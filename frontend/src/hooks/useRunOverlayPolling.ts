@@ -31,7 +31,8 @@ export function useRunOverlayPolling() {
   useQuery({
     queryKey: ['run-overlay', activeRunName],
     queryFn: async () => {
-      const detail = await argoApi.getRun(activeRunName!)
+      const projectId = useProjectStore.getState().currentProjectId ?? undefined
+      const detail = await argoApi.getRun(activeRunName!, projectId)
       updateFromArgo(detail.raw)
 
       // Save outputs + canvas to runs/ when run first reaches a terminal state

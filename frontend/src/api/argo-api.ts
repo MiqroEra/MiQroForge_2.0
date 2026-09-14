@@ -12,8 +12,9 @@ export const argoApi = {
     return fetchJSON(`/runs${q}`)
   },
 
-  getRun(name: string): Promise<RunDetailResponse> {
-    return fetchJSON(`/runs/${encodeURIComponent(name)}`)
+  getRun(name: string, projectId?: string): Promise<RunDetailResponse> {
+    const q = projectId ? `?project_id=${encodeURIComponent(projectId)}` : ''
+    return fetchJSON(`/runs/${encodeURIComponent(name)}${q}`)
   },
 
   getLogs(name: string, nodeId?: string): Promise<RunLogsResponse> {

@@ -137,7 +137,8 @@ function RunOverlaySection({
     setDownloading(true)
     try {
       const { argoApi } = await import('../../api/argo-api')
-      const result = await argoApi.getNodeLogs(runName, nodeId)
+      const podName = status.podName || nodeId
+      const result = await argoApi.getNodeLogs(runName, podName)
       // Trigger browser download
       const blob = new Blob([result.logs], { type: 'text/plain' })
       const url = URL.createObjectURL(blob)

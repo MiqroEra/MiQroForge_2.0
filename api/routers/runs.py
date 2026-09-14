@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 import logging
 import shutil
+from pathlib import Path
 from typing import Any
 
 import yaml
@@ -104,6 +105,30 @@ def list_runs(
     )
 
 
+def _build_local_run_response(run_dir: Path, name: str) -> RunDetailResponse:
+    """Build a RunDetailResponse from a local runs/{name}/ directory."""
+    phase = "Local"
+    outputs_path = run_dir / "outputs.json"
+    if outputs_path.exists():
+        try:
+            data = json.loads(outputs_path.read_text())
+            phase = data.get("phase", "Local")
+        except (json.JSONDecodeError, OSError):
+            pass
+
+    raw: dict[str, Any] = {
+        "metadata": {"name": name, "namespace": ""},
+        "status": {"phase": phase, "nodes": {}},
+    }
+
+    return RunDetailResponse(
+        name=name,
+        namespace="",
+        phase=phase,
+        raw=raw,
+    )
+
+
 @router.get("/{name}", response_model=RunDetailResponse, summary="运行详情")
 def get_run(
     name: str,
@@ -128,36 +153,30 @@ def get_run(
         pass  # Fall through to local data
 
     # Fallback: local-only run
-    if not project_id:
-        raise HTTPException(status_code=404, detail=f"Run '{name}' not found in Argo or locally")
-
+    # Try with provided project_id first; if missing, scan all project directories
     projects_root = paths.projects_dir if paths else settings.userdata_root / "projects"
-    run_dir = projects_root / project_id / "runs" / name
-    if not run_dir.is_dir():
-        raise HTTPException(status_code=404, detail=f"Run '{name}' not found")
 
-    phase = "Local"
-    outputs_path = run_dir / "outputs.json"
-    node_outputs: dict[str, str] = {}
-    if outputs_path.exists():
-        try:
-            data = json.loads(outputs_path.read_text())
-            phase = data.get("phase", "Local")
-            node_outputs = data.get("node_outputs", {})
-        except (json.JSONDecodeError, OSError):
-            pass
+    if project_id:
+        run_dir = projects_root / project_id / "runs" / name
+        if run_dir.is_dir():
+            return _build_local_run_response(run_dir, name)
+        raise HTTPException(
+            status_code=404,
+            detail=f"Run '{name}' not found in Argo or locally in project '{project_id}'",
+        )
 
-    # Build a synthetic Argo-like raw response for the frontend
-    raw: dict[str, Any] = {
-        "metadata": {"name": name, "namespace": ""},
-        "status": {"phase": phase, "nodes": {}},
-    }
+    # No project_id: scan all projects for this run name
+    if projects_root.exists():
+        for project_dir in sorted(projects_root.iterdir(), reverse=True):
+            if not project_dir.is_dir():
+                continue
+            run_dir = project_dir / "runs" / name
+            if run_dir.is_dir():
+                return _build_local_run_response(run_dir, name)
 
-    return RunDetailResponse(
-        name=name,
-        namespace="",
-        phase=phase,
-        raw=raw,
+    raise HTTPException(
+        status_code=404,
+        detail=f"Run '{name}' not found in Argo or locally (no project_id provided, scanned all projects)",
     )
 
 
@@ -584,17 +603,65 @@ def get_afterrun_canvas(
 def get_node_pod_logs(
     name: str,
     node_id: str,
+    project_id: str | None = None,
     argo: ArgoService = Depends(get_argo_service),
     user: CurrentUser = Depends(require_user),
+    paths: UserPaths = Depends(get_user_paths),
+    settings: Settings = Depends(get_settings),
 ) -> dict:
-    """返回指定节点的完整 pod 日志。Pod 已删除时返回 404。"""
+    """返回指定节点的完整 pod 日志。Pod 已删除时尝试从本地 outputs.json 读取。
+    
+    优先尝试 kubectl logs 获取实时 pod 日志；如果 pod 已被清理，则从已保存的
+    outputs.json 的 node_errors 字段中查找已缓存的错误日志。
+    node_id 可以是 Argo pod 名称或 canvas 节点 ID（如 "qsci-prep-1782808272897"）。
+    """
+    # Try 1: direct kubectl logs (pod name)
     try:
         logs = argo.get_pod_logs(node_id)
+        if logs is not None:
+            return {"node_id": node_id, "logs": logs}
     except Exception:
-        logs = None
-    if logs is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Pod 已被清理或命名空间不可达",
-        )
-    return {"node_id": node_id, "logs": logs}
+        pass
+
+    # Try 2: read from saved outputs.json (local fallback when pod is gone)
+    if project_id:
+        projects_root = paths.projects_dir if paths else settings.userdata_root / "projects"
+        run_dir = projects_root / project_id / "runs" / name
+        outputs_path = run_dir / "outputs.json"
+        if outputs_path.exists():
+            try:
+                data = json.loads(outputs_path.read_text(encoding="utf-8"))
+                node_errors: dict = data.get("node_errors", {})
+                node_outputs: dict = data.get("node_outputs", {})
+
+                # The node_id param may be a canvas node ID (template name from Argo)
+                # or an actual pod name. Try matching against node_errors keys first
+                # (canvas_id → {pod_name, phase, message}).
+                for canvas_id, err_info in node_errors.items():
+                    err_pod = err_info.get("pod_name", "")
+                    if node_id == canvas_id or node_id == err_pod or node_id in err_pod:
+                        # Found matching node — try kubectl with the real pod name
+                        try:
+                            logs = argo.get_pod_logs(err_pod)
+                            if logs:
+                                return {"node_id": err_pod, "logs": logs}
+                        except Exception:
+                            pass
+                        # Pod gone, return the cached error text from outputs
+                        error_key = f"{canvas_id}._error"
+                        cached = node_outputs.get(error_key, "")
+                        if cached:
+                            return {"node_id": err_pod or canvas_id, "logs": cached}
+                        break
+
+                # Fallback: search node_outputs for any _error matching node_id pattern
+                for key, val in node_outputs.items():
+                    if key.endswith("._error") and (node_id in key or node_id in str(val)):
+                        return {"node_id": key.removesuffix("._error"), "logs": str(val)}
+            except (json.JSONDecodeError, OSError):
+                pass
+
+    raise HTTPException(
+        status_code=404,
+        detail="Pod 已被清理且本地无缓存日志",
+    )
