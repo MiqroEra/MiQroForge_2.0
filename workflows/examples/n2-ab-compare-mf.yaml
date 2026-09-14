@@ -1,0 +1,140 @@
+# =============================================================================
+# n2-ab-compare-mf.yaml — N₂ EWF vs CAS(6,6) A/B 对比工作流
+#
+# Pipeline A (EWF): chem-prep → ewf-decompose → qsci-prep → hw-execute → qsci-assemble
+# Pipeline B (CAS): chem-prep → cas-truncation → qsci-prep → hw-execute → qsci-assemble
+#
+# 两条管道共享 chem-prep, 在 Hamiltonian 降维步骤分叉 (EWF vs CAS),
+# 然后走完全相同的 JW→Braket→QSCI 下游。
+# 在前端直接: CAS.cluster_hamiltonian → qsci-prep.cluster_hamiltonian (与 EWF 完全一样)
+# =============================================================================
+mf_version: "1.0"
+name: n2-ab-compare
+description: >
+  N₂ molecule A/B comparison: Plan A uses Vayesta EWF embedding, Plan B uses
+  PySCF CAS(6,6) active-space truncation.  Both produce cluster_hamiltonian
+  in the same HDF5 format (vayesta/cluster-hamiltonian-h5), so the downstream
+  qsci-prep → hardware-execute → qsci-assemble pipeline is identical.
+  Compare the total_energy from Plan A and Plan B.
+
+nodes:
+  # ── 共享: N₂ 几何结构 ───────────────────────────────────────────────────
+  - id: geom-input
+    nodespec_path: nodes/chemistry/preprocessing/geometry-file-input/nodespec.yaml
+    onboard_params:
+      inline_geometry: |
+        2
+        N2, r(N-N)=1.0977 Ang
+        N    0.000000    0.000000    0.000000
+        N    0.000000    0.000000    1.097700
+
+  # ── 共享: PySCF RHF 平均场 ───────────────────────────────────────────────
+  - id: chem-prep
+    nodespec_path: nodes/quantum/chem-prep/nodespec.yaml
+    onboard_params:
+      charge: 0
+      multiplicity: 1
+      basis_set: sto-3g
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # PLAN A: EWF (Vayesta)
+  # ═══════════════════════════════════════════════════════════════════════════
+  - id: ewf-decompose
+    nodespec_path: nodes/quantum/ewf-decompose/nodespec.yaml
+    onboard_params:
+      active_atoms: "0,1"
+      bath_threshold: 1.0e-6
+      bathtype: mp2
+      fragmentation: iao
+
+  - id: qsci-prep-a
+    nodespec_path: nodes/quantum/qsci-prep/nodespec.yaml
+
+  - id: hw-execute-a
+    nodespec_path: nodes/quantum/hardware-execute/nodespec.yaml
+    onboard_params:
+      backend: local
+      n_shots: 5000
+
+  - id: qsci-assemble-a
+    nodespec_path: nodes/quantum/qsci-assemble/nodespec.yaml
+    onboard_params:
+      K: 100
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # PLAN B: CAS(6,6) (PySCF CASCI)
+  # ═══════════════════════════════════════════════════════════════════════════
+  - id: cas-truncation
+    nodespec_path: userdata/users/Ayu/nodes/chemistry/pyscf-cas-truncation/nodespec.yaml
+    onboard_params:
+      active_electrons: 6
+      active_orbitals: 6
+      frozen_core: 0
+      spin_multiplicity: 1
+
+  - id: qsci-prep-b
+    nodespec_path: nodes/quantum/qsci-prep/nodespec.yaml
+
+  - id: hw-execute-b
+    nodespec_path: nodes/quantum/hardware-execute/nodespec.yaml
+    onboard_params:
+      backend: local
+      n_shots: 5000
+
+  - id: qsci-assemble-b
+    nodespec_path: nodes/quantum/qsci-assemble/nodespec.yaml
+    onboard_params:
+      K: 100
+
+# ════════════════════════════════════════════════════════════════════════════════
+# Connections
+# ════════════════════════════════════════════════════════════════════════════════
+connections:
+  # ── 共享: geom → chem-prep ────────────────────────────────────────────
+  - from: geom-input.xyz_geometry
+    to: chem-prep.xyz_geometry
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # PLAN A: chem-prep → ewf → qsci-prep → hw-execute → qsci-assemble
+  # ════════════════════════════════════════════════════════════════════════════
+  - from: chem-prep.meanfield_package
+    to: ewf-decompose.meanfield_package
+
+  - from: ewf-decompose.cluster_hamiltonian
+    to: qsci-prep-a.cluster_hamiltonian
+
+  - from: qsci-prep-a.ansatz_circuit
+    to: hw-execute-a.ansatz_circuit
+
+  - from: hw-execute-a.measurement_counts
+    to: qsci-assemble-a.measurement_counts
+
+  - from: qsci-prep-a.qubit_hamiltonian
+    to: qsci-assemble-a.qubit_hamiltonian
+
+  - from: ewf-decompose.e_mf
+    to: qsci-assemble-a.e_mf
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # PLAN B: chem-prep → cas-truncation → qsci-prep → hw-execute → qsci-assemble
+  #         注意: cas-truncation 现在输出 cluster_hamiltonian (HDF5),
+  #         与 ewf-decompose 完全相同的端口名和数据类型,
+  #         所以前端直接连 CAS.cluster_hamiltonian → qsci-prep.cluster_hamiltonian
+  # ════════════════════════════════════════════════════════════════════════════
+  - from: chem-prep.meanfield_package
+    to: cas-truncation.meanfield_package
+
+  - from: cas-truncation.cluster_hamiltonian
+    to: qsci-prep-b.cluster_hamiltonian
+
+  - from: qsci-prep-b.ansatz_circuit
+    to: hw-execute-b.ansatz_circuit
+
+  - from: hw-execute-b.measurement_counts
+    to: qsci-assemble-b.measurement_counts
+
+  - from: qsci-prep-b.qubit_hamiltonian
+    to: qsci-assemble-b.qubit_hamiltonian
+
+  - from: ewf-decompose.e_mf
+    to: qsci-assemble-b.e_mf

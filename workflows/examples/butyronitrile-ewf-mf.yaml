@@ -1,0 +1,119 @@
+# =============================================================================
+# butyronitrile-ewf-mf.yaml — 丁腈 EWF 嵌入 + 量子执行 + CCSD 参考
+#
+# 三能量对照 (对应 EWF/ewf_butyronitrile.py):
+#   E(HF)       = ewf-decompose.e_mf             (全分子 Hartree-Fock)
+#   E(CCSD)     = psi4-sp.total_energy           (全分子 CCSD(T) 参考)
+#   E(EWF+QSCI) = qsci-assemble.total_energy     (EWF嵌入 → 量子求解)
+#
+# Pipeline:
+#   geom-input → chem-prep → ewf-decompose → qsci-prep → hw-execute → qsci-assemble
+#              ↘ psi4-sp(CCSD(T))  ← 并行参考计算
+# =============================================================================
+mf_version: "1.0"
+name: butyronitrile-ewf
+description: >
+  Butyronitrile (丁腈, C4H7N) EWF single-fragment embedding on the nitrile
+  (–C≡N) group.  Three-energy comparison: HF reference, full-system CCSD(T)
+  reference (Psi4), and EWF+QSCI from the quantum pipeline.
+
+nodes:
+  # ── 丁腈 XYZ 输入 ─────────────────────────────────────────────────────────
+  - id: geom-input
+    nodespec_path: nodes/chemistry/preprocessing/geometry-file-input/nodespec.yaml
+    onboard_params:
+      inline_geometry: |
+        12
+        butyronitrile, PubChem CID 8008
+        N    2.38760000 -0.27100000 -0.00660000
+        C   -1.08850000 -0.50690000  0.01220000
+        C   -0.07900000  0.63920000  0.00720000
+        C   -2.51860000  0.00900000 -0.01210000
+        C    1.29860000  0.12960000 -0.00070000
+        H   -0.94440000 -1.13070000  0.90300000
+        H   -0.92600000 -1.15540000 -0.85760000
+        H   -0.23050000  1.27240000  0.88900000
+        H   -0.23800000  1.27140000 -0.87410000
+        H   -2.72540000  0.63280000  0.86330000
+        H   -2.70560000  0.60480000 -0.91120000
+        H   -3.22360000 -0.82820000 -0.00690000
+
+  # ── 全分子 CCSD(T) 参考值 (Psi4) ─────────────────────────────────────────
+  - id: psi4-sp
+    nodespec_path: nodes/chemistry/psi4/psi4-single-point/nodespec.yaml
+    onboard_params:
+      charge: 0
+      multiplicity: 1
+      method: ccsd(t)
+      basis_set: cc-pVDZ
+      reference: rhf
+
+  # ── PySCF RHF 平均场 (chem-prep) ──────────────────────────────────────────
+  - id: chem-prep
+    nodespec_path: nodes/quantum/chem-prep/nodespec.yaml
+    onboard_params:
+      charge: 0
+      multiplicity: 1
+      basis_set: cc-pVDZ
+
+  # ── EWF 嵌入分解 (–C≡N 碎片: 原子 [0,4]) ────────────────────────────────
+  - id: ewf-decompose
+    nodespec_path: nodes/quantum/ewf-decompose/nodespec.yaml
+    onboard_params:
+      active_atoms: "0,4"
+      bath_threshold: 1.0e-6
+      bathtype: mp2
+      fragmentation: iao
+
+  # ── JW 变换 + LUCJ ansatz ────────────────────────────────────────────────
+  - id: qsci-prep
+    nodespec_path: nodes/quantum/qsci-prep/nodespec.yaml
+
+  # ── Braket 电路执行 ──────────────────────────────────────────────────────
+  - id: hw-execute
+    nodespec_path: nodes/quantum/hardware-execute/nodespec.yaml
+    onboard_params:
+      backend: local
+      n_shots: 5000
+
+  # ── QSCI 子空间组装 + 能量估计 ───────────────────────────────────────────
+  - id: qsci-assemble
+    nodespec_path: nodes/quantum/qsci-assemble/nodespec.yaml
+    onboard_params:
+      K: 100
+
+# ════════════════════════════════════════════════════════════════════════════════
+# Connections
+# ════════════════════════════════════════════════════════════════════════════════
+connections:
+  # XYZ → psi4 CCSD(T) 参考 (并行)
+  - from: geom-input.xyz_geometry
+    to: psi4-sp.xyz_geometry
+
+  # XYZ → chem-prep (RHF)
+  - from: geom-input.xyz_geometry
+    to: chem-prep.xyz_geometry
+
+  # chem-prep → ewf-decompose
+  - from: chem-prep.meanfield_package
+    to: ewf-decompose.meanfield_package
+
+  # ewf-decompose → qsci-prep
+  - from: ewf-decompose.cluster_hamiltonian
+    to: qsci-prep.cluster_hamiltonian
+
+  # qsci-prep → hw-execute
+  - from: qsci-prep.ansatz_circuit
+    to: hw-execute.ansatz_circuit
+
+  # hw-execute → qsci-assemble
+  - from: hw-execute.measurement_counts
+    to: qsci-assemble.measurement_counts
+
+  # qsci-prep → qsci-assemble (qubit Hamiltonian)
+  - from: qsci-prep.qubit_hamiltonian
+    to: qsci-assemble.qubit_hamiltonian
+
+  # ewf-decompose → qsci-assemble (HF 参考能量)
+  - from: ewf-decompose.e_mf
+    to: qsci-assemble.e_mf

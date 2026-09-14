@@ -52,3 +52,8 @@ types:
     display_name: "QSCI Energy [quantum]"
     description: "Post-process measurement counts using quantum subspace expansion / QSCI methodology to estimate the ground-state energy."
     domain: quantum
+
+  quantum-cas-truncation:
+    display_name: "CAS Truncation [quantum]"
+    description: "PySCF CASCI active-space truncation: reduces full molecular Hamiltonian to a configurable active space, outputting effective 1-body Hamiltonian (heff) and core energy (ecore) for quantum computing."
+    domain: quantum

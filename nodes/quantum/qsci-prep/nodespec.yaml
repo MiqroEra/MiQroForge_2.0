@@ -83,7 +83,18 @@ stream_outputs:
       numeric (no free symbols), initialised from the precomputed MP2 t2 seed
       carried in the cluster contract.
 
-onboard_inputs: []
+onboard_inputs:
+  - name: coefficient_threshold
+    display_name: Integral Cutoff (Hartree)
+    kind: float
+    default: 1e-4
+    min_value: 1e-8
+    max_value: 1e-2
+    description: >
+      Two-body integrals below this threshold are zeroed before Jordan-Wigner
+      transform.  Lower = more accurate but more memory.  For QSCI subspace
+      diagonalisation, 1e-4 is sufficient; reduce to 1e-6 for near-FCI accuracy
+      (requires more RAM).
 
 onboard_outputs:
   - name: n_qubits
@@ -94,9 +105,9 @@ onboard_outputs:
       (2 × number of active spatial orbitals in the cluster).
 
 resources:
-  cpu_cores: 2
-  mem_gb: 4.0
-  estimated_walltime_hours: 0.25
+  cpu_cores: 4
+  mem_gb: 16.0
+  estimated_walltime_hours: 1.0
 
 execution:
   entrypoint_script: run.sh

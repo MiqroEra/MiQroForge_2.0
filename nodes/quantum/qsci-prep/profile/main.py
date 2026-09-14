@@ -64,9 +64,52 @@ g_mo = np.einsum("pi,qj,rk,sl,pqrs->ijkl",
 # Spatial → interleaved spin-orbital expansion (α on even, β on odd qubits).
 # g_mo is physicist <pq|rs>; OpenFermion's convention is h2[p,q,r,s] = <pq|sr>,
 # and InteractionOperator carries the explicit 1/2 prefactor.
+#
+# MEMORY NOTE: spinorb_from_spatial creates dense h2_so (16× spatial), which for
+# 59 orbitals is ~1.5 GB.  For large clusters, the upstream ewf-decompose node
+# (classical-chem image with PySCF) should precompute spin-orbital tensors and
+# write them directly to the cluster_hamiltonian HDF5 to avoid this expansion.
 h1_so, h2_so = spinorb_from_spatial(h_mo, g_mo.transpose(0, 1, 3, 2))
+
+# Free spatial-basis intermediates BEFORE InteractionOperator allocates copies
+del heff, eris, g_mo, C_mo
+import gc; gc.collect()
+
+# ── Prune: zero out integrals below threshold BEFORE JW ──
+# Jordan-Wigner only generates Pauli terms for non-zero tensor elements.
+# By zeroing h1_so/h2_so in-place before JW, we prevent insignificant terms.
+# Threshold is configured via onboard_input in the frontend Inspector panel
+# (default 1e-4 Hartree, suitable for QSCI subspace diagonalisation).
+threshold_str = ""
+threshold_file = os.path.join(INPUT_DIR, "coefficient_threshold")
+if os.path.isfile(threshold_file):
+    with open(threshold_file, "r") as f:
+        threshold_str = f.read().strip()
+COEFF_ACCURACY = float(threshold_str) if threshold_str else 1e-4
+COEFF_ACCURACY = max(1e-12, min(1e-1, COEFF_ACCURACY))  # sanity bounds
+h1_nz_before = int(np.count_nonzero(h1_so))
+h2_nz_before = int(np.count_nonzero(h2_so))
+h1_so[np.abs(h1_so) < COEFF_ACCURACY] = 0.0
+h2_so[np.abs(h2_so) < COEFF_ACCURACY] = 0.0
+h1_nz_after = int(np.count_nonzero(h1_so))
+h2_nz_after = int(np.count_nonzero(h2_so))
+print(f"[qsci-prep] Integral pruning (|coeff| < {COEFF_ACCURACY} → zero):", flush=True)
+print(f"           h1_so: {h1_nz_before} → {h1_nz_after} non-zero", flush=True)
+print(f"           h2_so: {h2_nz_before:,} → {h2_nz_after:,} non-zero "
+      f"({h2_nz_after/max(h2_nz_before,1)*100:.1f}% retained)", flush=True)
+
 interaction_op = InteractionOperator(float(e_core), h1_so, 0.5 * h2_so)
+# Free spin-orbital arrays — InteractionOperator copies them internally
+del h1_so, h2_so
+gc.collect()
+
+print(f"[qsci-prep] Running Jordan-Wigner on pruned integrals …", flush=True)
 qubit_hamiltonian: QubitOperator = jordan_wigner(interaction_op)
+del interaction_op
+gc.collect()
+
+print(f"[qsci-prep] JW terms: {len(qubit_hamiltonian.terms)} "
+      f"(input pruning at {COEFF_ACCURACY} Hartree)", flush=True)
 
 # Serialise as compact sparse JSON v2: {"X0 Z1 Y4": coeff_real, ...}.
 # Real orbitals ⇒ all JW coefficients are real; fail loudly if not.
@@ -76,21 +119,35 @@ if max_imag > 1e-10:
           "orbital tensors are expected to be real.", flush=True)
     sys.exit(1)
 
-terms_json = {
-    " ".join(f"{op}{q}" for q, op in sorted(pauli_tuple)): float(coeff.real)
-    for pauli_tuple, coeff in qubit_hamiltonian.terms.items()
-}
+# Stream serialisation: write term-by-term to file, popping from the dict
+# as we go.  For 18M+ terms, the old approach (dict comprehension → json.dumps)
+# held three full copies simultaneously (~8 GB peak).  Streaming keeps peak
+# at the QubitOperator dict (~4 GB) + a small key-reference list (~150 MB).
+n_total = len(qubit_hamiltonian.terms)
+print(f"[qsci-prep] Serialising {n_total} terms to JSON …", flush=True)
 
-ham_json = {
-    "format":  "openfermion-sparse-v2",
-    "n_qubits": n_qubits,
-    "n_elec":  int(n_elec),
-    "constant": float(e_core),
-    "terms":    terms_json,
-}
 with open(f"{OUTPUT_DIR}/qubit_hamiltonian", "w") as fh:
-    json.dump(ham_json, fh, separators=(",", ":"))
-print(f"[qsci-prep] Qubit Hamiltonian: {len(terms_json)} terms "
+    fh.write(f'{{"format":"openfermion-sparse-v2","n_qubits":{n_qubits},')
+    fh.write(f'"n_elec":{int(n_elec)},"constant":{float(e_core)},"terms":{{')
+
+    term_keys = list(qubit_hamiltonian.terms.keys())
+    for i, pauli_tuple in enumerate(term_keys):
+        coeff = qubit_hamiltonian.terms.pop(pauli_tuple)
+        if i > 0:
+            fh.write(",")
+        fh.write('"')
+        fh.write(" ".join(f"{op}{q}" for q, op in sorted(pauli_tuple)))
+        fh.write('":')
+        fh.write(str(float(coeff.real)))
+
+        if (i + 1) % 5_000_000 == 0:
+            print(f"           {i+1}/{n_total} terms …", flush=True)
+
+    fh.write("}}")
+    del term_keys
+    gc.collect()
+
+print(f"[qsci-prep] Qubit Hamiltonian: {n_total} terms "
       f"(n_qubits={n_qubits}, MO basis, interleaved spin-orbitals)", flush=True)
 
 # ═══════════════════════════════════════════════════════════════════════════════
