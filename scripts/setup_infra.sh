@@ -113,12 +113,68 @@ section "4 / 5  Argo Workflow Server"
 export KUBECONFIG="${KUBE_CONFIG}"
 bash "${SCRIPT_DIR}/install/install_argo.sh" --server-only
 
-# ── 5. Workspace PVC ──────────────────────────────────────────────────────────
+# ── 5. Workspace PVC + RBAC ───────────────────────────────────────────────────
 # 从 .env 已自动加载 ARGO_NAMESPACE，若未配置则使用默认值
 ARGO_NAMESPACE="${ARGO_NAMESPACE:-miqroforge-v2}"
 
-section "5 / 5  Workspace PVC（${ARGO_NAMESPACE}）"
-# hostPath 路径与 namespace 动态替换后再 apply
+section "5 / 5  Workspace Namespace + RBAC + PVC（${ARGO_NAMESPACE}）"
+
+# 5a. 确保 namespace 存在
+if kubectl get namespace "${ARGO_NAMESPACE}" &>/dev/null 2>&1; then
+    info "namespace '${ARGO_NAMESPACE}' 已存在，跳过创建。"
+else
+    info "创建 namespace '${ARGO_NAMESPACE}'..."
+    kubectl create namespace "${ARGO_NAMESPACE}"
+fi
+
+# 5b. 创建 RBAC 资源（SA、Role、RoleBinding）
+SA_NAME="${ARGO_NAMESPACE}-workflow-sa"
+if kubectl get serviceaccount "${SA_NAME}" -n "${ARGO_NAMESPACE}" &>/dev/null 2>&1; then
+    info "ServiceAccount '${SA_NAME}' 已存在，跳过创建。"
+else
+    info "创建 RBAC 资源（${ARGO_NAMESPACE}）..."
+    kubectl create serviceaccount "${SA_NAME}" -n "${ARGO_NAMESPACE}"
+    kubectl apply -f - <<KUBE_EOF
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: workflow-role
+  namespace: ${ARGO_NAMESPACE}
+rules:
+  - apiGroups: [""]
+    resources: [pods, pods/log]
+    verbs: [get, list, watch, create, delete, patch]
+  - apiGroups: [""]
+    resources: [configmaps]
+    verbs: [get, list, watch, create, update, patch]
+  - apiGroups: ["argoproj.io"]
+    resources: [workflows, workflowtemplates, cronworkflows]
+    verbs: [get, list, watch, create, update, patch, delete]
+  - apiGroups: ["argoproj.io"]
+    resources: [workflowtaskresults]
+    verbs: [create, patch]
+  - apiGroups: ["argoproj.io"]
+    resources: [workflowtasksets]
+    verbs: [get, list, watch, patch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: workflow-role-binding
+  namespace: ${ARGO_NAMESPACE}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: workflow-role
+subjects:
+  - kind: ServiceAccount
+    name: ${SA_NAME}
+    namespace: ${ARGO_NAMESPACE}
+KUBE_EOF
+    success "RBAC 资源已创建。"
+fi
+
+# 5c. 部署 Workspace PVC
 if kubectl get pvc "${ARGO_NAMESPACE}" -n "${ARGO_NAMESPACE}" &>/dev/null 2>&1; then
     success "Workspace PVC ${ARGO_NAMESPACE} 已存在，跳过。"
 else

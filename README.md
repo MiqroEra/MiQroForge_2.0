@@ -78,7 +78,13 @@ python3 -m venv .venv && source .venv/bin/activate
 bash scripts/setup_phase1.sh --yes
 ```
 
-安装所需 Python 依赖（pydantic v2、pytest、pyyaml、python-dotenv、langchain、langgraph 等）。
+安装 Phase 1 所需 Python 依赖（pydantic v2、pytest、pyyaml、python-dotenv、langchain、langgraph 等）。
+
+如果进行 Phase 2 开发（API / Agent），还需额外安装：
+
+```bash
+pip install -r requirements/phase2.txt
+```
 
 ### 第三步：配置环境变量
 
