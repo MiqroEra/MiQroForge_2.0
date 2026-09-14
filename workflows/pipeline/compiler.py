@@ -690,6 +690,50 @@ def _load_image_registry(project_root: Path) -> BaseImageRegistry:
     return BaseImageRegistry.model_validate(data)
 
 
+def _resolve_secret_refs(
+    secret_refs: list[str],
+    spec: NodeSpec,
+    onboard_params: dict[str, Any] | None,
+) -> list[str]:
+    """解析 secret_refs 中的 ``${onboard.<param>}`` 模板。
+
+    优先级与 ``_resolve_resources`` 一致：onboard_params 实例覆盖 >
+    nodespec onboard_input 默认值。无法解析的占位符直接抛 ValueError
+    （不 fallback、不静默跳过——错误的 Secret 名会导致 pod 无凭证）。
+
+    不含模板的静态条目原样保留（向后兼容）。
+    """
+    if not secret_refs:
+        return []
+
+    onboard_map = {p.name: p for p in spec.onboard_inputs}
+    params = onboard_params or {}
+    pattern = re.compile(r"\$\{onboard\.([A-Za-z0-9_\-]+)\}")
+
+    def _repl(match: re.Match[str]) -> str:
+        param_name = match.group(1)
+        raw = params.get(param_name)
+        if raw is None or str(raw).strip() == "":
+            param = onboard_map.get(param_name)
+            if param is None or param.default is None:
+                raise ValueError(
+                    f"secret_ref 模板 {match.group(0)} 引用的 onboard 参数 "
+                    f"'{param_name}' 无法解析：实例未提供且 nodespec 无默认值"
+                )
+            raw = param.default
+        return str(raw)
+
+    resolved: list[str] = []
+    for ref in secret_refs:
+        new_ref = pattern.sub(_repl, ref)
+        if "${" in new_ref or "{{" in new_ref:
+            raise ValueError(
+                f"secret_ref '{ref}' 解析后仍含未解析占位符：'{new_ref}'"
+            )
+        resolved.append(new_ref)
+    return resolved
+
+
 def _resolve_resources(
     spec: NodeSpec,
     onboard_params: dict[str, Any],
@@ -1338,6 +1382,7 @@ def _build_template(
             output_params=output_params,
             resource_overrides=resource_overrides,
             project_id=project_id,
+            onboard_params=node_inst.onboard_params,
         )
     elif isinstance(spec.execution, LightweightExecutionConfig):
         if spec.execution.entrypoint_script:
@@ -1384,6 +1429,7 @@ def _build_compute_template(
     output_params: list[dict[str, Any]],
     resource_overrides: dict[str, Any] | None = None,
     project_id: str = "",
+    onboard_params: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """构建 compute 节点的 container template。"""
     exec_cfg = spec.execution  # ComputeExecutionConfig
@@ -1493,11 +1539,15 @@ def _build_compute_template(
             for k, v in exec_cfg.environment.items()
         ]
 
-    # K8s Secret 注入（全局凭证，如 AWS Braket）
+    # K8s Secret 注入（全局凭证，如 AWS Braket）。支持 ${onboard.<param>} 模板，
+    # 编译时按实例 onboard_params（回退 nodespec default）解析为实际 Secret 名。
     if exec_cfg.secret_refs:
+        resolved_secret_refs = _resolve_secret_refs(
+            exec_cfg.secret_refs, spec, onboard_params
+        )
         template["container"]["envFrom"] = [
             {"secretRef": {"name": name, "optional": True}}
-            for name in exec_cfg.secret_refs
+            for name in resolved_secret_refs
         ]
 
     return template

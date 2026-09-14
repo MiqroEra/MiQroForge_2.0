@@ -189,18 +189,34 @@ OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 # nodes/quantum/hardware-execute/nodespec.yaml:
 execution:
   secret_refs:
-    - aws-braket-creds
+    - ${onboard.aws_account}   # 模板：编译时解析为实际 K8s Secret 名
 ```
 
 `secret_refs` 是 `ComputeExecutionConfig` 上的 `list[str]` 字段（默认 `[]`）。
-编译器在 `_build_compute_template()` 中将其转换为 Argo container spec 的 `envFrom` 块：
+条目支持 `${onboard.<param>}` 模板语法：编译时用该节点的实例
+`onboard_params` 值（未提供时回退 nodespec onboard_input 默认值）解析为
+实际 Secret 名；不含模板的静态条目原样保留。解析失败的占位符直接抛
+`ValueError`（不静默跳过——错误的 Secret 名会让 pod 无凭证启动）。
+
+`hardware-execute` 通过 onboard 枚举 `aws_account` 选择凭证账号：
+
+| `aws_account` 值 | Secret 名 | AWS 账号 |
+|------------------|-----------|----------|
+| `aws-braket-creds`（默认） | `aws-braket-creds` | 主账号 533612071261（IAM user mqe-quantum-dev） |
+| `aws-braket-creds-ayu` | `aws-braket-creds-ayu` | ayu 账号 |
+
+`local` 后端不使用凭证；枚举值由 validator 做值域检查（MF YAML 中的
+`aws_account` 必须在 `allowed_values` 内）。
+
+编译器在 `_build_compute_template()` 中经 `_resolve_secret_refs()` 解析后
+将结果转换为 Argo container spec 的 `envFrom` 块：
 
 ```yaml
-# 编译器生成的 Argo YAML：
+# 编译器生成的 Argo YAML（aws_account=aws-braket-creds-ayu 时）：
 container:
   envFrom:
     - secretRef:
-        name: aws-braket-creds
+        name: aws-braket-creds-ayu
         optional: true
 ```
 
@@ -306,6 +322,29 @@ kubectl create secret generic aws-braket-creds \
 | K8s Namespace | miqroforge-dev |
 | Secret Name | aws-braket-creds |
 | Secret Keys | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_DEFAULT_REGION`（大写，boto3 标准） |
+
+### 多账号支持
+
+一个 Secret 对应一个 AWS 账号。添加新账号（如 ayu 账号）三步：
+
+1. **创建新 Secret**（凭证 key 大写，boto3 标准）：
+
+   ```bash
+   kubectl create secret generic aws-braket-creds-ayu \
+     --namespace=miqroforge-dev \
+     --from-literal=AWS_ACCESS_KEY_ID=<ayu-key> \
+     --from-literal=AWS_SECRET_ACCESS_KEY=<ayu-secret> \
+     --from-literal=AWS_DEFAULT_REGION=us-east-1
+   ```
+
+2. **在 nodespec 枚举中注册**：`hardware-execute/nodespec.yaml` 的
+   `aws_account.allowed_values` 加入 `aws-braket-creds-ayu`。
+
+3. **前端选择**：工作流中该节点的 Inspector 面板 `AWS Account` 下拉选择账号，
+   编译时 `secret_refs` 模板解析为对应 Secret 名。
+
+各账号的 S3 结果桶与 region 要求由对应账号自身满足（Braket 结果桶必须存在于
+该账号内）。后端与账号正交：同一账号可跑 sv1 和所有具名 QPU。
 
 详见 `infrastructure/k8s/aws-braket-creds-injection.md` §2 和 §5。
 

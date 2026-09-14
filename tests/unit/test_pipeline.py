@@ -736,6 +736,134 @@ class TestCompiler:
 
         assert "envFrom" not in template["container"]
 
+    def test_envfrom_secret_ref_template_resolved_from_onboard_params(self):
+        """WHEN secret_refs 含 ${onboard.x} 模板 AND 实例提供 onboard 值 → 用实例值。"""
+        spec_data = {
+            "metadata": {
+                "name": "test-compute",
+                "version": "1.0.0",
+                "display_name": "Test Compute",
+                "description": "Minimal compute node for templated envFrom test.",
+                "node_type": "compute",
+                "category": "utility",
+                "author": "Test Suite",
+                "base_image_ref": "quantum-exec-0.1",
+            },
+            "onboard_inputs": [
+                {
+                    "name": "aws_account",
+                    "kind": "enum",
+                    "default": "aws-braket-creds",
+                    "allowed_values": ["aws-braket-creds", "aws-braket-creds-ayu"],
+                }
+            ],
+            "resources": {
+                "cpu_cores": 1,
+                "mem_gb": 0.5,
+                "estimated_walltime_hours": 0.1,
+            },
+            "execution": {
+                "secret_refs": ["${onboard.aws_account}"],
+            },
+        }
+        wf = MFWorkflow(
+            name="test-secret-ref-template",
+            nodes=[
+                MFNodeInstance(
+                    id="compute",
+                    inline_nodespec=spec_data,
+                    onboard_params={"aws_account": "aws-braket-creds-ayu"},
+                )
+            ],
+        )
+        report = validate_workflow(wf, project_root=PROJECT_ROOT)
+        assert report.valid, f"Validation failed: {[i.message for i in report.errors]}"
+
+        argo = compile_to_argo(wf, report.resolved_nodes, project_root=PROJECT_ROOT)
+        template = next(
+            t for t in argo["spec"]["templates"] if t["name"] == "mf-compute"
+        )
+        assert template["container"]["envFrom"] == [
+            {"secretRef": {"name": "aws-braket-creds-ayu", "optional": True}},
+        ]
+
+    def test_envfrom_secret_ref_template_falls_back_to_default(self):
+        """WHEN 实例未提供 onboard 值 → 模板回退到 nodespec onboard_input default。"""
+        spec_data = {
+            "metadata": {
+                "name": "test-compute",
+                "version": "1.0.0",
+                "display_name": "Test Compute",
+                "description": "Minimal compute node for templated envFrom fallback test.",
+                "node_type": "compute",
+                "category": "utility",
+                "author": "Test Suite",
+                "base_image_ref": "quantum-exec-0.1",
+            },
+            "onboard_inputs": [
+                {
+                    "name": "aws_account",
+                    "kind": "enum",
+                    "default": "aws-braket-creds",
+                    "allowed_values": ["aws-braket-creds", "aws-braket-creds-ayu"],
+                }
+            ],
+            "resources": {
+                "cpu_cores": 1,
+                "mem_gb": 0.5,
+                "estimated_walltime_hours": 0.1,
+            },
+            "execution": {
+                "secret_refs": ["${onboard.aws_account}"],
+            },
+        }
+        wf = MFWorkflow(
+            name="test-secret-ref-template-fallback",
+            nodes=[MFNodeInstance(id="compute", inline_nodespec=spec_data)],
+        )
+        report = validate_workflow(wf, project_root=PROJECT_ROOT)
+        assert report.valid, f"Validation failed: {[i.message for i in report.errors]}"
+
+        argo = compile_to_argo(wf, report.resolved_nodes, project_root=PROJECT_ROOT)
+        template = next(
+            t for t in argo["spec"]["templates"] if t["name"] == "mf-compute"
+        )
+        assert template["container"]["envFrom"] == [
+            {"secretRef": {"name": "aws-braket-creds", "optional": True}},
+        ]
+
+    def test_envfrom_secret_ref_unresolved_template_raises(self):
+        """WHEN 模板引用的 onboard 参数不存在且无默认值 → ValueError。"""
+        spec_data = {
+            "metadata": {
+                "name": "test-compute",
+                "version": "1.0.0",
+                "display_name": "Test Compute",
+                "description": "Minimal compute node for unresolvable envFrom test.",
+                "node_type": "compute",
+                "category": "utility",
+                "author": "Test Suite",
+                "base_image_ref": "quantum-exec-0.1",
+            },
+            "resources": {
+                "cpu_cores": 1,
+                "mem_gb": 0.5,
+                "estimated_walltime_hours": 0.1,
+            },
+            "execution": {
+                "secret_refs": ["${onboard.missing_param}"],
+            },
+        }
+        wf = MFWorkflow(
+            name="test-secret-ref-unresolved",
+            nodes=[MFNodeInstance(id="compute", inline_nodespec=spec_data)],
+        )
+        report = validate_workflow(wf, project_root=PROJECT_ROOT)
+        assert report.valid, f"Validation failed: {[i.message for i in report.errors]}"
+
+        with pytest.raises(ValueError, match="missing_param"):
+            compile_to_argo(wf, report.resolved_nodes, project_root=PROJECT_ROOT)
+
     def test_generate_configmaps(self, validated_h2o):
         """生成 ConfigMap 清单。"""
         wf, report = validated_h2o

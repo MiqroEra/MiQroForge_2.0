@@ -67,6 +67,18 @@ stream_outputs:
       Example: {"00": 512, "11": 488}.
 
 onboard_inputs:
+  - name: aws_account
+    display_name: AWS Account
+    kind: enum
+    default: aws-braket-creds
+    allowed_values:
+      - aws-braket-creds
+      - aws-braket-creds-ayu
+    description: >
+      AWS 凭证对应的 K8s Secret 名（编译时解析为容器 envFrom 注入）。
+      aws-braket-creds = 主账号（533612071261 / mqe-quantum-dev）；
+      aws-braket-creds-ayu = ayu 账号。local 后端不使用凭证。
+
   - name: backend
     display_name: Execution Backend
     kind: enum
@@ -114,7 +126,7 @@ resources:
 
 execution:
   secret_refs:
-    - aws-braket-creds
+    - ${onboard.aws_account}
 
 semantic_identity: >
   Executes a quantum circuit on AWS Braket hardware or simulator and

@@ -14,7 +14,7 @@ K8s resources for MF2 platform runtime. Two namespaces are used:
 | `rbac.yaml` | SA + Role + Binding | `miqroforge-v2` | Production RBAC for Argo workflows |
 | `rbac-dev.yaml` | SA + Role + Binding | `miqroforge-dev` | Dev RBAC (workflow ServiceAccount; no `secrets` verbs needed — `envFrom.secretRef` is resolved by kubelet) |
 | `workspace.yaml` | PV + PVC | `__MF_NAMESPACE__` | Workspace persistent storage (hostPath) |
-| `aws-braket-secret.example.yaml` | Secret | `miqroforge-dev` | AWS Braket credentials template (placeholder keys) |
+| `aws-braket-secret.example.yaml` | Secret | `miqroforge-dev` | AWS Braket credentials template (placeholder keys). One Secret per AWS account — see `aws-braket-creds-injection.md` §2 multi-account section |
 
 ## Docs
 

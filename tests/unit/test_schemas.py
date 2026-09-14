@@ -983,7 +983,7 @@ distinguishing_ports:
         assert "band_data_out" in summary
 
     def test_secret_refs_in_hardware_execute_nodespec(self):
-        """端到端：实际 hardware-execute 节点的 YAML → NodeSpec，验证 secret_refs。"""
+        """端到端：实际 hardware-execute 节点的 YAML → NodeSpec，验证 secret_refs 模板 + aws_account 枚举。"""
         yaml_path = (
             Path(__file__).parent.parent.parent
             / "nodes"
@@ -993,4 +993,12 @@ distinguishing_ports:
         )
         ns = NodeSpec.from_yaml(yaml_path)
         assert isinstance(ns.execution, ComputeExecutionConfig)
-        assert ns.execution.secret_refs == ["aws-braket-creds"]
+        assert ns.execution.secret_refs == ["${onboard.aws_account}"]
+        aws_account = next(
+            p for p in ns.onboard_inputs if p.name == "aws_account"
+        )
+        assert aws_account.allowed_values == [
+            "aws-braket-creds",
+            "aws-braket-creds-ayu",
+        ]
+        assert aws_account.default == "aws-braket-creds"

@@ -76,27 +76,30 @@ keys as environment variables. No workspace PVC staging is needed.
 ### How it works
 
 1. **NodeSpec declares `secret_refs`** — the `hardware-execute` node's
-   `execution.secret_refs` field lists the K8s Secret names to inject:
+   `execution.secret_refs` field lists the K8s Secret names (or
+   `${onboard.<param>}` templates) to inject:
 
    ```yaml
    # In nodes/quantum/hardware-execute/nodespec.yaml:
    execution:
      type: compute
      secret_refs:
-       - aws-braket-creds
+       - ${onboard.aws_account}    # resolved at compile time via _resolve_secret_refs()
    ```
 
-2. **Compiler emits `envFrom`** — `_build_compute_template()` reads
-   `secret_refs` and emits `envFrom.secretRef` with `optional: true` (the pod
-   starts even if the Secret is temporarily absent):
+2. **Compiler resolves templates and emits `envFrom`** —
+   `_build_compute_template()` runs `_resolve_secret_refs()` (instance
+   `onboard_params` override > nodespec onboard default; unresolvable
+   placeholders raise `ValueError`) and emits `envFrom.secretRef` with
+   `optional: true` (the pod starts even if the Secret is temporarily absent):
 
    ```yaml
-   # Generated Argo container spec:
+   # Generated Argo container spec (aws_account=aws-braket-creds-ayu):
    container:
      image: quantum-exec-0.1
      envFrom:
        - secretRef:
-           name: aws-braket-creds
+           name: aws-braket-creds-ayu
            optional: true
      env:
        - name: MF_API_URL
@@ -150,6 +153,23 @@ kubectl create secret generic aws-braket-creds \
 See also `infrastructure/k8s/aws-braket-secret.example.yaml` for a declarative
 template.
 
+### Multi-account support
+
+One Secret = one AWS account. The `hardware-execute` node selects the account
+per workflow run via the `aws_account` onboard enum, whose values are Secret
+names resolved through the `${onboard.aws_account}` template:
+
+| `aws_account` value | Secret | AWS account |
+|---------------------|--------|-------------|
+| `aws-braket-creds` (default) | `aws-braket-creds` | 533612071261 (mqe-quantum-dev) |
+| `aws-braket-creds-ayu` | `aws-braket-creds-ayu` | ayu account |
+
+Adding an account is a one-time admin Secret creation plus registering the
+enum value in the nodespec (see `nodes/quantum/AGENTS.md` §"多账号支持").
+Rotation of any account is per-Secret re-apply; no node image rebuild or
+nodespec change is required. The `backend` (sv1 / QPU) and `aws_account`
+choices are orthogonal — any backend runs under any account's credentials.
+
 ### Implementation history
 
 | Milestone | Description |
@@ -157,6 +177,7 @@ template.
 | Schema | `ComputeExecutionConfig.secret_refs: list[str]` added in `nodes/schemas/node.py` |
 | Compiler | `_build_compute_template()` emits `envFrom.secretRef(optional: true)` for each entry in `secret_refs` |
 | Secret | `aws-braket-creds` Secret in `miqroforge-dev` (pre-existing; now consumed by compiler) |
+| Multi-account | `${onboard.<param>}` template support in `_resolve_secret_refs()`; `hardware-execute` gains `aws_account` enum |
 
 ---
 
