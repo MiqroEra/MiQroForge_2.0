@@ -33,7 +33,8 @@ infrastructure/
 
 凭证机制由两个组件配合工作：
 
-1. **K8s Secret**（一次性 admin 操作）：在 `miqroforge-dev` namespace 创建
+1. **K8s Secret**（一次性 admin 操作）：在 workflow namespace（`.env` 的
+   `ARGO_NAMESPACE`，当前实际为 `miqroforge-wxy`）创建
    `aws-braket-creds` Secret，包含 `AWS_ACCESS_KEY_ID`、`AWS_SECRET_ACCESS_KEY`、
    `AWS_DEFAULT_REGION`（大写 key，boto3 标准）。
 

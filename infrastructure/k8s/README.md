@@ -14,7 +14,7 @@ K8s resources for MF2 platform runtime. Two namespaces are used:
 | `rbac.yaml` | SA + Role + Binding | `miqroforge-v2` | Production RBAC for Argo workflows |
 | `rbac-dev.yaml` | SA + Role + Binding | `miqroforge-dev` | Dev RBAC (workflow ServiceAccount; no `secrets` verbs needed — `envFrom.secretRef` is resolved by kubelet) |
 | `workspace.yaml` | PV + PVC | `__MF_NAMESPACE__` | Workspace persistent storage (hostPath) |
-| `aws-braket-secret.example.yaml` | Secret | `miqroforge-dev` | AWS Braket credentials template (placeholder keys). One Secret per AWS account — see `aws-braket-creds-injection.md` §2 multi-account section |
+| `aws-braket-secret.example.yaml` | Secret | `__MF_NAMESPACE__` | AWS Braket credentials template (placeholder keys). One Secret per AWS account — see `aws-braket-creds-injection.md` §2 multi-account section |
 
 ## Docs
 
@@ -37,9 +37,11 @@ MF_NS=miqroforge-dev
 sed "s|__MF_PROJECT_ROOT__|$(pwd)|g; s|__MF_NAMESPACE__|$MF_NS|g" \
     infrastructure/k8s/workspace.yaml | kubectl apply -f -
 
-# AWS Braket credentials (fill real values first)
+# AWS Braket credentials (fill real values first; goes to the workflow namespace)
 cp infrastructure/k8s/aws-braket-secret.example.yaml infrastructure/k8s/aws-braket-secret.yaml
 # Edit aws-braket-secret.yaml with real keys
+MF_NS=$(grep ARGO_NAMESPACE .env | cut -d= -f2)
+sed -i "s|__MF_NAMESPACE__|$MF_NS|g" infrastructure/k8s/aws-braket-secret.yaml
 kubectl apply -f infrastructure/k8s/aws-braket-secret.yaml
 ```
 
@@ -64,8 +66,8 @@ grep ARGO_NAMESPACE .env | cut -d= -f2
 ```
 
 Manifests that use `__MF_NAMESPACE__` must be processed through `sed` (see above).
-Manifests with hardcoded namespace (`miqroforge-dev`) should only be applied if
-`ARGO_NAMESPACE=miqroforge-dev`.
+Manifests with hardcoded namespace (`miqroforge-dev`, e.g. `rbac-dev.yaml`)
+should only be applied if `ARGO_NAMESPACE=miqroforge-dev`.
 
 ---
 

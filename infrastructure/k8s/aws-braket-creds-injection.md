@@ -56,7 +56,7 @@ keys as environment variables. No workspace PVC staging is needed.
 
 ```
 ┌──────────────────────────────────────────────────────────┐
-│  K8s Cluster (namespace: miqroforge-dev)                 │
+│  K8s Cluster (namespace: workflow = ARGO_NAMESPACE)       │
 │                                                          │
 │  ┌─────────────────┐     ┌──────────────────────────┐   │
 │  │  K8s Secret     │     │  N4 Pod (hardware-execute)│   │
@@ -119,7 +119,7 @@ keys as environment variables. No workspace PVC staging is needed.
 
 | Attribute | Requirement |
 |-----------|-------------|
-| Namespace | `miqroforge-dev` (the namespace where hardware-execute pods run) |
+| Namespace | Workflow namespace where hardware-execute pods run (`.env` `ARGO_NAMESPACE`; currently `miqroforge-wxy`) |
 | Name | `aws-braket-creds` (referenced in NodeSpec `secret_refs`) |
 | Key naming | **Uppercase boto3 standard names**: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_DEFAULT_REGION` |
 | Optional keys | `AWS_SESSION_TOKEN` (for STS temporary credentials) |
@@ -142,9 +142,13 @@ not affect `envFrom` behavior.
 
 ### Credential creation (one-time admin operation)
 
+The Secret must be created in the **workflow namespace** — the namespace where
+`hardware-execute` pods run (`.env` `ARGO_NAMESPACE`; currently `miqroforge-wxy`).
+`envFrom.secretRef` is resolved by the kubelet in the pod's own namespace.
+
 ```bash
 kubectl create secret generic aws-braket-creds \
-  --namespace=miqroforge-dev \
+  --namespace="$ARGO_NAMESPACE" \
   --from-literal=AWS_ACCESS_KEY_ID=... \
   --from-literal=AWS_SECRET_ACCESS_KEY=... \
   --from-literal=AWS_DEFAULT_REGION=us-east-1
@@ -162,7 +166,7 @@ names resolved through the `${onboard.aws_account}` template:
 | `aws_account` value | Secret | AWS account |
 |---------------------|--------|-------------|
 | `aws-braket-creds` (default) | `aws-braket-creds` | 533612071261 (mqe-quantum-dev) |
-| `aws-braket-creds-ayu` | `aws-braket-creds-ayu` | ayu account |
+| `aws-braket-creds-ayu` | `aws-braket-creds-ayu` | 565950323203 (IAM user ayu) |
 
 Adding an account is a one-time admin Secret creation plus registering the
 enum value in the nodespec (see `nodes/quantum/AGENTS.md` §"多账号支持").
@@ -176,7 +180,7 @@ choices are orthogonal — any backend runs under any account's credentials.
 |-----------|-------------|
 | Schema | `ComputeExecutionConfig.secret_refs: list[str]` added in `nodes/schemas/node.py` |
 | Compiler | `_build_compute_template()` emits `envFrom.secretRef(optional: true)` for each entry in `secret_refs` |
-| Secret | `aws-braket-creds` Secret in `miqroforge-dev` (pre-existing; now consumed by compiler) |
+| Secret | `aws-braket-creds` / `aws-braket-creds-ayu` Secrets in the workflow namespace (`miqroforge-wxy`; consumed by compiler via `envFrom`) |
 | Multi-account | `${onboard.<param>}` template support in `_resolve_secret_refs()`; `hardware-execute` gains `aws_account` enum |
 
 ---
@@ -239,6 +243,13 @@ Per `wcx_data/hardware_explore/aws_braket_setup.md` (2026-05-27):
 | S3 Bucket | amazon-braket-mqe-533612071261 |
 | Auth file | `~/.aws/credentials` (local dev machine) |
 | SDK | `amazon-braket-sdk`, `amazon-braket-pennylane-plugin` |
+
+Additional account (ayu):
+
+| Field | Value |
+|-------|-------|
+| AWS Account | 565950323203 |
+| IAM User | ayu |
 
 ---
 
