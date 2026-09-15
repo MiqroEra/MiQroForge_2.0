@@ -24,6 +24,23 @@ WORKSPACE_DIR="/mf/workspace"
 
 mkdir -p "$OUTPUT_DIR" "$WORKDIR"
 
+# ── CPU 线程数钉扎 ────────────────────────────────────────────────────────────
+# 读取容器 CFS CPU 配额（cgroup v2），导出 OMP_NUM_THREADS / OPENBLAS_NUM_THREADS。
+#
+# 背景：科学计算库（PySCF/libcint、OpenBLAS 等）默认按进程可见核数开线程池。
+# Argo pod 因 wait sidecar 无资源声明而为 Burstable QoS，进程可见全部宿主机核，
+# 但实际 CFS 配额只有节点声明的 cpu_cores，多线程抢配额造成 oversubscription，
+# 实测 12 原子 cc-pVDZ RHF 从 2.3s 拖慢到 ~3min。
+# 此处按配额钉扎线程数，让资源声明真正生效。
+if [[ -r /sys/fs/cgroup/cpu.max ]]; then
+    read -r _mf_quota _mf_period < /sys/fs/cgroup/cpu.max
+    if [[ "$_mf_quota" =~ ^[0-9]+$ ]] && [[ "$_mf_period" =~ ^[0-9]+$ ]] && (( _mf_quota > 0 )); then
+        _mf_nthreads=$(( (_mf_quota + _mf_period - 1) / _mf_period ))
+        export OMP_NUM_THREADS=${OMP_NUM_THREADS:-$_mf_nthreads}
+        export OPENBLAS_NUM_THREADS=${OPENBLAS_NUM_THREADS:-$_mf_nthreads}
+    fi
+fi
+
 # ── mf_param ──────────────────────────────────────────────────────────────────
 # 读取 /mf/input/<name> 的内容（去除 Windows 换行符）。
 # 文件不存在、无法读取或内容为空时返回 <default>。
