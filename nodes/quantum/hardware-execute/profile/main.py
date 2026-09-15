@@ -3,7 +3,7 @@
 
 Reads an OpenQASM 3.0 circuit (MF_OQ3_FILE) and the onboard parameters
 MF_BACKEND / MF_N_SHOTS from the environment, executes it on the selected
-Braket backend (local simulator, SV1/TN1 cloud simulators, or a named QPU),
+Braket backend (local simulator, SV1 cloud simulator, or a named QPU),
 and writes measurement counts (JSON) plus a task_succeeded gate.
 
 Each QPU backend name maps to a globally-unique device ARN; the AWS region is
@@ -27,7 +27,6 @@ DEVICE_ARNS = {
     "iqm-garnet":      "arn:aws:braket:eu-north-1::device/qpu/iqm/Garnet",
 }
 SV1_ARN = "arn:aws:braket:::device/quantum-simulator/amazon/sv1"
-TN1_ARN = "arn:aws:braket:::device/quantum-simulator/amazon/tn1"
 
 backend = os.environ["MF_BACKEND"]
 n_shots = int(os.environ["MF_N_SHOTS"])
@@ -50,17 +49,16 @@ if backend == "local":
     print("[hardware-execute] Running on LocalSimulator …", file=sys.stderr)
     result = LocalSimulator().run(circuit, shots=n_shots).result()
 
-elif backend in ("sv1", "tn1"):
+elif backend == "sv1":
     from braket.aws import AwsDevice
-    sim_arn = SV1_ARN if backend == "sv1" else TN1_ARN
     os.environ["AWS_DEFAULT_REGION"] = "us-east-1"
-    print(f"[hardware-execute] Submitting to {backend.upper()} ({sim_arn}) …", file=sys.stderr)
-    task = AwsDevice(sim_arn).run(circuit, shots=n_shots)
+    print(f"[hardware-execute] Submitting to SV1 ({SV1_ARN}) …", file=sys.stderr)
+    task = AwsDevice(SV1_ARN).run(circuit, shots=n_shots)
     print(f"[hardware-execute] Task ARN: {task.id}", file=sys.stderr)
     while task.state() not in ("COMPLETED", "FAILED", "CANCELLED"):
         time.sleep(2)
     if task.state() != "COMPLETED":
-        print(f"[hardware-execute][ERROR] {backend.upper()} task {task.state()}", file=sys.stderr)
+        print(f"[hardware-execute][ERROR] SV1 task {task.state()}", file=sys.stderr)
         sys.exit(1)
     result = task.result()
 
