@@ -131,14 +131,15 @@ Runs the pipeline with AWS Braket SV1 cloud simulator.
 ### Prerequisites
 
 1. **AWS Braket credentials** — admin creates the `aws-braket-creds` Secret once
-   in `miqroforge-dev` (see `infrastructure/k8s/aws-braket-creds-injection.md`).
+   in the workflow namespace (`.env` `ARGO_NAMESPACE`, currently
+   `miqroforge-wxy`; see `infrastructure/k8s/aws-braket-creds-injection.md`).
    The compiler reads `secret_refs` from the NodeSpec and injects the Secret as
    `envFrom.secretRef` into the pod. No `.aws/` file staging or workspace PVC
    manipulation is needed.
 
    ```bash
    kubectl create secret generic aws-braket-creds \
-     --namespace=miqroforge-dev \
+     --namespace="$ARGO_NAMESPACE" \
      --from-literal=AWS_ACCESS_KEY_ID=... \
      --from-literal=AWS_SECRET_ACCESS_KEY=... \
      --from-literal=AWS_DEFAULT_REGION=us-east-1
