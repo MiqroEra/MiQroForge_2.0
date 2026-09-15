@@ -24,6 +24,7 @@ Thumbs.db
 # ── Data / Runtime ─────────────────────────────────
 data/
 *.db
+logs/
 
 # ── Claude Code ────────────────────────────────────
 .claude/
