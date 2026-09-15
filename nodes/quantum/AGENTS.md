@@ -203,7 +203,7 @@ execution:
 | `aws_account` 值 | Secret 名 | AWS 账号 |
 |------------------|-----------|----------|
 | `aws-braket-creds`（默认） | `aws-braket-creds` | 主账号 533612071261（IAM user mqe-quantum-dev） |
-| `aws-braket-creds-ayu` | `aws-braket-creds-ayu` | ayu 账号 |
+| `aws-braket-creds-ayu` | `aws-braket-creds-ayu` | ayu 账号 565950323203（IAM user ayu） |
 
 `local` 后端不使用凭证；枚举值由 validator 做值域检查（MF YAML 中的
 `aws_account` 必须在 `allowed_values` 内）。
@@ -239,7 +239,6 @@ Boto3 SDK 按标准约定从 `AWS_ACCESS_KEY_ID`、`AWS_SECRET_ACCESS_KEY`、
 |--------------|------|--------|-------------|
 | `local` | `LocalSimulator`（免费） | — | 否 |
 | `sv1` | Amazon SV1 云模拟器（max 34 qubits） | us-east-1（固定） | 是 |
-| `tn1` | Amazon TN1 张量网络模拟器（max 50 qubits，按任务分钟计费） | us-east-1（固定） | 是 |
 | `rigetti-cepheus` | Rigetti Cepheus-1-108Q | us-west-1 | 是 |
 | `iqm-emerald` | IQM Emerald | eu-north-1 | 是 |
 | `ionq-forte` | IonQ Forte-Enterprise-1 | us-east-1 | 是 |
@@ -247,11 +246,14 @@ Boto3 SDK 按标准约定从 `AWS_ACCESS_KEY_ID`、`AWS_SECRET_ACCESS_KEY`、
 | `iqm-garnet` | IQM Garnet | eu-north-1 | 是 |
 
 `profile/main.py` 根据 backend 枚举决定执行路径：`local` 用 `LocalSimulator`（无凭证）；
-`sv1` / `tn1` 固定 `AWS_DEFAULT_REGION=us-east-1`（tn1 是 sv1 的 50-qubit 张量网络替代，
-代码里走同一分支，按 backend 值选 `SV1_ARN` / `TN1_ARN`）；具名 QPU 从 `main.py` 内的
-`DEVICE_ARNS` 映射查出唯一 ARN，并从 ARN 第 4 个冒号字段提取 region，在创建 Braket
-session 前导出，覆盖凭证 Secret 的默认 region（ARN 格式
-`arn:aws:braket:<region>::device/qpu/<vendor>/<name>`）。
+`sv1` 固定 `AWS_DEFAULT_REGION=us-east-1`；具名 QPU 从 `main.py` 内的 `DEVICE_ARNS`
+映射查出唯一 ARN，并从 ARN 第 4 个冒号字段提取 region，在创建 Braket session 前导出，
+覆盖凭证 Secret 的默认 region（ARN 格式 `arn:aws:braket:<region>::device/qpu/<vendor>/<name>`）。
+
+> **注意（2026-06-23 起）：** AWS 已退役 TN1 张量网络模拟器，Braket 云模拟器只剩
+> SV1（≤34 qubits）和 DM1（≤17 qubits）。>34 qubits 的电路只能上真机 QPU
+> （如 rigetti-cepheus 107Q / iqm-emerald 54Q）或缩小活性空间（ewf-decompose 的
+> `orbital_filter` / `bath_threshold`）让 SV1 装得下。
 
 ### 电路输入 / 测量输出
 
@@ -281,9 +283,13 @@ ARN 可在 AWS Braket 控制台或 `aws braket search-devices` 查到。自由�
 
 ### 一次性创建（首次配置时）
 
+> **Secret 必须建在 workflow namespace**——hardware-execute pod 跑在哪个
+> namespace 就读取哪个 namespace 的 Secret。以 `.env` 的 `ARGO_NAMESPACE` 为准
+> （当前实际为 `miqroforge-wxy`）。
+
 ```bash
 kubectl create secret generic aws-braket-creds \
-  --namespace=miqroforge-dev \
+  --namespace="$ARGO_NAMESPACE" \
   --from-literal=AWS_ACCESS_KEY_ID=... \
   --from-literal=AWS_SECRET_ACCESS_KEY=... \
   --from-literal=AWS_DEFAULT_REGION=us-east-1
@@ -306,9 +312,9 @@ kubectl apply -f infrastructure/k8s/aws-braket-secret.yaml
 在下次 pod 启动时自动拿到新凭证。
 
 ```bash
-kubectl delete secret aws-braket-creds --namespace=miqroforge-dev
+kubectl delete secret aws-braket-creds --namespace="$ARGO_NAMESPACE"
 kubectl create secret generic aws-braket-creds \
-  --namespace=miqroforge-dev \
+  --namespace="$ARGO_NAMESPACE" \
   --from-literal=AWS_ACCESS_KEY_ID=<new-key> \
   --from-literal=AWS_SECRET_ACCESS_KEY=<new-secret> \
   --from-literal=AWS_DEFAULT_REGION=us-east-1
@@ -322,7 +328,7 @@ kubectl create secret generic aws-braket-creds \
 | IAM User | mqe-quantum-dev |
 | Region | us-east-1 |
 | S3 Bucket | amazon-braket-mqe-533612071261 |
-| K8s Namespace | miqroforge-dev |
+| K8s Namespace | workflow namespace（`.env` 的 `ARGO_NAMESPACE`；当前 `miqroforge-wxy`） |
 | Secret Name | aws-braket-creds |
 | Secret Keys | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_DEFAULT_REGION`（大写，boto3 标准） |
 
@@ -334,7 +340,7 @@ kubectl create secret generic aws-braket-creds \
 
    ```bash
    kubectl create secret generic aws-braket-creds-ayu \
-     --namespace=miqroforge-dev \
+     --namespace="$ARGO_NAMESPACE" \
      --from-literal=AWS_ACCESS_KEY_ID=<ayu-key> \
      --from-literal=AWS_SECRET_ACCESS_KEY=<ayu-secret> \
      --from-literal=AWS_DEFAULT_REGION=us-east-1
@@ -348,6 +354,9 @@ kubectl create secret generic aws-braket-creds \
 
 各账号的 S3 结果桶与 region 要求由对应账号自身满足（Braket 结果桶必须存在于
 该账号内）。后端与账号正交：同一账号可跑 sv1 和所有具名 QPU。
+
+ayu 账号信息：AWS Account 565950323203，IAM user `ayu`
+（ARN `arn:aws:iam::565950323203:user/ayu`）。
 
 详见 `infrastructure/k8s/aws-braket-creds-injection.md` §2 和 §5。
 
