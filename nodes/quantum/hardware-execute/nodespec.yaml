@@ -12,9 +12,9 @@ metadata:
   display_name: Hardware Execute
   description: >
     Executes an OpenQASM 3.0 quantum circuit on AWS Braket. Supports
-    local simulation (free, no credentials), SV1 cloud simulation
+    local simulation (free, no credentials), SV1 / TN1 cloud simulation
     (default), and QPU hardware backends. Region for QPU is derived
-    from the device ARN; SV1 uses us-east-1 (same region as the S3
+    from the device ARN; SV1/TN1 use us-east-1 (same region as the S3
     results bucket). Returns measurement outcome counts as a JSON
     object mapping bitstrings to integer shot counts.
   node_type: compute
@@ -86,6 +86,7 @@ onboard_inputs:
     allowed_values:
       - local
       - sv1
+      - tn1
       - rigetti-cepheus
       - iqm-emerald
       - ionq-forte
@@ -93,11 +94,13 @@ onboard_inputs:
       - iqm-garnet
     description: >
       AWS Braket execution backend. 'local' uses the LocalSimulator
-      (free, no AWS credentials needed). 'sv1' uses the Amazon SV1 cloud
-      simulator (requires AWS credentials; us-east-1). The remaining
-      values are physical QPUs, each bound to a unique device ARN whose
-      region is derived automatically from the ARN (requires AWS
-      credentials):
+      (free, no AWS credentials needed; max 25 qubits). 'sv1' uses the
+      Amazon SV1 cloud simulator (requires AWS credentials; us-east-1;
+      max 34 qubits). 'tn1' uses the Amazon TN1 tensor-network simulator
+      (requires AWS credentials; us-east-1; max 50 qubits, billable per
+      task-minute). The remaining values are physical QPUs, each bound
+      to a unique device ARN whose region is derived automatically from
+      the ARN (requires AWS credentials):
       rigetti-cepheus (us-west-1, Rigetti Cepheus-1-108Q),
       iqm-emerald (eu-north-1, IQM Emerald),
       ionq-forte (us-east-1, IonQ Forte-Enterprise-1),
@@ -131,7 +134,7 @@ execution:
 semantic_identity: >
   Executes a quantum circuit on AWS Braket hardware or simulator and
   returns measurement outcome counts. Supports local simulation (free),
-  SV1 cloud simulation, and QPU execution via a single backend enum.
+  SV1 / TN1 cloud simulation, and QPU execution via a single backend enum.
 
 distinguishing_ports:
   - measurement_counts

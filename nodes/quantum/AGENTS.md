@@ -238,7 +238,8 @@ Boto3 SDK 按标准约定从 `AWS_ACCESS_KEY_ID`、`AWS_SECRET_ACCESS_KEY`、
 | `backend` 值 | 目标 | region | 是否需要凭证 |
 |--------------|------|--------|-------------|
 | `local` | `LocalSimulator`（免费） | — | 否 |
-| `sv1` | Amazon SV1 云模拟器 | us-east-1（固定） | 是 |
+| `sv1` | Amazon SV1 云模拟器（max 34 qubits） | us-east-1（固定） | 是 |
+| `tn1` | Amazon TN1 张量网络模拟器（max 50 qubits，按任务分钟计费） | us-east-1（固定） | 是 |
 | `rigetti-cepheus` | Rigetti Cepheus-1-108Q | us-west-1 | 是 |
 | `iqm-emerald` | IQM Emerald | eu-north-1 | 是 |
 | `ionq-forte` | IonQ Forte-Enterprise-1 | us-east-1 | 是 |
@@ -246,9 +247,11 @@ Boto3 SDK 按标准约定从 `AWS_ACCESS_KEY_ID`、`AWS_SECRET_ACCESS_KEY`、
 | `iqm-garnet` | IQM Garnet | eu-north-1 | 是 |
 
 `profile/main.py` 根据 backend 枚举决定执行路径：`local` 用 `LocalSimulator`（无凭证）；
-`sv1` 固定 `AWS_DEFAULT_REGION=us-east-1`；具名 QPU 从 `main.py` 内的 `DEVICE_ARNS`
-映射查出唯一 ARN，并从 ARN 第 4 个冒号字段提取 region，在创建 Braket session 前导出，
-覆盖凭证 Secret 的默认 region（ARN 格式 `arn:aws:braket:<region>::device/qpu/<vendor>/<name>`）。
+`sv1` / `tn1` 固定 `AWS_DEFAULT_REGION=us-east-1`（tn1 是 sv1 的 50-qubit 张量网络替代，
+代码里走同一分支，按 backend 值选 `SV1_ARN` / `TN1_ARN`）；具名 QPU 从 `main.py` 内的
+`DEVICE_ARNS` 映射查出唯一 ARN，并从 ARN 第 4 个冒号字段提取 region，在创建 Braket
+session 前导出，覆盖凭证 Secret 的默认 region（ARN 格式
+`arn:aws:braket:<region>::device/qpu/<vendor>/<name>`）。
 
 ### 电路输入 / 测量输出
 
