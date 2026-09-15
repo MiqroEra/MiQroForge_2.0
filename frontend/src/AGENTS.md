@@ -32,3 +32,4 @@ src/
 - **Styling**: Tailwind CSS v3 with `mf-` design tokens (dark mode via class)
 - **TypeScript**: Strict — noUnusedLocals, verbatimModuleSyntax enforced
 - **Route isolation**: Project switch saves canvas + clears localStorage state
+- **Node spec snapshots**: Canvas nodes embed a nodespec snapshot (`onboard_inputs` enum_values / ports / description). It goes stale when `nodespec.yaml` changes. `src/lib/node-spec-refresh.ts` re-syncs snapshots from `GET /api/v1/nodes/{name}` whenever nodes load into the workflow store (`loadFromNodes`) and after reindex; user param values are preserved. When changing a nodespec, remember old canvases refresh on load — no manual canvas edits needed.

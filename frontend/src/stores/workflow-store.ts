@@ -10,6 +10,7 @@ import type {
 } from '@xyflow/react'
 import type { StreamPort, OnBoardParam, OnBoardOutput, ResourceSpec } from '../types/nodespec'
 import type { WorkflowMeta, ValidationResult } from '../types/workflow'
+import { fetchNodeDetailCached, mergeLatestSpec } from '../lib/node-spec-refresh'
 
 // ─── MFNode data shape ────────────────────────────────────────────────────────
 
@@ -157,6 +158,27 @@ function _debouncedBackendSync() {
       useProjectStore.getState().saveCanvas().catch(() => {})
     })
   }, 2000)
+}
+
+// ─── nodespec 快照刷新 ────────────────────────────────────────────────────────
+
+export async function refreshFormalNodeSpecs(nodes: RFNode<MFNodeData>[]) {
+  const targets = nodes.filter((n) => {
+    const d = n.data as MFNodeData
+    return d.name && !d.ephemeral && !d.pending
+  })
+  if (targets.length === 0) return
+
+  await Promise.all(
+    targets.map(async (n) => {
+      const detail = await fetchNodeDetailCached((n.data as MFNodeData).name)
+      if (!detail) return
+      const store = useWorkflowStore.getState()
+      const current = store.nodes.find((x) => x.id === n.id)
+      if (!current) return
+      store.updateNodeData(n.id, mergeLatestSpec(current.data as MFNodeData, detail))
+    }),
+  )
 }
 
 // ── Canvas 加载时的数据规范化 ──────────────────────────────────────────────────
@@ -393,6 +415,9 @@ export const useWorkflowStore = create<WorkflowState>()(
         })
         _debouncedBackendSync()
         set({ nodes: normalized, edges, nodeHistory: {}, validationResult: null })
+        // 异步刷新正式节点的 nodespec 快照（enum_values / 端口 / 描述），
+        // 保留用户已填写的参数值。见 lib/node-spec-refresh.ts。
+        void refreshFormalNodeSpecs(normalized)
       },
 
       clearCanvas: () => {

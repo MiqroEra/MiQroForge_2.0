@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { nodesApi } from '../api/nodes-api'
 import { useNodeCatalogStore } from '../stores/node-catalog-store'
+import { useWorkflowStore, refreshFormalNodeSpecs } from '../stores/workflow-store'
+import { clearNodeDetailCache } from '../lib/node-spec-refresh'
 
 export function useNodeCatalog() {
   const { setNodes, setLoading, setError } = useNodeCatalogStore()
@@ -17,7 +19,10 @@ export function useNodeCatalog() {
   const reindexMutation = useMutation({
     mutationFn: () => nodesApi.reindex(),
     onSuccess: () => {
+      clearNodeDetailCache()
       query.refetch()
+      const { nodes } = useWorkflowStore.getState()
+      if (nodes.length > 0) void refreshFormalNodeSpecs(nodes)
     },
     onSettled: () => {
       setIsReindexing(false)
