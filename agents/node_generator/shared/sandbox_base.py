@@ -12,9 +12,10 @@ import os
 import shutil
 import subprocess
 import uuid
-from datetime import datetime
 from pathlib import Path
 from typing import Any
+
+from agents.common.timeutil import now_cn, now_cn_iso
 
 # 支持的图片扩展名
 _IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".svg", ".pdf", ".gif", ".webp"}
@@ -91,7 +92,7 @@ def create_sandbox_dir(
         raise ValueError("sandbox requires both project_id and run_name")
     if not projects_dir:
         raise ValueError("sandbox requires projects_dir (user-scoped projects root)")
-    run_id = datetime.now().strftime("%Y%m%d-%H%M%S") + "-" + uuid.uuid4().hex[:6]
+    run_id = now_cn().strftime("%Y%m%d-%H%M%S") + "-" + uuid.uuid4().hex[:6]
     sandbox_dir = _get_sandbox_base_dir(project_id, run_name, projects_dir) / f"sandbox_{run_id}"
     (sandbox_dir / "input").mkdir(parents=True)
     (sandbox_dir / "output").mkdir(parents=True)
@@ -142,7 +143,7 @@ def save_pip_history(
     history_path = userdata_root / "pip_history.jsonl"
     history_path.parent.mkdir(parents=True, exist_ok=True)
 
-    timestamp = datetime.now().isoformat()
+    timestamp = now_cn_iso()
     desc_short = description[:100]
 
     with open(history_path, "a", encoding="utf-8") as f:

@@ -29,9 +29,10 @@ from __future__ import annotations
 
 import contextvars
 import json
-from datetime import datetime
 from pathlib import Path
 from typing import Any
+
+from agents.common.timeutil import now_cn, now_cn_iso
 
 
 # ─── 线程安全的上下文变量 ─────────────────────────────────────────────────────
@@ -49,7 +50,7 @@ class AgentSessionLog:
     def __init__(self, agent_type: str, request_data: dict[str, Any]):
         self.agent_type = agent_type
         self.request_data = request_data
-        self.started_at = datetime.now().isoformat()
+        self.started_at = now_cn_iso()
         self.steps: list[dict[str, Any]] = []
 
     def log_llm_call(
@@ -90,7 +91,7 @@ class AgentSessionLog:
 
         entry = {
             "step": step_name,
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": now_cn_iso(),
             "iteration": iteration,
             "messages_to_llm": serialized_messages,
             "llm_response": response_content,
@@ -108,7 +109,7 @@ class AgentSessionLog:
         """记录非 LLM 事件（如程序化检查结果、RAG 检索等）。"""
         self.steps.append({
             "step": step_name,
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": now_cn_iso(),
             **data,
         })
 
@@ -117,7 +118,7 @@ class AgentSessionLog:
         return {
             "agent_type": self.agent_type,
             "started_at": self.started_at,
-            "finished_at": datetime.now().isoformat(),
+            "finished_at": now_cn_iso(),
             "request": self.request_data,
             "steps": self.steps,
             "total_llm_calls": sum(
@@ -166,7 +167,7 @@ def save_agent_log(
     -------
     Path: 保存的文件路径
     """
-    now = datetime.now()
+    now = now_cn()
     date_str = now.strftime("%Y-%m-%d")
     time_str = now.strftime("%H-%M-%S")
     agent_type = log_data.get("agent_type", "unknown")
@@ -208,7 +209,7 @@ def save_conversation(
     -------
     Path: 保存的文件路径
     """
-    now = datetime.now()
+    now = now_cn()
     date_str = now.strftime("%Y-%m-%d")
 
     session_dir = userdata_root / "agent_sessions" / date_str / session_id
@@ -329,7 +330,7 @@ def save_agent_log_text(
     Returns:
         Path: 保存的文件路径
     """
-    now = datetime.now()
+    now = now_cn()
     time_str = now.strftime("%H-%M-%S")
     agent_type = log_data.get("agent_type", "unknown")
 

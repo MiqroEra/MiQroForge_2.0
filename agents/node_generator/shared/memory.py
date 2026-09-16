@@ -14,9 +14,10 @@ from __future__ import annotations
 
 import json
 import uuid
-from datetime import datetime
 from pathlib import Path
 from typing import Any
+
+from agents.common.timeutil import now_cn_iso
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -78,7 +79,7 @@ class EmbeddingMemoryStore:
             return
 
         entry_id = str(uuid.uuid4())
-        entry["timestamp"] = datetime.now().isoformat()
+        entry["timestamp"] = now_cn_iso()
 
         # 将 lessons 序列化（ChromaDB metadata 不支持 list）
         meta = {k: v for k, v in entry.items()}

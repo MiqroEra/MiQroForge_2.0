@@ -11,7 +11,6 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -19,6 +18,7 @@ from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, Tool
 
 from agents.llm_config import LLMConfig
 from agents.common.prompt_loader import load_prompt
+from agents.common.timeutil import now_cn, now_cn_iso
 
 # 搜索阶段轮次
 _SEARCH_ROUNDS = 3
@@ -39,7 +39,7 @@ def run_explore_agent(
 
     这确保永远不会把 raw tool output 直接返回给父 Agent。
     """
-    started_at = datetime.now().isoformat()
+    started_at = now_cn_iso()
     log_steps: list[dict[str, Any]] = []
 
     # ── 构建工具 ──
@@ -80,7 +80,7 @@ def run_explore_agent(
         try:
             response = llm_with_tools.invoke(messages)
         except Exception as e:
-            log_steps.append({"round": round_idx, "timestamp": datetime.now().isoformat(), "error": str(e)})
+            log_steps.append({"round": round_idx, "timestamp": now_cn_iso(), "error": str(e)})
             return f"[Explore agent error in search round {round_idx}]: {e}"
 
         messages.append(response)
@@ -94,7 +94,7 @@ def run_explore_agent(
         round_log: dict[str, Any] = {
             "round": round_idx,
             "stage": "search",
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": now_cn_iso(),
             "tool_calls": tc_names,
             "tools": [],
         }
@@ -148,7 +148,7 @@ def run_explore_agent(
         # 不用 bind_tools —— 纯文本回复
         final_response = llm.invoke(messages)
     except Exception as e:
-        log_steps.append({"round": "synthesize", "timestamp": datetime.now().isoformat(), "error": str(e)})
+        log_steps.append({"round": "synthesize", "timestamp": now_cn_iso(), "error": str(e)})
         return f"[Explore agent error during synthesis]: {e}"
 
     summary = _extract_text(final_response.content)
@@ -156,7 +156,7 @@ def run_explore_agent(
     log_steps.append({
         "round": "synthesize",
         "stage": "synthesis",
-        "timestamp": datetime.now().isoformat(),
+        "timestamp": now_cn_iso(),
         "summary_preview": summary[:300],
     })
 
@@ -165,7 +165,7 @@ def run_explore_agent(
         summary = summary[:4000] + "\n\n[... truncated ...]"
 
     # ── 保存 session log ──
-    finished_at = datetime.now().isoformat()
+    finished_at = now_cn_iso()
     _save_log(
         project_id=project_id,
         projects_dir=projects_dir,
@@ -210,7 +210,7 @@ def _save_log(
         log_dir = Path(projects_dir) / project_id / "conversations" / "explore"
         log_dir.mkdir(parents=True, exist_ok=True)
 
-        now = datetime.now()
+        now = now_cn()
         time_str = now.strftime("%H-%M-%S")
         base = f"explore_{time_str}"
 
