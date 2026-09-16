@@ -4,6 +4,7 @@ import { useSavedWorkflowsStore, snapshotToRF } from '../../stores/saved-workflo
 import { useWorkflowStore } from '../../stores/workflow-store'
 import { useUIStore } from '../../stores/ui-store'
 import { useRunOverlayStore } from '../../stores/run-overlay-store'
+import { formatDateTime } from '../../lib/date-utils'
 
 // ─── WorkflowsSidebar ─────────────────────────────────────────────────────────
 
@@ -71,7 +72,7 @@ export function WorkflowsSidebar() {
                     {wf.name}
                   </div>
                   <div className="text-[9px] text-mf-text-muted font-mono">
-                    {wf.savedAt.slice(0, 16).replace('T', ' ')}
+                    {formatDateTime(wf.savedAt)}
                   </div>
                 </div>
                 <button

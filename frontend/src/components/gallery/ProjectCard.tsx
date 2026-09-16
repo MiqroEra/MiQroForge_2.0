@@ -3,6 +3,7 @@ import { Copy, Trash2, MoreVertical, Pencil, FileText, GripVertical } from 'luci
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import type { ProjectMeta } from '../../api/projects-api'
+import { formatDate } from '../../lib/date-utils'
 
 // ─── Common emoji sets ──────────────────────────────────────────────────────────
 
@@ -70,7 +71,7 @@ function timeAgo(iso: string): string {
   if (hrs < 24) return `${hrs}h ago`
   const days = Math.floor(hrs / 24)
   if (days < 30) return `${days}d ago`
-  return new Date(iso).toLocaleDateString()
+  return formatDate(iso)
 }
 
 export function ProjectCard({

@@ -7,6 +7,7 @@ import { Bot, User, AlertCircle, ChevronDown, ChevronRight, Copy, Check } from '
 import type { ChatMessage } from '../../types/semantic'
 import { PlanApprovalCard } from './PlanApprovalCard'
 import type { SemanticWorkflow } from '../../types/semantic'
+import { formatClock } from '../../lib/date-utils'
 
 // ─── Collapsible YAML result card ─────────────────────────────────────────────
 
@@ -149,7 +150,7 @@ export const ChatMessageBubble = memo(({
 
         {/* Timestamp */}
         <div className={`text-[9px] text-mf-text-muted ${isUser ? 'text-right' : 'text-left'}`}>
-          {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          {formatClock(message.timestamp)}
         </div>
       </div>
     </div>

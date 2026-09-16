@@ -9,6 +9,7 @@ import { useRunOverlayStore } from '../../stores/run-overlay-store'
 import type { RunSummaryResponse, RunPhase, RunDetailResponse } from '../../types/index-types'
 import { RefreshCw, ChevronRight, Terminal, RotateCcw, Trash2, AlertTriangle, Info, Square } from 'lucide-react'
 import { phaseBadgeClass, formatDurationSeconds } from '../../lib/phase-utils'
+import { formatDateTime } from '../../lib/date-utils'
 
 // ─── Helpers for RunDetail ────────────────────────────────────────────────────
 
@@ -310,7 +311,7 @@ function RunList({
               <div className="min-w-0">
                 <div className="text-xs font-mono text-mf-text-secondary truncate">{run.name}</div>
                 <div className="text-[10px] text-mf-text-muted mt-0.5">
-                  {run.started_at?.slice(0, 16).replace('T', ' ')}
+                  {formatDateTime(run.started_at)}
                   {!isLocalOnly && ` · ${formatDuration(run.duration_seconds)}`}
                 </div>
               </div>
@@ -577,7 +578,7 @@ export function RunsPanel() {
                 </div>
 
                 <div className="text-[10px] text-mf-text-muted">
-                  {runSnapshots[selectedRun].savedAt.slice(0, 16).replace('T', ' ')}
+                  {formatDateTime(runSnapshots[selectedRun].savedAt)}
                 </div>
 
                 {runSnapshots[selectedRun].error && (
