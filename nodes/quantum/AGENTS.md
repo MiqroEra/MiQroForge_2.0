@@ -204,6 +204,7 @@ execution:
 |------------------|-----------|----------|
 | `aws-braket-creds`（默认） | `aws-braket-creds` | 主账号 533612071261（IAM user mqe-quantum-dev） |
 | `aws-braket-creds-ayu` | `aws-braket-creds-ayu` | ayu 账号 565950323203（IAM user ayu） |
+| `aws-braket-creds-fhj` | `aws-braket-creds-fhj` | ayu 账号团队成员凭证 565950323203（IAM user fhj） |
 
 `local` 后端不使用凭证；枚举值由 validator 做值域检查（MF YAML 中的
 `aws_account` 必须在 `allowed_values` 内）。

@@ -167,6 +167,7 @@ names resolved through the `${onboard.aws_account}` template:
 |---------------------|--------|-------------|
 | `aws-braket-creds` (default) | `aws-braket-creds` | 533612071261 (mqe-quantum-dev) |
 | `aws-braket-creds-ayu` | `aws-braket-creds-ayu` | 565950323203 (IAM user ayu) |
+| `aws-braket-creds-fhj` | `aws-braket-creds-fhj` | 565950323203 (IAM user fhj, team member) |
 
 Adding an account is a one-time admin Secret creation plus registering the
 enum value in the nodespec (see `nodes/quantum/AGENTS.md` §"多账号支持").

@@ -1000,5 +1000,6 @@ distinguishing_ports:
         assert aws_account.allowed_values == [
             "aws-braket-creds",
             "aws-braket-creds-ayu",
+            "aws-braket-creds-fhj",
         ]
         assert aws_account.default == "aws-braket-creds"

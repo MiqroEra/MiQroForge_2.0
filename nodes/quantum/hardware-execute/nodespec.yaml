@@ -74,10 +74,12 @@ onboard_inputs:
     allowed_values:
       - aws-braket-creds
       - aws-braket-creds-ayu
+      - aws-braket-creds-fhj
     description: >
       AWS 凭证对应的 K8s Secret 名（编译时解析为容器 envFrom 注入）。
       aws-braket-creds = 主账号（533612071261 / mqe-quantum-dev）；
-      aws-braket-creds-ayu = ayu 账号（565950323203 / IAM user ayu）。local 后端不使用凭证。
+      aws-braket-creds-ayu = ayu 账号（565950323203 / IAM user ayu）；
+      aws-braket-creds-fhj = ayu 账号团队成员凭证（565950323203 / IAM user fhj）。local 后端不使用凭证。
 
   - name: backend
     display_name: Execution Backend
