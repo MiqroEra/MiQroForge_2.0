@@ -17,6 +17,8 @@ from typing import TYPE_CHECKING, Any, Optional
 if TYPE_CHECKING:
     from api.user_paths import UserPaths
 
+from agents.common.timeutil import now_cn, now_cn_iso
+
 from api.config import get_settings
 from api.models.projects import (
     CanvasState,
@@ -28,7 +30,7 @@ from api.models.projects import (
 
 
 def _now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return now_cn_iso()
 
 
 def _new_project_id() -> str:
@@ -46,13 +48,13 @@ def _project_files_dir(pid: str) -> Path:
 
 
 def _new_conversation_id() -> str:
-    date_part = datetime.now(timezone.utc).strftime("%Y%m%d")
+    date_part = now_cn().strftime("%Y%m%d")
     rand = secrets.token_hex(3)
     return f"conv_{date_part}-{rand}"
 
 
 def _new_snapshot_id() -> str:
-    ts = int(datetime.now(timezone.utc).timestamp())
+    ts = int(now_cn().timestamp())
     rand = secrets.token_hex(3)
     return f"snap_{ts}-{rand}"
 
@@ -135,7 +137,10 @@ class ProjectService:
     @staticmethod
     def _parse_ts(iso: str) -> float:
         try:
-            return datetime.fromisoformat(iso).timestamp()
+            dt = datetime.fromisoformat(iso)
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=timezone.utc)
+            return dt.timestamp()
         except (ValueError, TypeError):
             return 0.0
 

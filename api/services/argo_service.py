@@ -9,6 +9,8 @@ from pathlib import Path
 
 import yaml
 
+from agents.common.timeutil import parse_argo_ts
+
 
 class ArgoService:
     """Argo 工作流提交和查询服务。"""
@@ -182,7 +184,7 @@ class ArgoService:
             "namespace": meta.get("namespace", ""),
             "uid": meta.get("uid", ""),
             "phase": status.get("phase", "Unknown"),
-            "started_at": status.get("startedAt"),
-            "finished_at": status.get("finishedAt"),
+            "started_at": parse_argo_ts(status.get("startedAt")),
+            "finished_at": parse_argo_ts(status.get("finishedAt")),
             "labels": meta.get("labels", {}),
         }

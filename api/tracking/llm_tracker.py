@@ -16,9 +16,10 @@ from __future__ import annotations
 import json
 import time
 import uuid
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+
+from agents.common.timeutil import now_cn_iso
 
 from langchain_core.callbacks.base import BaseCallbackHandler
 from langchain_core.outputs import LLMResult
@@ -82,7 +83,7 @@ class TokenUsageTracker(BaseCallbackHandler):
         )
         record = {
             **{k: v for k, v in self._current.items() if k != "started_at"},
-            "finished_at": datetime.now(timezone.utc).isoformat(),
+            "finished_at": now_cn_iso(),
             "duration_seconds": round(elapsed, 3),
             "input_tokens": token_usage.get("input_tokens", 0),
             "output_tokens": token_usage.get("output_tokens", 0),

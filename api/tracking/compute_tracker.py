@@ -10,9 +10,11 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 from typing import Any
+
+from agents.common.timeutil import now_cn_iso
 
 
 class ComputeUsageTracker:
@@ -103,7 +105,7 @@ class ComputeUsageTracker:
                     "gpu_hours": gpu_hours,
                     "phase": phase,
                     "currency": self._currency,
-                    "recorded_at": datetime.now(timezone.utc).isoformat(),
+                    "recorded_at": now_cn_iso(),
                 }
                 f.write(json.dumps(record, ensure_ascii=False) + "\n")
 
