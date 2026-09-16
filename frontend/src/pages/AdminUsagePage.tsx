@@ -31,6 +31,7 @@ interface AdminUsageSummary {
   total_gpu_hours: number
   total_tokens: number
   total_estimated_cost: number
+  currency: string
   users: AdminUserUsage[]
 }
 
