@@ -6,8 +6,11 @@
 # =============================================================================
 FROM docker.1ms.run/library/python:3.11-slim
 
+# 时区：北京（UTC+8）— 在安装 tzdata 前声明，debconf 据此配置本地时区
+ENV TZ=Asia/Shanghai
 # 系统依赖：matplotlib 需要 libgomp（OpenMP）和字体
 RUN apt-get update && apt-get install -y --no-install-recommends \
+        tzdata \
         libgomp1 \
         fonts-dejavu-core \
     && rm -rf /var/lib/apt/lists/*

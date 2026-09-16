@@ -43,10 +43,13 @@ FROM ubuntu:22.04
 
 # ── 运行时依赖（不含编译器/开发头文件）────────────────────────────────────
 ENV DEBIAN_FRONTEND=noninteractive
+# 时区：北京（UTC+8）— 在安装 tzdata 前声明，debconf 据此配置本地时区
+ENV TZ=Asia/Shanghai
 # 国内镜像源加速
 RUN sed -i 's|http://archive.ubuntu.com|http://mirrors.aliyun.com|g' /etc/apt/sources.list \
     && sed -i 's|http://security.ubuntu.com|http://mirrors.aliyun.com|g' /etc/apt/sources.list
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    tzdata \
     # OpenMPI 运行时（shared_openmpi 版 ORCA 需要）
     libopenmpi3 \
     openmpi-bin \

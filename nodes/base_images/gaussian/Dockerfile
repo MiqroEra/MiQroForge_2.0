@@ -32,11 +32,13 @@ RUN mkdir -p /opt/gaussian \
 FROM ubuntu:22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
+# 时区：北京（UTC+8）— 在安装 tzdata 前声明，debconf 据此配置本地时区
+ENV TZ=Asia/Shanghai
 # 国内镜像源加速
 RUN sed -i 's|http://archive.ubuntu.com|http://mirrors.aliyun.com|g' /etc/apt/sources.list \
     && sed -i 's|http://security.ubuntu.com|http://mirrors.aliyun.com|g' /etc/apt/sources.list
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3 python3-pip bc libgomp1 \
+    python3 python3-pip bc libgomp1 tzdata \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /opt/gaussian /opt/gaussian

@@ -14,8 +14,11 @@ FROM docker.1ms.run/library/python:3.11-slim
 
 # 国内镜像源加速（DEB822 格式）
 RUN sed -i 's|URIs: http://deb.debian.org|URIs: http://mirrors.aliyun.com|g' /etc/apt/sources.list.d/debian.sources
+# 时区：北京（UTC+8）— 在安装 tzdata 前声明，debconf 据此配置本地时区
+ENV TZ=Asia/Shanghai
 # 系统依赖：BLAS/LAPACK 运行时 + 编译器临时依赖（Vayesta 编译需要）
 RUN apt-get update && apt-get install -y --no-install-recommends \
+        tzdata \
         libgomp1 \
         liblapack3 \
         libblas3 \

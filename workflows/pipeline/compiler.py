@@ -49,6 +49,10 @@ from .models import MFWorkflow, MFNodeInstance
 # 临时节点 Python 镜像（与 lightweight 节点一致）
 _EPHEMERAL_PYTHON_VERSION = "3.11"
 
+# Pod 统一时区：北京（UTC+8）。编译器在每个 template 的 env 首位注入 TZ，
+# 保证 pod 本地时间为北京时区（配合基础镜像内置 tzdata 生效）。
+_MF_TZ_ENV = {"name": "TZ", "value": "Asia/Shanghai"}
+
 def _get_deploy_namespace() -> str:
     """读取 ARGO_NAMESPACE 作为部署命名空间。
 
@@ -1532,12 +1536,11 @@ def _build_compute_template(
             "nvidia.com/gpu"
         ] = str(gpu_count)
 
-    # 环境变量
-    if exec_cfg.environment:
-        template["container"]["env"] = [
-            {"name": k, "value": v}
-            for k, v in exec_cfg.environment.items()
-        ]
+    # 环境变量（TZ 始终置首位，保证 pod 本地时间为北京时区）
+    template["container"]["env"] = [_MF_TZ_ENV] + [
+        {"name": k, "value": v}
+        for k, v in exec_cfg.environment.items()
+    ]
 
     # K8s Secret 注入（全局凭证，如 AWS Braket）。支持 ${onboard.<param>} 模板，
     # 编译时按实例 onboard_params（回退 nodespec default）解析为实际 Secret 名。
@@ -1612,6 +1615,7 @@ def _build_lightweight_script_template(
     # ── 环境变量注入：所有 input 参数 + MF 路径约定 ──────────────────────────
     # 脚本通过 os.environ.get(param_name) 读取参数，Argo 在容器启动前解析模板表达式
     env_vars: list[dict[str, str]] = [
+        _MF_TZ_ENV,
         {"name": "MF_OUTPUT_DIR", "value": "/mf/output"},
         {"name": "MF_WORKSPACE_DIR", "value": "/mf/workspace"},
     ]
@@ -1687,6 +1691,7 @@ def _build_ephemeral_template(
     mf_api_url = _os.environ.get("MF_POD_API_URL") or _os.environ.get("MF_API_URL", "http://localhost:8200")
     mf_internal_token = _os.environ.get("MF_INTERNAL_TOKEN", "")
     env_vars: list[dict[str, str]] = [
+        _MF_TZ_ENV,
         {"name": "MF_OUTPUT_DIR", "value": "/mf/output"},
         {"name": "MF_WORKSPACE_DIR", "value": "/mf/workspace"},
         {"name": "MF_API_URL", "value": mf_api_url},
@@ -1789,6 +1794,7 @@ def _build_prefab_template(
     mf_api_url = _os.environ.get("MF_POD_API_URL") or _os.environ.get("MF_API_URL", "http://localhost:8200")
     mf_internal_token = _os.environ.get("MF_INTERNAL_TOKEN", "")
     env_vars: list[dict[str, str]] = [
+        _MF_TZ_ENV,
         {"name": "MF_OUTPUT_DIR", "value": "/mf/output"},
         {"name": "MF_WORKSPACE_DIR", "value": "/mf/workspace"},
         {"name": "MF_API_URL", "value": mf_api_url},
@@ -1965,12 +1971,11 @@ def _build_lightweight_profile_template(
         ],
     }
 
-    # 额外环境变量（如有）
-    if exec_cfg.environment:
-        template["container"]["env"] = [
-            {"name": k, "value": v}
-            for k, v in exec_cfg.environment.items()
-        ]
+    # 环境变量（TZ 始终置首位，保证 pod 本地时间为北京时区）
+    template["container"]["env"] = [_MF_TZ_ENV] + [
+        {"name": k, "value": v}
+        for k, v in exec_cfg.environment.items()
+    ]
 
     return template
 

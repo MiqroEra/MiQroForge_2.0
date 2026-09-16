@@ -10,7 +10,7 @@
 # 提供：
 #   标准目录变量  INPUT_DIR / OUTPUT_DIR / WORKDIR / PROFILE_DIR
 #   mf_param()    读取 on-board 参数，文件不存在或为空时返回默认值
-#   mf_banner()   打印节点启动横幅（节点名 + 描述 + UTC 时间戳）
+#   mf_banner()   打印节点启动横幅（节点名 + 描述 + 北京时区时间戳）
 #   mf_write_xyz() 将 XYZ 几何字符串写入 workdir/input.xyz，
 #                  自动适配标准 XYZ 格式与纯原子行格式
 # =============================================================================
@@ -63,7 +63,8 @@ mf_param() {
 }
 
 # ── mf_banner ─────────────────────────────────────────────────────────────────
-# 打印节点启动横幅，包含节点 ID、任务描述、UTC 时间戳。
+# 打印节点启动横幅，包含节点 ID、任务描述、本地时间戳。
+# 时区取自 TZ 环境变量（pod 由编译器注入 TZ=Asia/Shanghai），默认北京时区。
 # 建议在读取参数之前调用，作为 run.sh 的第一个输出。
 #
 # 用法：mf_banner <node-id> [description]
@@ -74,7 +75,7 @@ mf_banner() {
     local node_id="$1"
     local desc="${2:-}"
     local ts
-    ts=$(date -u '+%Y-%m-%dT%H:%M:%SZ' 2>/dev/null || echo "N/A")
+    ts=$(TZ="${TZ:-Asia/Shanghai}" date '+%Y-%m-%dT%H:%M:%S%z' 2>/dev/null || echo "N/A")
     local line="================================================================"
     echo ""
     echo "  ${line}"

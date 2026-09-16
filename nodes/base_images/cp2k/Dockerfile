@@ -8,9 +8,11 @@
 # =============================================================================
 FROM docker.1ms.run/cp2k/cp2k:2025.2_openmpi_x86_64_psmp
 
+# 时区：北京（UTC+8）— 在安装 tzdata 前声明，debconf 据此配置本地时区
+ENV TZ=Asia/Shanghai
 # 安装 Python + numpy（官方镜像可能不含 Python）
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3 python3-pip bc \
+    python3 python3-pip bc tzdata \
     && pip3 install --no-cache-dir --break-system-packages numpy \
     && rm -rf /var/lib/apt/lists/*
 

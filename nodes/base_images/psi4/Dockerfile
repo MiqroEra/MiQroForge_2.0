@@ -10,7 +10,12 @@ FROM docker.1ms.run/psi4/psi4:1.10
 
 # 官方镜像以 mambauser 运行，需 root 权限创建 /mf 目录
 USER root
-RUN mkdir -p /mf/profile /mf/input /mf/output /mf/workdir \
+# 时区：北京（UTC+8）— 官方镜像基于 Ubuntu 的 micromamba 镜像，apt 可用；
+# 在安装 tzdata 前声明 TZ，debconf 据此配置本地时区
+ENV TZ=Asia/Shanghai
+RUN apt-get update && apt-get install -y --no-install-recommends tzdata \
+    && rm -rf /var/lib/apt/lists/* \
+    && mkdir -p /mf/profile /mf/input /mf/output /mf/workdir \
     && chown -R mambauser:mambauser /mf
 USER mambauser
 

@@ -12,8 +12,11 @@ FROM docker.1ms.run/library/python:3.11-slim
 # 国内镜像源加速
 RUN sed -i 's|http://deb.debian.org|http://mirrors.aliyun.com|g' /etc/apt/sources.list \
     && sed -i 's|http://security.debian.org|http://mirrors.aliyun.com|g' /etc/apt/sources.list.d/debian.sources 2>/dev/null || true
+# 时区：北京（UTC+8）— 在安装 tzdata 前声明，debconf 据此配置本地时区
+ENV TZ=Asia/Shanghai
 # 系统依赖：matplotlib 需要字体（与 ephemeral-py 一致）
 RUN apt-get update && apt-get install -y --no-install-recommends \
+        tzdata \
         libgomp1 \
         fonts-dejavu-core \
     && rm -rf /var/lib/apt/lists/*

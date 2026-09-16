@@ -17,10 +17,15 @@ import pytest
 import yaml
 
 from nodes.schemas import NodeSpec
+from nodes.schemas.base_image import BaseImageRegistry
 from workflows.pipeline.models import MFConnection, MFNodeInstance, MFWorkflow
 from workflows.pipeline.loader import load_workflow, resolve_nodespec
 from workflows.pipeline.validator import validate_workflow, ValidationReport
 from workflows.pipeline.compiler import (
+    _build_ephemeral_template,
+    _build_lightweight_profile_template,
+    _build_lightweight_script_template,
+    _build_prefab_template,
     compile_to_argo,
     compile_to_yaml_str,
     generate_configmaps,
@@ -644,6 +649,81 @@ class TestCompiler:
         assert any(m["mountPath"] == "/mf/profile" for m in mounts)
         volumes = geo_opt_template["volumes"]
         assert any(v["name"] == "profile" for v in volumes)
+
+    def test_tz_env_injected_in_all_template_kinds(self, validated_h2o):
+        """所有 template 类型均在 env 首位注入 TZ=Asia/Shanghai（北京时区）。
+
+        覆盖 5 种模板：compute、lightweight script、lightweight profile、
+        ephemeral、prefab。
+        """
+        tz = {"name": "TZ", "value": "Asia/Shanghai"}
+
+        # 1. compute 节点（经 H2O 工作流编译，container 模板）
+        wf, report = validated_h2o
+        argo = compile_to_argo(wf, report.resolved_nodes, project_root=PROJECT_ROOT)
+        for tmpl in argo["spec"]["templates"]:
+            if "container" in tmpl:
+                assert tmpl["container"]["env"][0] == tz
+
+        empty_registry = BaseImageRegistry(images=[])
+        lightweight_meta = {
+            "name": "tz-lightweight",
+            "version": "1.0.0",
+            "description": "TZ env injection test node.",
+            "node_type": "lightweight",
+            "author": "Test Suite",
+        }
+
+        # 2. lightweight script 模板（inline_script 模式）
+        ls_spec = NodeSpec.model_validate({
+            "metadata": lightweight_meta,
+            "resources": {"type": "lightweight"},
+            "execution": {"type": "lightweight", "inline_script": "print('hi')"},
+        })
+        ls = _build_lightweight_script_template(
+            template_name="mf-ls",
+            spec=ls_spec,
+            registry=empty_registry,
+            input_params=[],
+            output_params=[],
+        )
+        assert ls["script"]["env"][0] == tz
+
+        # 3. lightweight profile 模板（entrypoint_script 模式，container 模板）
+        lp_spec = NodeSpec.model_validate({
+            "metadata": lightweight_meta,
+            "resources": {"type": "lightweight"},
+            "execution": {"type": "lightweight", "entrypoint_script": "run.sh"},
+        })
+        lp = _build_lightweight_profile_template(
+            template_name="mf-lp",
+            spec=lp_spec,
+            registry=empty_registry,
+            input_params=[],
+            output_params=[],
+        )
+        assert lp["container"]["env"][0] == tz
+
+        # 4. ephemeral 模板（script 模板）
+        ep = _build_ephemeral_template(
+            template_name="mf-ep",
+            spec=ls_spec,
+            script_source="print('hi')",
+            registry=empty_registry,
+            input_params=[],
+            output_params=[],
+        )
+        assert ep["script"]["env"][0] == tz
+
+        # 5. prefab 模板（script 模板）
+        pf = _build_prefab_template(
+            template_name="mf-pf",
+            script_source="print('hi')",
+            registry=empty_registry,
+            input_params=[],
+            output_params=[],
+        )
+        assert pf["script"]["env"][0] == tz
 
     def test_compile_to_yaml_str(self, validated_h2o):
         """编译为 YAML 字符串。"""
