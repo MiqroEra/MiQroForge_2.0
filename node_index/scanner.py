@@ -6,8 +6,9 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 import yaml
 
@@ -26,6 +27,8 @@ from .models import NodeIndex, NodeIndexEntry, OnBoardInputSummary, OnBoardOutpu
 
 # 扫描时跳过的目录名
 _SKIP_DIRS = {"schemas", "base_images", "__pycache__", ".git", "node_modules"}
+
+_BEIJING = ZoneInfo("Asia/Shanghai")
 
 
 def scan_nodes(
@@ -151,8 +154,8 @@ def load_index(project_root: Path | None = None) -> NodeIndex:
 
 
 def _now_iso() -> str:
-    """返回当前 UTC 时间的 ISO 8601 字符串。"""
-    return datetime.now(timezone.utc).isoformat()
+    """返回当前北京时间（Asia/Shanghai）的 ISO 8601 字符串。"""
+    return datetime.now(_BEIJING).isoformat()
 
 
 def _port_summary(port: StreamInputPort | StreamOutputPort, direction: str) -> PortSummary:
