@@ -285,8 +285,10 @@ class TestCompilerSweep:
             p["name"]: p["value"]
             for p in tasks["downstream"]["arguments"]["parameters"]
         }
-        # fan-in 引用 pipeline task 的输出（而非内层 sweep 节点的输出）
-        assert "tasks.sweep-pipeline-sp-sweep.outputs.parameters.optimized_checkpoint" in downstream_args["checkpoint_in"]
+        # SDP 端口（checkpoint_in）经 PVC .stream/ 传输，不作为 DAG argument；
+        # fan-in 的 sweep key 经 pipeline task 的 _sweep_keys 参数传递
+        assert "checkpoint_in" not in downstream_args
+        assert "_sweep_keys" in downstream_args
 
     def test_sweep_template_has_output_params(self):
         """sweep 节点的 template 输出被下游连接时包含 output parameter。"""
@@ -297,8 +299,10 @@ class TestCompilerSweep:
             t for t in argo["spec"]["templates"] if t["name"] == "mf-sp-sweep"
         )
         output_names = {p["name"] for p in sweep_template["outputs"]["parameters"]}
-        # optimized_checkpoint is connected to downstream → should appear
-        assert "optimized_checkpoint" in output_names
+        # optimized_checkpoint 是 SDP 端口，经 PVC .stream/ 传输，不导出为参数
+        assert "optimized_checkpoint" not in output_names
+        # quality gate 始终收集
+        assert "_qg_converged" in output_names
 
     def test_sweep_with_string_values(self):
         """sweep 支持字符串值列表。"""
@@ -427,12 +431,14 @@ class TestSweepEndToEnd:
         assert "withParam" in tasks[pipeline_name]
         assert json.loads(tasks[pipeline_name]["withParam"]) == [0.5, 0.74, 1.0, 1.5]
 
-        # Fan-in task references pipeline output
+        # Fan-in task：SDP checkpoint 经 PVC .stream/ 传输，不作为 argument；
+        # sweep key 经 _sweep_keys 参数传递
         downstream_args = {
             p["name"]: p["value"]
             for p in tasks["downstream"]["arguments"]["parameters"]
         }
-        assert "tasks.sweep-pipeline-sp-sweep.outputs.parameters.optimized_checkpoint" in downstream_args["checkpoint_in"]
+        assert "checkpoint_in" not in downstream_args
+        assert "_sweep_keys" in downstream_args
 
         # Pipeline template exists with inner DAG
         pipeline_tmpl = next(

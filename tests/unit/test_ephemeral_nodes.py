@@ -558,10 +558,12 @@ class TestEphemeralCompiler:
         # 应有依赖 geom-input
         assert "geom-input" in extract_task["depends"]
 
-        # 检查输入参数传递
-        params = extract_task["arguments"]["parameters"]
-        param_names = {p["name"] for p in params}
-        assert "I1" in param_names
+        # 输入参数经 template inputs + script env 注入（临时节点 wrapper 无 DAG arguments）
+        assert "arguments" not in extract_task
+        input_param_names = {p["name"] for p in extract_tmpl["inputs"]["parameters"]}
+        assert "I1" in input_param_names
+        env_names = {e["name"] for e in extract_tmpl["script"]["env"]}
+        assert "I1" in env_names
 
 
 # ═══════════════════════════════════════════════════════════════════════════

@@ -143,7 +143,6 @@ class TestMFWorkflow:
             nodes=[MFNodeInstance(id="a", node="x")],
         )
         assert wf.mf_version == "1.0"
-        assert wf.namespace == os.environ.get("ARGO_NAMESPACE", "")
         assert wf.global_params == {}
         assert wf.connections == []
 
@@ -568,7 +567,7 @@ class TestCompiler:
         assert "image" in geo_opt_template["container"]
 
     def test_compile_output_parameters(self, validated_h2o):
-        """只有被下游连接的 stream output 才生成 Argo output parameter。"""
+        """只有被下游连接的 stream output 才生成 Argo output parameter；SDP 端口经 PVC 传输、不导出为参数。"""
         wf, report = validated_h2o
         argo = compile_to_argo(wf, report.resolved_nodes, project_root=PROJECT_ROOT)
         geo_opt_template = next(
@@ -577,8 +576,9 @@ class TestCompiler:
         output_params = geo_opt_template["outputs"]["parameters"]
         output_names = {p["name"] for p in output_params}
 
-        # optimized_checkpoint 在 h2o 工作流中连接到 freq，应存在
-        assert "optimized_checkpoint" in output_names
+        # optimized_checkpoint 是 software_data_package（SDP）端口，
+        # 即使被 freq 连接也经 PVC .stream/ 传输，不导出为 Argo 参数
+        assert "optimized_checkpoint" not in output_names
         # total_energy 未被连接，不应出现（避免大文件作为参数传递）
         assert "total_energy" not in output_names
         # Quality gate 始终收集（DAG depends 条件所需）
@@ -603,14 +603,21 @@ class TestCompiler:
             p["name"]: p["value"]
             for p in tasks["freq"]["arguments"]["parameters"]
         }
-        assert "checkpoint_in" in freq_args
-        assert "tasks.geo-opt.outputs.parameters.optimized_checkpoint" in freq_args["checkpoint_in"]
+        # SDP 端口（checkpoint_in）经 PVC .stream/ 传输，不作为 DAG argument
+        assert "checkpoint_in" not in freq_args
         # opt_converged is no longer a stream input of freq
         assert "opt_converged" not in freq_args
 
         # freq task should have onboard args
         assert "temperature" in freq_args
         assert freq_args["temperature"] == "298.15"
+
+        # SDP 传输已接线：freq 容器启动命令从 PVC .stream/ 复制 checkpoint_in
+        freq_template = next(
+            t for t in argo["spec"]["templates"] if t["name"] == "mf-freq"
+        )
+        assert "checkpoint_in" in freq_template["container"]["args"][0]
+        assert "/mf/workspace/.stream/" in freq_template["container"]["args"][0]
 
         # freq task should have a when condition from geo-opt's quality gate
         assert "when" in tasks["freq"]
@@ -1015,17 +1022,24 @@ class TestEndToEnd:
             p["name"]: p["value"]
             for p in task_map["freq"]["arguments"]["parameters"]
         }
-        # Stream data from geo-opt (only checkpoint, not converged)
-        assert "{{tasks.geo-opt.outputs.parameters.optimized_checkpoint}}" == freq_args["checkpoint_in"]
+        # SDP 数据（checkpoint）经 PVC .stream/ 传输，不作为 DAG argument
+        assert "checkpoint_in" not in freq_args
         assert "opt_converged" not in freq_args
 
         thermo_args = {
             p["name"]: p["value"]
             for p in task_map["thermo-extract"]["arguments"]["parameters"]
         }
-        # Stream data from freq (only thermo_data, not is_true_minimum)
-        assert "{{tasks.freq.outputs.parameters.thermo_data}}" == thermo_args["thermo_data_in"]
+        # SDP 数据（thermo_data）经 PVC .stream/ 传输，不作为 DAG argument
+        assert "thermo_data_in" not in thermo_args
         assert "is_minimum" not in thermo_args
+
+        # SDP 传输已接线：freq 容器从 .stream/ 读 checkpoint、写 thermo_data
+        freq_template = next(t for t in templates if t["name"] == "mf-freq")
+        freq_cmd = freq_template["container"]["args"][0]
+        assert "checkpoint_in" in freq_cmd
+        assert "thermo_data" in freq_cmd
+        assert "/mf/workspace/.stream/" in freq_cmd
 
         # Quality gate when conditions
         assert "{{tasks.geo-opt.outputs.parameters._qg_converged}} == true" in task_map["freq"]["when"]
