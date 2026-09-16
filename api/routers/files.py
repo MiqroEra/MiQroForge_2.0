@@ -18,6 +18,7 @@ from pydantic import BaseModel
 from api.auth import CurrentUser, require_user
 from api.dependencies import get_user_paths
 from api.user_paths import UserPaths
+from agents.common.timeutil import BEIJING
 
 router = APIRouter(prefix="/files", tags=["files"])
 
@@ -60,7 +61,7 @@ def _file_entry(path: Path) -> FileEntry:
         name=path.name,
         size_bytes=stat.st_size,
         modified_at=datetime.datetime.fromtimestamp(
-            stat.st_mtime, tz=datetime.timezone.utc
+            stat.st_mtime, tz=BEIJING
         ).isoformat(),
     )
 

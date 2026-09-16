@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel, Field
+
+from agents.common.timeutil import now_cn
 
 from api.auth import require_admin, CurrentUser
 from api.config import get_settings
@@ -78,7 +80,7 @@ def get_admin_usage(
     if not users_dir.exists():
         return AdminUsageSummary(period_days=days, total_users=0)
 
-    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+    cutoff = now_cn() - timedelta(days=days)
     billing = _load_billing(settings)
     summary = AdminUsageSummary(
         period_days=days,

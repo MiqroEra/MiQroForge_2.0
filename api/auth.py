@@ -14,6 +14,8 @@ from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
 
+from agents.common.timeutil import now_cn_iso
+
 _SECRET_KEY_PATH: Path | None = None
 _SECRET_KEY: str | None = None
 
@@ -62,6 +64,7 @@ def verify_password(plain: str, hashed: str) -> bool:
 
 
 def create_jwt(username: str, role: str) -> str:
+    # JWT exp 保持 UTC（epoch 语义），勿转北京时间
     expire = datetime.now(timezone.utc) + timedelta(hours=_TOKEN_EXPIRE_HOURS)
     payload = {
         "sub": username,
@@ -112,7 +115,7 @@ def create_user_yaml(username: str, password_hash: str, role: str, display_name:
     data = _load_users_yaml(auth_dir)
     if "users" not in data:
         data["users"] = {}
-    now = datetime.now(timezone.utc).isoformat()
+    now = now_cn_iso()
     data["users"][username] = {
         "password_hash": password_hash,
         "display_name": display_name or username,

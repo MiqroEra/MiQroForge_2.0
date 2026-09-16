@@ -15,7 +15,6 @@ from __future__ import annotations
 
 import asyncio
 import json
-from datetime import datetime
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -40,6 +39,7 @@ from agents.common.session_logger import (
     start_session, end_session,
     save_agent_log, save_conversation,
 )
+from agents.common.timeutil import now_cn
 from api.tracking.llm_tracker import TokenUsageTracker
 
 router = APIRouter(prefix="/agents", tags=["agents"])
@@ -84,7 +84,7 @@ async def plan_workflow(
         # 前端未传 session_id 时，服务端自动生成（确保日志总能被保存）
         effective_session_id = (
             request.session_id
-            or f"auto-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+            or f"auto-{now_cn().strftime('%Y%m%d-%H%M%S')}"
         )
 
         def _run_with_session():
@@ -151,7 +151,7 @@ async def generate_yaml(
 
         effective_session_id = (
             request.session_id
-            or f"auto-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+            or f"auto-{now_cn().strftime('%Y%m%d-%H%M%S')}"
         )
 
         def _run_with_session():
@@ -239,7 +239,7 @@ async def generate_node(
 
         effective_session_id = (
             request.session_id
-            or f"design-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+            or f"design-{now_cn().strftime('%Y%m%d-%H%M%S')}"
         )
 
         last_state = None
@@ -300,7 +300,7 @@ async def generate_node(
                             # JSON 格式（机器可读，作为备份）
                             proj_conv_dir_session = proj_conv_dir / effective_session_id
                             proj_conv_dir_session.mkdir(parents=True, exist_ok=True)
-                            time_str = datetime.now().strftime("%H-%M-%S")
+                            time_str = now_cn().strftime("%H-%M-%S")
                             agent_type = log_dict.get("agent_type", "unknown")
                             (proj_conv_dir_session / f"{agent_type}_{time_str}.json").write_text(
                                 json.dumps(log_dict, indent=2, ensure_ascii=False, default=str)
@@ -585,7 +585,7 @@ async def run_node_runtime(
 
         effective_session_id = (
             request.session_id
-            or f"runtime-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+            or f"runtime-{now_cn().strftime('%Y%m%d-%H%M%S')}"
         )
 
         prefab_cfg = _load_prefab_settings()
@@ -707,7 +707,7 @@ async def run_node_runtime(
                                     / "runs" / request.run_name
                                 )
                                 run_log_dir.mkdir(parents=True, exist_ok=True)
-                                time_str = datetime.now().strftime("%H-%M-%S")
+                                time_str = now_cn().strftime("%H-%M-%S")
                                 agent_type = log_dict.get("agent_type", "unknown")
                                 node_id = request.prefab_node_id or "unknown"
                                 json_path = run_log_dir / f"{agent_type}_r{outer_round}_{node_id}_{time_str}.json"
@@ -804,7 +804,7 @@ async def run_node_runtime(
                                     / "runs" / request.run_name
                                 )
                                 run_log_dir.mkdir(parents=True, exist_ok=True)
-                                time_str = datetime.now().strftime("%H-%M-%S")
+                                time_str = now_cn().strftime("%H-%M-%S")
                                 agent_type = log_dict.get("agent_type", "unknown")
                                 node_id = request.prefab_node_id or "unknown"
                                 json_path = run_log_dir / f"{agent_type}_r{outer_round}_{node_id}_{time_str}.json"
@@ -959,7 +959,7 @@ async def run_node_runtime(
 
                 # ── 保存 curator 决策日志 ──
                 try:
-                    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+                    timestamp = now_cn().strftime("%Y%m%d-%H%M%S")
                     curator_log = {
                         "timestamp": timestamp,
                         "action": action,
@@ -1226,7 +1226,7 @@ async def ephemeral_generate(
                                         / "runs" / request.run_name
                                     )
                                     run_log_dir.mkdir(parents=True, exist_ok=True)
-                                    time_str = datetime.now().strftime("%H-%M-%S")
+                                    time_str = now_cn().strftime("%H-%M-%S")
                                     agent_type = log_dict.get("agent_type", "unknown")
                                     node_id = request.context.get("node_id", "unknown") if request.context else "unknown"
                                     json_path = run_log_dir / f"{agent_type}_r{outer_round}_{node_id}_{time_str}.json"
@@ -1288,7 +1288,7 @@ async def ephemeral_generate(
                                         / "runs" / request.run_name
                                     )
                                     run_log_dir.mkdir(parents=True, exist_ok=True)
-                                    time_str = datetime.now().strftime("%H-%M-%S")
+                                    time_str = now_cn().strftime("%H-%M-%S")
                                     agent_type = log_dict.get("agent_type", "unknown")
                                     node_id = request.context.get("node_id", "unknown") if request.context else "unknown"
                                     json_path = run_log_dir / f"{agent_type}_r{outer_round}_{node_id}_{time_str}.json"
@@ -1424,7 +1424,7 @@ async def ephemeral_evaluate(
                                 / "runs" / request.run_name
                             )
                             run_log_dir.mkdir(parents=True, exist_ok=True)
-                            time_str = datetime.now().strftime("%H-%M-%S")
+                            time_str = now_cn().strftime("%H-%M-%S")
                             agent_type = log_dict.get("agent_type", "unknown")
                             json_path = run_log_dir / f"{agent_type}_{time_str}.json"
                             json_path.write_text(json.dumps(log_dict, indent=2, ensure_ascii=False, default=str))

@@ -8,6 +8,8 @@ from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
+from agents.common.timeutil import BEIJING, now_cn
+
 from api.auth import CurrentUser
 from api.dependencies import get_user_paths
 from api.models.usage import ComputeUsageSummary, TokenUsageSummary
@@ -96,7 +98,7 @@ def get_token_usage(
 ):
     if paths is None:
         raise HTTPException(401, "Not authenticated")
-    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+    cutoff = now_cn() - timedelta(days=days)
     records = _read_jsonl(paths.usage_dir / "llm_usage.jsonl")
 
     summary = TokenUsageSummary(period_days=days)
@@ -105,6 +107,9 @@ def get_token_usage(
     for r in records:
         try:
             ts = datetime.fromisoformat(r.get("finished_at", ""))
+            if ts.tzinfo is None:
+                ts = ts.replace(tzinfo=timezone.utc)
+            ts = ts.astimezone(BEIJING)
         except (ValueError, TypeError):
             continue
         if ts < cutoff:
@@ -169,7 +174,7 @@ def get_compute_usage(
 ):
     if paths is None:
         raise HTTPException(401, "Not authenticated")
-    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+    cutoff = now_cn() - timedelta(days=days)
     records = _read_jsonl(paths.usage_dir / "compute_usage.jsonl")
 
     summary = ComputeUsageSummary(period_days=days)
@@ -178,6 +183,9 @@ def get_compute_usage(
     for r in records:
         try:
             ts = datetime.fromisoformat(r.get("recorded_at", ""))
+            if ts.tzinfo is None:
+                ts = ts.replace(tzinfo=timezone.utc)
+            ts = ts.astimezone(BEIJING)
         except (ValueError, TypeError):
             continue
         if ts < cutoff:

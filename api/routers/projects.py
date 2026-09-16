@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import os
 import shutil
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 from typing import Optional
+
+from agents.common.timeutil import BEIJING
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile
 from fastapi.responses import FileResponse
@@ -431,7 +433,7 @@ def _scan_directory(root: Path, base: Path) -> list[DirectoryEntry]:
             size_bytes=stat.st_size if child.is_file() else 0,
             is_dir=child.is_dir(),
             modified_at=datetime.fromtimestamp(
-                stat.st_mtime, tz=timezone.utc
+                stat.st_mtime, tz=BEIJING
             ).isoformat(),
         ))
         if child.is_dir() and not child.is_symlink():

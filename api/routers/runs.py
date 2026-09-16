@@ -25,6 +25,7 @@ from api.user_paths import UserPaths
 from api.models.runs import RunDetailResponse, RunListResponse, RunLogsResponse, RunSummaryResponse
 from api.services.argo_service import ArgoService
 from api.services.project_service import ProjectService
+from agents.common.timeutil import BEIJING, parse_argo_ts
 
 router = APIRouter(prefix="/runs", tags=["runs"])
 
@@ -76,7 +77,7 @@ def list_runs(
             try:
                 mtime = d.stat().st_mtime
                 finished_at = datetime.datetime.fromtimestamp(
-                    mtime, tz=datetime.timezone.utc
+                    mtime, tz=BEIJING
                 ).isoformat()
             except OSError:
                 pass
@@ -363,8 +364,8 @@ def save_run_outputs(
         # Collect per-node timing
         node_details[canvas_id] = {
             "phase": phase,
-            "started_at": node.get("startedAt", ""),
-            "finished_at": node.get("finishedAt", ""),
+            "started_at": parse_argo_ts(node.get("startedAt", "")) or "",
+            "finished_at": parse_argo_ts(node.get("finishedAt", "")) or "",
         }
 
         # Collect output parameters
@@ -403,8 +404,8 @@ def save_run_outputs(
         json.dumps(
             {
                 "phase": status.get("phase", "Unknown"),
-                "started_at": status.get("startedAt", ""),
-                "finished_at": status.get("finishedAt", ""),
+                "started_at": parse_argo_ts(status.get("startedAt", "")) or "",
+                "finished_at": parse_argo_ts(status.get("finishedAt", "")) or "",
                 "node_outputs": node_outputs,
                 "node_errors": node_errors,
                 "node_details": node_details,
