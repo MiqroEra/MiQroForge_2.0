@@ -13,6 +13,7 @@ export interface ProjectMeta {
   canvas_node_count: number
   run_count: number
   conversation_count: number
+  readonly?: boolean
 }
 
 export interface ProjectListResponse {

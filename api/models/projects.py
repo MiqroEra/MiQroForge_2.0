@@ -19,6 +19,7 @@ class ProjectMeta(BaseModel):
     canvas_node_count: int = 0
     run_count: int = 0
     conversation_count: int = 0
+    readonly: bool = False
 
 
 class ProjectCreateRequest(BaseModel):

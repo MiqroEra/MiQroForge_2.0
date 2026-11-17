@@ -716,6 +716,21 @@ function NodeGeneratorEditor({ nodeId }: { nodeId: string }) {
   const [software, setSoftware] = useState<string>(gen?.software ?? '')
   const [description, setDescription] = useState<string>(gen?.description ?? '')
 
+  // Sync local form state with the store when it changes externally
+  // (e.g. the readonly demo project injects a localized description AFTER the
+  // editor mounts — without this the Generate button stays disabled forever).
+  // Guarded by inequality so the user's own typing (which writes back to the
+  // store in the same handler) is never clobbered.
+  React.useEffect(() => {
+    if (gen?.description !== undefined && gen.description !== description) {
+      setDescription(gen.description)
+    }
+    if (gen?.software !== undefined && gen.software !== software) {
+      setSoftware(gen.software)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gen?.description, gen?.software])
+
   if (!gen) return null
 
   // ── Port editing (like ephemeral) ──
@@ -858,6 +873,13 @@ function NodeGeneratorEditor({ nodeId }: { nodeId: string }) {
           className="w-full px-2 py-1 bg-mf-input border border-mf-border rounded text-xs text-mf-text-primary focus:outline-none focus:border-gray-400 font-mono resize-y"
         />
       </div>
+
+      {/* Generation error */}
+      {gen.result?.error && (
+        <div className="px-2 py-1.5 bg-red-900/30 border border-red-700/50 rounded text-[11px] text-red-300 leading-relaxed break-words">
+          {gen.result.error}
+        </div>
+      )}
 
       {/* Generate button */}
       <button

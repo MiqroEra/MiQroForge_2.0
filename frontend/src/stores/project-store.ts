@@ -8,6 +8,7 @@
 import { create } from 'zustand'
 import { projectsApi } from '../api/projects-api'
 import type { ProjectMeta, ConversationMeta, CanvasState } from '../api/projects-api'
+import { localizeDemoCanvas } from '../lib/demo-localize'
 
 interface ProjectState {
   // 当前项目
@@ -119,9 +120,13 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
   },
 
   loadCanvas: async () => {
-    const { currentProjectId } = get()
+    const { currentProjectId, currentProjectMeta } = get()
     if (!currentProjectId) return null
-    return projectsApi.getCanvas(currentProjectId)
+    const canvas = await projectsApi.getCanvas(currentProjectId)
+    if (canvas && currentProjectMeta?.readonly) {
+      return localizeDemoCanvas(canvas)
+    }
+    return canvas
   },
 
   createConversation: async (title) => {

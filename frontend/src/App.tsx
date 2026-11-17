@@ -28,9 +28,11 @@ import { useAgentStore } from './stores/agent-store'
 import { setSavedWorkflowsProjectId } from './stores/saved-workflows-store'
 import { useProjectStore } from './stores/project-store'
 import { useWorkflowStore } from './stores/workflow-store'
+import { useSettingsStore } from './stores/settings-store'
 import { nodesApi } from './api/nodes-api'
 import { setSemanticRegistry } from './lib/semantic-labels'
 import { loadGlobalPrefs, setPreferenceProjectId } from './lib/node-preferences'
+import { demoNodeDescription, demoWorkflowMeta } from './lib/demo-localize'
 import { useRunOverlayPolling } from './hooks/useRunOverlayPolling'
 import { useGlobalShortcuts } from './hooks/useGlobalShortcuts'
 
@@ -55,6 +57,7 @@ function CanvasLayout() {
   const filesOpen       = useUIStore((s) => s.filesOpen)
   const selectedNodeId  = useUIStore((s) => s.selectedNodeId)
   const chatOpen        = useAgentStore((s) => s.isOpen)
+  const language        = useSettingsStore((s) => s.language)
 
   const loadProject = useProjectStore((s) => s.loadProject)
   const clearProject = useProjectStore((s) => s.clearProject)
@@ -109,6 +112,20 @@ function CanvasLayout() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId])
+
+  useEffect(() => {
+    const projectMeta = useProjectStore.getState().currentProjectMeta
+    if (!projectMeta?.readonly) return
+    const store = useWorkflowStore.getState()
+    store.setMeta(demoWorkflowMeta())
+    for (const node of store.nodes) {
+      const ng = node.data.node_generator
+      if (!ng) continue
+      store.updateNodeData(node.id, {
+        node_generator: { ...ng, description: demoNodeDescription() },
+      })
+    }
+  }, [language])
 
   return (
     <div className="flex flex-col h-screen bg-mf-base overflow-hidden">

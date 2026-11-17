@@ -27,6 +27,7 @@ from api.models.projects import (
     ProjectMeta,
     SnapshotMeta,
 )
+from api.services import demo_project
 
 
 def _now_iso() -> str:
@@ -178,6 +179,7 @@ class ProjectService:
             project_dir = self.projects_root / pid
             if project_dir.is_dir():
                 results.append(self._build_meta(p, project_dir))
+        results.append(demo_project.demo_meta())
         # Sort by order ascending, then updated_at descending
         results.sort(key=lambda p: (p.get("order", 0), -(self._parse_ts(p.get("updated_at", "")))))
         return results
@@ -221,6 +223,8 @@ class ProjectService:
         return meta
 
     def get_project(self, project_id: str) -> dict[str, Any] | None:
+        if project_id == demo_project.DEMO_PROJECT_ID:
+            return demo_project.demo_meta()
         project_dir = self.projects_root / project_id
         pj = project_dir / "project.json"
         if not pj.exists():
@@ -335,6 +339,8 @@ class ProjectService:
         return True
 
     def load_canvas(self, project_id: str) -> dict[str, Any] | None:
+        if project_id == demo_project.DEMO_PROJECT_ID:
+            return demo_project.DEMO_CANVAS
         project_dir = self.projects_root / project_id
         f = project_dir / "canvas.json"
         if not f.exists():

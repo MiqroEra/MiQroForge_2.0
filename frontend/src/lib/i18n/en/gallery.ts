@@ -20,6 +20,10 @@ export const galleryEn = {
   migratedName: 'Migrated Workflow',
   migratedDescription: 'Auto-migrated from local storage',
   migratedChat: 'Migrated Chat',
+  demoBadge: 'Demo',
+  demoName: 'Generate Node Demo',
+  demoDescription: 'Describe a computation in natural language and the Node Generator Agent creates a formal compute node. Open the project and select the Generate Node on the canvas to see the example description.',
+  demoNodeDescription: 'Compute the ORCA single-point energy of a water molecule (H2O) with the B3LYP functional and def2-TZVP basis set, output the total energy.',
   // Content
   loadingProjects: 'Loading projects...',
   noProjects: 'No projects yet',

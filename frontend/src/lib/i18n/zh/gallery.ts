@@ -22,6 +22,10 @@ export const galleryZh: Record<keyof typeof galleryEn, string> = {
   migratedName: '已迁移工作流',
   migratedDescription: '从本地存储自动迁移',
   migratedChat: '已迁移对话',
+  demoBadge: '示例',
+  demoName: 'Generate Node 示例',
+  demoDescription: '用自然语言描述计算任务，Node Generator Agent 会自动生成正式计算节点。打开项目选中画布上的 Generate Node 即可查看示例描述。',
+  demoNodeDescription: '计算水分子 (H2O) 的 ORCA 单点能，使用 B3LYP 泛函和 def2-TZVP 基组，输出体系总能量。',
   // Content
   loadingProjects: '正在加载项目...',
   noProjects: '还没有项目',

@@ -158,6 +158,9 @@ export function ProjectCard({
 
   const icon = project.icon || '📁'
   const hasIcon = !!project.icon
+  const readonly = !!project.readonly
+  const displayName = readonly ? t('gallery.demoName') : project.name
+  const displayDescription = readonly ? t('gallery.demoDescription') : project.description
 
   return (
     <div
@@ -171,7 +174,7 @@ export function ProjectCard({
       onClick={() => { if (!editMode && !editing && !descEditing) onOpen() }}
     >
       {/* Edit mode: checkbox + drag handle */}
-      {editMode && (
+      {editMode && !readonly && (
         <div className="absolute top-2 left-2 z-10 flex items-center gap-1">
           <input
             type="checkbox"
@@ -196,17 +199,23 @@ export function ProjectCard({
         <div className="flex items-center gap-2.5">
           {/* Emoji icon — click to open picker */}
           <div className="relative" ref={emojiRef}>
-            <button
-              onClick={(e) => { e.stopPropagation(); setEmojiPickerOpen(!emojiPickerOpen) }}
-              className={`w-9 h-9 rounded-md flex items-center justify-center flex-shrink-0 text-lg transition-colors ${
-                hasIcon
-                  ? 'bg-mf-hover hover:bg-mf-hover'
-                  : 'bg-blue-600/15 hover:bg-blue-600/25'
-              }`}
-              title={t('gallery.changeIcon')}
-            >
-              {icon}
-            </button>
+            {readonly ? (
+              <div className="w-9 h-9 rounded-md flex items-center justify-center flex-shrink-0 text-lg bg-mf-hover">
+                {icon}
+              </div>
+            ) : (
+              <button
+                onClick={(e) => { e.stopPropagation(); setEmojiPickerOpen(!emojiPickerOpen) }}
+                className={`w-9 h-9 rounded-md flex items-center justify-center flex-shrink-0 text-lg transition-colors ${
+                  hasIcon
+                    ? 'bg-mf-hover hover:bg-mf-hover'
+                    : 'bg-blue-600/15 hover:bg-blue-600/25'
+                }`}
+                title={t('gallery.changeIcon')}
+              >
+                {icon}
+              </button>
+            )}
             {emojiPickerOpen && (
               <div
                 className="absolute left-0 top-full mt-1 bg-mf-panel border border-mf-border rounded-lg shadow-xl z-50 p-2 w-56 max-h-60 overflow-y-auto mf-scroll"
@@ -247,8 +256,13 @@ export function ProjectCard({
             />
           ) : (
             <h3 className="text-sm font-medium text-mf-text-primary truncate max-w-40">
-              {project.name}
+              {displayName}
             </h3>
+          )}
+          {readonly && (
+            <span className="flex-shrink-0 text-[9px] font-medium uppercase tracking-wide px-1.5 py-0.5 rounded border border-purple-700/50 text-purple-300 bg-purple-900/20">
+              {t('gallery.demoBadge')}
+            </span>
           )}
         </div>
 
@@ -263,31 +277,39 @@ export function ProjectCard({
           </button>
           {menuOpen && (
             <div className="absolute right-0 top-full mt-1 w-36 bg-mf-panel border border-mf-border rounded-md shadow-lg z-50 py-1">
-              <button
-                onClick={(e) => { e.stopPropagation(); setMenuOpen(false); setEditing(true) }}
-                className="flex items-center gap-2 w-full px-3 py-1.5 text-xs text-mf-text-secondary hover:text-mf-text-primary hover:bg-mf-hover"
-              >
-                <Pencil size={12} /> {t('gallery.rename')}
-              </button>
-              <button
-                onClick={(e) => { e.stopPropagation(); setMenuOpen(false); setDescEditing(true) }}
-                className="flex items-center gap-2 w-full px-3 py-1.5 text-xs text-mf-text-secondary hover:text-mf-text-primary hover:bg-mf-hover"
-              >
-                <FileText size={12} /> {t('gallery.editNote')}
-              </button>
+              {!readonly && (
+                <>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setMenuOpen(false); setEditing(true) }}
+                    className="flex items-center gap-2 w-full px-3 py-1.5 text-xs text-mf-text-secondary hover:text-mf-text-primary hover:bg-mf-hover"
+                  >
+                    <Pencil size={12} /> {t('gallery.rename')}
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setMenuOpen(false); setDescEditing(true) }}
+                    className="flex items-center gap-2 w-full px-3 py-1.5 text-xs text-mf-text-secondary hover:text-mf-text-primary hover:bg-mf-hover"
+                  >
+                    <FileText size={12} /> {t('gallery.editNote')}
+                  </button>
+                </>
+              )}
               <button
                 onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onDuplicate() }}
                 className="flex items-center gap-2 w-full px-3 py-1.5 text-xs text-mf-text-secondary hover:text-mf-text-primary hover:bg-mf-hover"
               >
                 <Copy size={12} /> {t('gallery.duplicate')}
               </button>
-              <div className="border-t border-mf-border my-1" />
-              <button
-                onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onDelete() }}
-                className="flex items-center gap-2 w-full px-3 py-1.5 text-xs text-red-400 hover:text-red-300 hover:bg-mf-hover"
-              >
-                <Trash2 size={12} /> {t('gallery.delete')}
-              </button>
+              {!readonly && (
+                <>
+                  <div className="border-t border-mf-border my-1" />
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onDelete() }}
+                    className="flex items-center gap-2 w-full px-3 py-1.5 text-xs text-red-400 hover:text-red-300 hover:bg-mf-hover"
+                  >
+                    <Trash2 size={12} /> {t('gallery.delete')}
+                  </button>
+                </>
+              )}
             </div>
           )}
         </div>
@@ -317,9 +339,9 @@ export function ProjectCard({
             rows={2}
             className="mt-1.5 w-full text-[11px] text-mf-text-secondary bg-mf-input border border-mf-border rounded px-2 py-1.5 focus:outline-none focus:border-blue-500 resize-none"
           />
-        ) : project.description ? (
+        ) : displayDescription ? (
           <p className="text-[11px] text-mf-text-muted mt-1.5 line-clamp-2">
-            {project.description}
+            {displayDescription}
           </p>
         ) : null}
       </div>

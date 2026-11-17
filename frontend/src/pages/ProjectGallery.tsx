@@ -9,6 +9,7 @@ import { SortableContext, rectSortingStrategy, arrayMove } from '@dnd-kit/sortab
 import { ProjectCard } from '../components/gallery/ProjectCard'
 import { projectsApi } from '../api/projects-api'
 import type { ProjectMeta } from '../api/projects-api'
+import { localizeDemoCanvas } from '../lib/demo-localize'
 import { SettingsContent } from '../components/settings/SettingsPanel'
 
 // ─── Migration from old localStorage keys ─────────────────────────────────────
@@ -234,6 +235,19 @@ export function ProjectGallery() {
 
   const handleDuplicate = async (id: string) => {
     try {
+      const proj = projects.find((p) => p.id === id)
+      if (proj?.readonly) {
+        const canvas = await projectsApi.getCanvas(id)
+        const lang = useSettingsStore.getState().language
+        const meta = await projectsApi.create({
+          name: translate(lang, 'gallery.demoName'),
+          description: translate(lang, 'gallery.demoDescription'),
+          icon: proj.icon || '✨',
+        })
+        await projectsApi.saveCanvas(meta.id, localizeDemoCanvas(canvas))
+        setProjects((prev) => [meta, ...prev])
+        return
+      }
       const meta = await projectsApi.duplicate(id)
       setProjects((prev) => [meta, ...prev])
     } catch { /* ignore */ }
