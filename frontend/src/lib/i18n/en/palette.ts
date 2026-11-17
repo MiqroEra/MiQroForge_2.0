@@ -1,0 +1,16 @@
+export const paletteEn = {
+  searchNodes: 'Search nodes...',
+  nodesTitle: 'Nodes',
+  refreshCatalog: 'Refresh node catalog (re-scan filesystem)',
+  collapsePalette: 'Collapse palette',
+  expandPalette: 'Expand palette',
+  loadingNodes: 'Loading nodes…',
+  noMatches: 'No nodes match your search.',
+  noNodesFound: 'No nodes found. Run mf2 nodes reindex.',
+  dragHint: 'Drag to canvas · Click to select software',
+  dragToPlace: 'Drag to place {name}',
+  implUnit: '{count} impl',
+  implUnits: '{count} impls',
+  ephemeralHint: 'temporary · drag to create',
+  nodeGenHint: 'AI-assisted · drag to create',
+} as const

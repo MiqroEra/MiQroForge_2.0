@@ -3,20 +3,22 @@
  */
 
 import { memo } from 'react'
+import { useT, type DictKey } from '../../lib/i18n'
 
 interface AgentThinkingProps {
   status: 'planning' | 'generating_yaml' | 'generating_node' | 'thinking'
 }
 
-const STATUS_LABELS: Record<string, string> = {
-  planning: 'Planner 分析中…',
-  generating_yaml: 'YAML Coder 生成中…',
-  generating_node: 'Node Generator 生成中…',
-  thinking: '思考中…',
+const STATUS_KEYS: Record<AgentThinkingProps['status'], DictKey> = {
+  planning: 'chat.thinkingPlanning',
+  generating_yaml: 'chat.thinkingYaml',
+  generating_node: 'chat.thinkingNode',
+  thinking: 'chat.thinking',
 }
 
 export const AgentThinking = memo(({ status }: AgentThinkingProps) => {
-  const label = STATUS_LABELS[status] ?? '处理中…'
+  const { t } = useT()
+  const label = t(STATUS_KEYS[status] ?? 'chat.thinkingDefault')
 
   return (
     <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-mf-hover/50 text-mf-text-muted text-xs max-w-xs">

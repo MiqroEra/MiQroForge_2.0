@@ -90,9 +90,17 @@ class NodeMetadata(BaseModel):
         default=None,
         description="人类可读的显示名称。为空时自动从 name 生成。",
     )
+    display_name_zh: Optional[str] = Field(
+        default=None,
+        description="中文显示名称。为空时前端回退到 display_name。",
+    )
     description: str = Field(
         default="",
         description="节点功能的详细描述。",
+    )
+    description_zh: str = Field(
+        default="",
+        description="节点功能的中文描述。",
     )
     node_type: NodeType
     category: NodeCategory = NodeCategory.UTILITY

@@ -16,6 +16,10 @@ class PortSummary(BaseModel):
 
     name: str
     display_name: str
+    display_name_zh: str = Field(
+        default="",
+        description="中文显示名称。为空时前端回退到 display_name。",
+    )
     category: str = Field(
         ...,
         description="Stream I/O 类别：physical_quantity / software_data_package / logic_value / report_object",
@@ -28,6 +32,14 @@ class PortSummary(BaseModel):
         default="input",
         description="端口方向：input / output",
     )
+    description: str = Field(
+        default="",
+        description="端口用途说明。",
+    )
+    description_zh: str = Field(
+        default="",
+        description="中文描述。",
+    )
 
 
 class OnBoardInputSummary(BaseModel):
@@ -35,9 +47,11 @@ class OnBoardInputSummary(BaseModel):
 
     name: str
     display_name: str
+    display_name_zh: str = ""
     kind: str = Field(..., description="string | integer | float | boolean | enum | textarea")
     default: Any = None
     description: str = ""
+    description_zh: str = ""
     allowed_values: Optional[list[str]] = None
     min_value: Optional[float] = None
     max_value: Optional[float] = None
@@ -61,12 +75,15 @@ class OnBoardOutputSummary(BaseModel):
 
     name: str
     display_name: str
+    display_name_zh: str = ""
     kind: str = Field(..., description="string | integer | float | boolean | enum")
     unit: Optional[str] = None
     description: str = ""
+    description_zh: str = ""
     quality_gate: bool = False
     gate_default: str = "must_pass"   # must_pass | warn | ignore
     gate_description: str = ""
+    gate_description_zh: str = ""
 
 
 class NodeIndexEntry(BaseModel):
@@ -75,7 +92,9 @@ class NodeIndexEntry(BaseModel):
     name: str = Field(..., description="节点唯一标识（metadata.name）")
     version: str = Field(..., description="节点版本")
     display_name: str = Field(..., description="人类可读的显示名称")
+    display_name_zh: str = Field(default="", description="节点中文显示名称")
     description: str = Field(default="", description="节点功能描述")
+    description_zh: str = Field(default="", description="节点功能的中文描述")
     node_type: str = Field(..., description="compute / lightweight")
     category: str = Field(..., description="节点分类")
     base_image_ref: Optional[str] = Field(default=None, description="基础镜像引用")
@@ -87,6 +106,7 @@ class NodeIndexEntry(BaseModel):
     software: Optional[str] = Field(default=None, description="底层计算软件")
     semantic_type: Optional[str] = Field(default=None, description="化学语义操作类型，如 'geometry-optimization'")
     semantic_display_name: Optional[str] = Field(default=None, description="语义类型的人类可读名称（来自注册表）")
+    semantic_display_name_zh: Optional[str] = Field(default=None, description="语义类型的中文显示名称（来自注册表）")
     methods: list[str] = Field(default_factory=list, description="计算方法标签")
     domains: list[str] = Field(default_factory=list, description="应用领域标签")
     capabilities: list[str] = Field(default_factory=list, description="功能标签")

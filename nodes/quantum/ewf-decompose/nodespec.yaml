@@ -20,6 +20,12 @@ metadata:
     ansatz seed in the vayesta/cluster-hamiltonian-h5 T6 contract format.  Uses
     Vayesta's DUMP solver to write cluster integrals without performing a
     correlated cluster solve.
+  description_zh: >
+    从收敛的 PySCF RHF 平均场对象构建单个原子碎片，以可配置的浴类型
+    （MP2/DMET/full）与碎片化方案（IAO/IAO+PAO/SAO）展开纠缠浴，并将有效
+    簇哈密顿量（heff、eris、e_core）及预计算的 MP2 t2 ansatz 初值导出为
+    vayesta/cluster-hamiltonian-h5 T6 契约格式。使用 Vayesta 的 DUMP 求解器
+    写出簇积分，而无需执行关联簇求解。
   node_type: compute
   category: quantum
   author: MiQroForge Team
@@ -48,6 +54,7 @@ metadata:
       - mp2
       - iao
 
+  display_name_zh: EWF 嵌入分解
 stream_inputs:
   - name: meanfield_package
     display_name: Mean-Field Package (HDF5)
@@ -59,7 +66,11 @@ stream_inputs:
     description: >
       PySCF RHF checkpoint file (HDF5 format) containing converged molecular
       orbitals, density matrix, and full molecule specification.
+    description_zh: >
+      PySCF RHF 检查点文件（HDF5 格式），包含收敛的分子轨道、密度矩阵与完整的
+      分子定义。
 
+    display_name_zh: 平均场 HDF5 包
 stream_outputs:
   - name: cluster_hamiltonian
     display_name: Cluster Hamiltonian (HDF5)
@@ -74,7 +85,14 @@ stream_outputs:
       (/cluster/t2_amps, /cluster/eps_mo, /cluster/C_mo in the canonical cluster
       MO basis), and /meta/* metadata (norb, n_elec).
       Readable by cluster_contract.load_cluster().
+    description_zh: >
+      T6 HDF5 契约格式的有效簇哈密顿量。包含 /cluster/heff（单体项）、
+      /cluster/eris（双体项，物理学家排序）、/cluster/e_core（核能量常数）、
+      MP2 ansatz 初值（/cluster/t2_amps、/cluster/eps_mo、/cluster/C_mo，位于
+      正则簇 MO 基下）以及 /meta/* 元数据（norb、n_elec）。可通过
+      cluster_contract.load_cluster() 读取。
 
+    display_name_zh: 簇 Hamiltonian (HDF5)
   - name: e_mf
     display_name: Mean-Field Energy
     io_type:
@@ -83,7 +101,10 @@ stream_outputs:
     description: >
       Hartree-Fock total energy of the full molecular system (from the input
       mean-field package).
+    description_zh: >
+      整个分子体系的 Hartree-Fock 总能量（取自输入的平均场数据包）。
 
+    display_name_zh: 平均场能量
 onboard_inputs:
   - name: active_atoms
     display_name: Active Atom Indices
@@ -94,7 +115,12 @@ onboard_inputs:
       embed, e.g. "0,4" for a fragment containing atoms 0 and 4.  All listed
       atoms are combined into ONE fragment (not one per index).
       Whitespace is tolerated for backward compatibility ("0 4" → "0,4").
+    description_zh: >
+      逗号分隔、从 0 开始的原子索引，用于定义要嵌入的单个碎片，如 "0,4" 表示
+      包含第 0 与第 4 号原子的碎片。列出的所有原子合并为同一个碎片（而非每个
+      索引一个碎片）。为向后兼容，允许空格分隔（"0 4" → "0,4"）。
 
+    display_name_zh: 活性原子索引
   - name: bath_threshold
     display_name: Bath BN Occupation Threshold (eta)
     kind: float
@@ -106,7 +132,12 @@ onboard_inputs:
       include more bath orbitals (more complete embedding).  Typical range
       is 1e-8 (tight) to 1e-4 (loose).  Default 1e-6 balances accuracy and
       cluster size.  Only relevant when bathtype is 'mp2'.
+    description_zh: >
+      MP2 浴自然轨道选择的阈值。值越小，纳入的浴轨道越多（嵌入越完整）。
+      典型范围从 1e-8（严格）到 1e-4（宽松）。默认值 1e-6 在精度与簇规模之间
+      取得平衡。仅当 bathtype 为 'mp2' 时生效。
 
+    display_name_zh: Bath BN 占据阈值 (eta)
   - name: bathtype
     display_name: Bath Expansion Type
     kind: enum
@@ -121,7 +152,12 @@ onboard_inputs:
       'dmet': DMET bath only, no MP2 natural orbital expansion.
       'full': No bath truncation — all environment orbitals are included in
       the cluster.
+    description_zh: >
+      浴展开方法。'mp2'（默认）：MP2 浴自然轨道（能量加权碎片形式），按
+      bath_threshold 截断。'dmet'：仅 DMET 浴，不做 MP2 自然轨道展开。
+      'full'：不截断浴——所有环境轨道都纳入簇中。
 
+    display_name_zh: Bath 展开类型
   - name: fragmentation
     display_name: Fragmentation Method
     kind: enum
@@ -134,7 +170,11 @@ onboard_inputs:
       Local orbital fragmentation scheme. 'iao' (default): Intrinsic Atomic
       Orbitals. 'iaopao': IAO + Projected Atomic Orbitals.
       'sao': Symmetry-Adapted Orbitals.
+    description_zh: >
+      定域轨道碎片化方案。'iao'（默认）：内禀原子轨道。'iaopao'：IAO + 投影
+      原子轨道。'sao'：对称匹配轨道。
 
+    display_name_zh: 碎片化方法
   - name: orbital_filter
     display_name: Orbital Filter
     kind: string
@@ -149,7 +189,16 @@ onboard_inputs:
       For a C≡N fragment, "2p" selects the 6-orbital π/σ_p system (≈ CAS(6e,6o)).
       Leave empty (default) to include all minimal-basis orbitals on the active
       atoms.
+    description_zh: >
+      可选的、逗号分隔的 IAO 轨道类型标记，用于限制哪些碎片轨道进入簇，从而
+      将活性空间（及量子比特数）收缩到化学相关的区域。每个标记由 Vayesta 以
+      正则表达式匹配 "<atom> <symbol> <nl> <ml>" 形式的 IAO 标签（如
+      "0 N 2p x"）。示例："2p" 仅保留活性原子上的 2p 轨道；"2s,2p" 保留 2s 与
+      2p；"N 2p,C 2p" 指定特定原子类型。对于 C≡N 碎片，"2p" 选出 6 轨道的
+      π/σ_p 体系（≈ CAS(6e,6o)）。留空（默认）则包含活性原子上的全部最小基
+      轨道。
 
+    display_name_zh: 轨道筛选
 onboard_outputs:
   - name: n_active_orbitals
     display_name: Active Orbital Count
@@ -157,7 +206,10 @@ onboard_outputs:
     description: >
       Total number of spatial orbitals in the final EWF cluster (fragment +
       bath).
+    description_zh: >
+      最终 EWF 簇中的空间轨道总数（碎片 + 浴）。
 
+    display_name_zh: 活性轨道数
 resources:
   cpu_cores: 4
   mem_gb: 8.0

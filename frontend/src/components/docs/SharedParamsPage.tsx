@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react'
 import { ArrowLeft } from 'lucide-react'
+import { useT } from '../../lib/i18n'
+import type { DictKey } from '../../lib/i18n'
 
 import '../../stores/settings-store'
 
 interface SharedParamEntry {
   display_name: string
+  display_name_zh?: string
   gaussian: string | null
   psi4: string | null
   orca: string | null
@@ -17,27 +20,31 @@ interface SharedParamsData {
   dispersions: Record<string, SharedParamEntry>
 }
 
-const CATEGORY_INFO: Record<string, { title: string; description: string }> = {
+const CATEGORY_INFO: Record<string, { title: DictKey; description: DictKey }> = {
   functionals: {
-    title: 'DFT Functionals',
-    description: 'Exchange-correlation functionals used in DFT calculations. Canonical names are translated to software-native keywords at compile time.',
+    title: 'docs.spFunctionalsTitle',
+    description: 'docs.spFunctionalsDesc',
   },
   basis_sets: {
-    title: 'Basis Sets',
-    description: 'Atomic orbital basis sets define the accuracy of molecular calculations. Larger basis sets give more accurate results but cost more compute. null = not supported by that software.',
+    title: 'docs.spBasisSetsTitle',
+    description: 'docs.spBasisSetsDesc',
   },
   dispersions: {
-    title: 'Dispersion Corrections',
-    description: 'Empirical corrections for van der Waals interactions. Essential for non-covalent interactions, layered materials, and molecular crystals.',
+    title: 'docs.spDispersionsTitle',
+    description: 'docs.spDispersionsDesc',
   },
 }
 
 export function SharedParamsPage() {
+  const { t } = useT()
   const [data, setData] = useState<SharedParamsData | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    document.title = 'Shared Parameters — MiQroForge'
+    document.title = t('docs.sharedParamsTitle', { app: 'MiQroForge' })
+  }, [t])
+
+  useEffect(() => {
     fetch('/api/v1/nodes/shared-params')
       .then((r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`)
@@ -57,12 +64,12 @@ export function SharedParamsPage() {
             className="flex items-center gap-1.5 text-xs text-mf-text-muted hover:text-mf-text-primary transition-colors"
           >
             <ArrowLeft size={14} />
-            Gallery
+            {t('docs.backToGallery')}
           </a>
           <div className="w-px h-5 bg-mf-border" />
           <div className="flex items-center gap-2">
             <img src="/logo.png" alt="MiQroForge" className="h-5 w-auto" />
-            <h1 className="text-sm font-semibold tracking-tight">Shared Parameters</h1>
+            <h1 className="text-sm font-semibold tracking-tight">{t('docs.sharedParams')}</h1>
           </div>
         </div>
       </header>
@@ -71,45 +78,45 @@ export function SharedParamsPage() {
         {/* Intro */}
         <div className="mb-6 p-4 rounded-lg border border-mf-border bg-mf-panel">
           <h2 className="text-xs font-semibold text-mf-text-secondary uppercase tracking-wide mb-2">
-            Cross-Software Parameter Translation
+            {t('docs.crossSoftwareTranslation')}
           </h2>
           <p className="text-[12px] text-mf-text-muted">
-            Shared parameters are canonical names (e.g. <code className="text-blue-400">PBE0</code>,{' '}
-            <code className="text-blue-400">def2-SVP</code>, <code className="text-blue-400">D3BJ</code>) that
-            the compiler automatically translates to each software's native keywords.
-            A value of <code className="text-red-400">null</code> means the parameter is not available for that software.
+            {t('docs.spIntroPre')}{' '}
+            <code className="text-blue-400">PBE0</code>,{' '}
+            <code className="text-blue-400">def2-SVP</code>, <code className="text-blue-400">D3BJ</code>
+            {t('docs.spIntroMid')}
+            <code className="text-red-400">null</code>
+            {t('docs.spIntroEnd')}
           </p>
         </div>
 
         {/* Error */}
         {error && (
           <div className="text-sm text-red-400 bg-red-500/10 border border-red-500/30 rounded-lg px-4 py-3 mb-6">
-            Failed to load shared parameters: {error}
+            {t('docs.spLoadFailed', { error })}
           </div>
         )}
 
         {/* Loading */}
         {!data && !error && (
-          <div className="text-sm text-mf-text-muted animate-pulse py-8 text-center">Loading shared parameters...</div>
+          <div className="text-sm text-mf-text-muted animate-pulse py-8 text-center">{t('docs.spLoading')}</div>
         )}
 
         {/* Tables */}
         {data && (
           <div className="grid gap-6">
-            {(Object.entries(CATEGORY_INFO) as [string, { title: string; description: string }][]).map(
-              ([key, info]) => {
-                const entries = data[key as keyof SharedParamsData]
-                if (!entries || Object.keys(entries).length === 0) return null
-                return (
-                  <ParamTable
-                    key={key}
-                    title={info.title}
-                    description={info.description}
-                    entries={entries}
-                  />
-                )
-              },
-            )}
+            {Object.entries(CATEGORY_INFO).map(([key, info]) => {
+              const entries = data[key as keyof SharedParamsData]
+              if (!entries || Object.keys(entries).length === 0) return null
+              return (
+                <ParamTable
+                  key={key}
+                  title={t(info.title)}
+                  description={t(info.description)}
+                  entries={entries}
+                />
+              )
+            })}
           </div>
         )}
       </main>
@@ -126,6 +133,8 @@ function ParamTable({
   description: string
   entries: Record<string, SharedParamEntry>
 }) {
+  const { t, language } = useT()
+  const zh = language === 'zh'
   const sorted = Object.entries(entries).sort(([a], [b]) => a.localeCompare(b))
 
   return (
@@ -137,8 +146,8 @@ function ParamTable({
       <table className="w-full text-[12px]">
         <thead>
           <tr className="text-mf-text-muted border-b border-mf-border">
-            <th className="text-left px-4 py-1.5 font-medium">Canonical</th>
-            <th className="text-left px-4 py-1.5 font-medium">Display Name</th>
+            <th className="text-left px-4 py-1.5 font-medium">{t('docs.spColCanonical')}</th>
+            <th className="text-left px-4 py-1.5 font-medium">{t('docs.spColDisplayName')}</th>
             <th className="text-center px-4 py-1.5 font-mono font-medium">Gaussian</th>
             <th className="text-center px-4 py-1.5 font-mono font-medium">ORCA</th>
             <th className="text-center px-4 py-1.5 font-mono font-medium">Psi4</th>
@@ -152,7 +161,7 @@ function ParamTable({
               className={`hover:bg-mf-hover/30 ${i < sorted.length - 1 ? 'border-b border-mf-border/40' : ''}`}
             >
               <td className="px-4 py-1.5 font-mono text-mf-text-primary font-medium">{canonical}</td>
-              <td className="px-4 py-1.5 text-mf-text-muted">{entry.display_name}</td>
+              <td className="px-4 py-1.5 text-mf-text-muted">{zh && entry.display_name_zh ? entry.display_name_zh : entry.display_name}</td>
               <td className="text-center px-4 py-1.5 font-mono">
                 <CellValue value={entry.gaussian} />
               </td>

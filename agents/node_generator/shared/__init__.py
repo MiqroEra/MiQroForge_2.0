@@ -1,6 +1,6 @@
 """agents/node_generator/shared/ — 共享工具模块。
 
-提供 knowledge、manual_index、compression、memory、sandbox_base 等
+提供 knowledge、manual_index、compression、memory、sandbox_base、parsing 等
 在 prefab 和 ephemeral 模式中都会用到的基础设施。
 """
 

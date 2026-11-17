@@ -16,16 +16,20 @@
 cpu_cores:
   param_name: n_cores        # OnBoardInput name; also read by run.sh (PALn)
   display_name: CPU Cores
+  display_name_zh: CPU 核数
   kind: integer
   min_value: 1
   max_value: 128
   description: >
     Number of CPU cores allocated to this computation.
     Determines both pod resource request and parallel processes (PALn).
+  description_zh: >
+    为此计算分配的 CPU 核数。同时决定 Pod 资源请求与并行进程数（PALn）。
 
 mem_overhead:
   param_name: mem_overhead
   display_name: Memory Overhead (GB)
+  display_name_zh: 内存开销 (GB)
   kind: float
   min_value: 0.0
   max_value: 256.0
@@ -33,35 +37,45 @@ mem_overhead:
   description: >
     Extra pod memory beyond app memory (mem_gb + overhead = pod allocation).
     Most nodes use 0; Psi4 uses ~4 GB for Python/C++/scratch overhead.
+  description_zh: >
+    超出应用内存的额外 Pod 内存（mem_gb + 开销 = Pod 分配量）。
+    多数节点为 0；Psi4 约需 4 GB 用于 Python/C++/scratch 开销。
 
 gpu_count:
   param_name: gpu_count
   display_name: GPU Count
+  display_name_zh: GPU 数量
   kind: integer
   min_value: 0
   max_value: 8
   description: Number of GPUs allocated.
+  description_zh: 分配的 GPU 数量。
 
 parallel_tasks:
   param_name: n_cores        # same param as cpu_cores — no duplicate injection
   display_name: CPU Cores
+  display_name_zh: CPU 核数
   kind: integer
   min_value: 1
   max_value: 128
   description: Number of MPI parallel tasks (kept in sync with cpu_cores via n_cores).
+  description_zh: MPI 并行任务数（通过 n_cores 与 cpu_cores 保持同步）。
 
 scratch_disk_gb:
   param_name: scratch_disk_gb
   display_name: Scratch Disk (GB)
+  display_name_zh: 临时磁盘 (GB)
   kind: float
   min_value: 0
   max_value: 1000.0
   unit: GB
   description: Temporary disk space in GiB for intermediate files.
+  description_zh: 中间文件所需的临时磁盘空间（GiB）。
 
 mem_gb:
   param_name: mem_gb
   display_name: App Memory (GB)
+  display_name_zh: 应用内存 (GB)
   kind: float
   min_value: 2.0
   max_value: 512.0
@@ -69,12 +83,16 @@ mem_gb:
   description: >
     Application-level memory passed to the computation software
     (e.g. Gaussian %mem, Psi4 set_memory).
+  description_zh: >
+    传递给计算软件的应用层内存（如 Gaussian %mem、Psi4 set_memory）。
 
 estimated_walltime_hours:
   param_name: walltime_hours
   display_name: Walltime (hours)
+  display_name_zh: 墙钟时间 (小时)
   kind: float
   min_value: 0.01
   max_value: 720.0
   unit: hours
   description: Estimated maximum wall-clock time.
+  description_zh: 预估的最大墙钟运行时间。

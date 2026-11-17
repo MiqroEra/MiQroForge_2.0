@@ -63,11 +63,14 @@ def _entry_to_summary(entry: NodeIndexEntry) -> NodeSummaryResponse:
         name=entry.name,
         version=entry.version,
         display_name=entry.display_name,
+        display_name_zh=entry.display_name_zh,
         description=entry.description,
+        description_zh=entry.description_zh,
         node_type=entry.node_type,
         category=entry.category,
         semantic_type=entry.semantic_type,
         semantic_display_name=entry.semantic_display_name,
+        semantic_display_name_zh=entry.semantic_display_name_zh,
         base_image_ref=entry.base_image_ref,
         nodespec_path=entry.nodespec_path,
         software=entry.software,
@@ -155,7 +158,9 @@ def get_semantic_registry() -> SemanticRegistryResponse:
         types={
             key: SemanticTypeEntry(
                 display_name=entry.display_name,
+                display_name_zh=entry.display_name_zh,
                 description=entry.description,
+                description_zh=entry.description_zh,
                 domain=entry.domain,
             )
             for key, entry in registry.types.items()
@@ -185,6 +190,7 @@ def list_semantic_types(
         SemanticTypeGroup(
             semantic_type=st,
             display_name=registry.display_name(st),
+            display_name_zh=registry.display_name_zh(st),
             nodes=nodes,
         )
         for st, nodes in sorted(groups_map.items())
@@ -216,13 +222,16 @@ def get_shared_params(software: Optional[str] = None) -> dict:
                     entries.append({
                         "canonical": name,
                         "display_name": entry.display_name,
+                        "display_name_zh": entry.display_name_zh or "",
                         "native": native,
                     })
             allowed_values = [e["canonical"] for e in entries]
             result[cat_name] = {
                 "kind": cat_meta.kind,
                 "display_name": cat_meta.display_name,
+                "display_name_zh": cat_meta.display_name_zh,
                 "description": cat_meta.description,
+                "description_zh": cat_meta.description_zh,
                 "allow_other": cat_meta.allow_other,
                 "allowed_values": allowed_values,
                 "entries": entries,
@@ -411,9 +420,11 @@ def get_node(
         OnBoardParamResponse(
             name=p.name,
             display_name=p.display_name,
+            display_name_zh=p.display_name_zh,
             kind=p.kind,
             default=p.default,
             description=p.description,
+            description_zh=p.description_zh,
             allowed_values=p.allowed_values,
             min_value=p.min_value,
             max_value=p.max_value,
@@ -428,12 +439,15 @@ def get_node(
         OnBoardOutputResponse(
             name=o.name,
             display_name=o.display_name,
+            display_name_zh=o.display_name_zh,
             kind=o.kind,
             unit=o.unit,
             description=o.description,
+            description_zh=o.description_zh,
             quality_gate=o.quality_gate,
             gate_default=o.gate_default,
             gate_description=o.gate_description,
+            gate_description_zh=o.gate_description_zh,
         )
         for o in entry.onboard_outputs
     ]

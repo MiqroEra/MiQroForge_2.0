@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import { ArrowLeft } from 'lucide-react'
+import { useT } from '../../lib/i18n'
+import type { DictKey } from '../../lib/i18n'
 
 // Import settings store so theme is applied on this page too
 import '../../stores/settings-store'
@@ -16,22 +18,26 @@ interface UnitsData {
   dimensions: Record<string, UnitEntry[]>
 }
 
-const SI_LABELS: Record<string, string> = {
-  energy: 'J (Joule)',
-  length: 'm (metre)',
-  pressure: 'Pa (Pascal)',
-  temperature: 'K (Kelvin)',
-  angle: 'rad (radian)',
-  force: 'N (Newton)',
-  time: 's (second)',
+const SI_LABELS: Record<string, DictKey> = {
+  energy: 'docs.siEnergy',
+  length: 'docs.siLength',
+  pressure: 'docs.siPressure',
+  temperature: 'docs.siTemperature',
+  angle: 'docs.siAngle',
+  force: 'docs.siForce',
+  time: 'docs.siTime',
 }
 
 export function UnitsPage() {
+  const { t } = useT()
   const [data, setData] = useState<UnitsData | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    document.title = 'Units Reference — MiQroForge'
+    document.title = t('docs.unitsTitle', { app: 'MiQroForge' })
+  }, [t])
+
+  useEffect(() => {
     fetch('/api/v1/nodes/units')
       .then((r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`)
@@ -55,16 +61,16 @@ export function UnitsPage() {
             className="flex items-center gap-1.5 text-xs text-mf-text-muted hover:text-mf-text-primary transition-colors"
           >
             <ArrowLeft size={14} />
-            Canvas
+            {t('docs.backToCanvas')}
           </a>
           <div className="w-px h-5 bg-mf-border" />
           <div className="flex items-center gap-2">
             <img src="/logo.png" alt="MiQroForge" className="h-5 w-auto" />
-            <h1 className="text-sm font-semibold tracking-tight">Units Reference</h1>
+            <h1 className="text-sm font-semibold tracking-tight">{t('docs.unitsReference')}</h1>
           </div>
           {data && (
             <span className="ml-auto text-[11px] text-mf-text-muted">
-              {data.total_units} units / {data.total_dimensions} dimensions
+              {t('docs.unitsStats', { total: data.total_units, dims: data.total_dimensions })}
             </span>
           )}
         </div>
@@ -74,25 +80,38 @@ export function UnitsPage() {
         {/* Intro */}
         <div className="mb-6 p-4 rounded-lg border border-mf-border bg-mf-panel">
           <h2 className="text-xs font-semibold text-mf-text-secondary uppercase tracking-wide mb-2">
-            Connection Rules for Physical Quantity Ports
+            {t('docs.connRules')}
           </h2>
           <ul className="text-[12px] text-mf-text-muted space-y-1 list-disc list-inside">
-            <li>Two PQ ports can connect when they share the same <strong className="text-mf-text-primary">dimension</strong> (e.g. both are <code className="text-blue-400">energy</code>) and the same <strong className="text-mf-text-primary">shape</strong> (e.g. both are <code className="text-blue-400">scalar</code>).</li>
-            <li>Different units within the same dimension are <strong className="text-mf-text-primary">automatically converted</strong> at runtime via their SI factors.</li>
-            <li>Ports with different dimensions (e.g. <code className="text-blue-400">energy</code> vs <code className="text-blue-400">length</code>) cannot connect.</li>
+            <li>
+              {t('docs.rulesDimPre')}<strong className="text-mf-text-primary">{t('docs.rulesDimension')}</strong>
+              {t('docs.rulesDimMid')}<code className="text-blue-400">energy</code>
+              {t('docs.rulesDimShape')}<strong className="text-mf-text-primary">{t('docs.rulesShape')}</strong>
+              {t('docs.rulesDimMid')}<code className="text-blue-400">scalar</code>
+              {t('docs.rulesDimEnd')}
+            </li>
+            <li>
+              {t('docs.rulesAutoPre')}<strong className="text-mf-text-primary">{t('docs.rulesAutoConverted')}</strong>
+              {t('docs.rulesAutoEnd')}
+            </li>
+            <li>
+              {t('docs.rulesDiffPre')}<code className="text-blue-400">energy</code>
+              {t('docs.rulesDiffMid')}<code className="text-blue-400">length</code>
+              {t('docs.rulesDiffEnd')}
+            </li>
           </ul>
         </div>
 
         {/* Error */}
         {error && (
           <div className="text-sm text-red-400 bg-red-500/10 border border-red-500/30 rounded-lg px-4 py-3 mb-6">
-            Failed to load units: {error}
+            {t('docs.unitsLoadFailed', { error })}
           </div>
         )}
 
         {/* Loading */}
         {!data && !error && (
-          <div className="text-sm text-mf-text-muted animate-pulse py-8 text-center">Loading units...</div>
+          <div className="text-sm text-mf-text-muted animate-pulse py-8 text-center">{t('docs.unitsLoading')}</div>
         )}
 
         {/* Dimension cards grid */}
@@ -110,21 +129,23 @@ export function UnitsPage() {
 
 
 function DimensionCard({ dimension, units }: { dimension: string; units: UnitEntry[] }) {
-  const siLabel = SI_LABELS[dimension] ?? '?'
+  const { t } = useT()
+  const siKey = SI_LABELS[dimension]
+  const siLabel = siKey !== undefined ? t(siKey) : '?'
 
   return (
     <div className="rounded-lg border border-mf-border bg-mf-panel overflow-hidden">
       {/* Card header */}
       <div className="flex items-center justify-between px-4 py-2.5 bg-mf-hover/40 border-b border-mf-border">
         <span className="text-[13px] font-semibold text-mf-text-primary capitalize">{dimension}</span>
-        <span className="text-[11px] text-mf-text-muted">SI: {siLabel}</span>
+        <span className="text-[11px] text-mf-text-muted">{t('docs.siPrefix', { label: siLabel })}</span>
       </div>
       {/* Unit rows */}
       <table className="w-full text-[12px]">
         <thead>
           <tr className="text-mf-text-muted border-b border-mf-border">
-            <th className="text-left px-4 py-1.5 font-medium">Symbol</th>
-            <th className="text-right px-4 py-1.5 font-medium">to SI factor</th>
+            <th className="text-left px-4 py-1.5 font-medium">{t('docs.colSymbol')}</th>
+            <th className="text-right px-4 py-1.5 font-medium">{t('docs.colToSiFactor')}</th>
           </tr>
         </thead>
         <tbody>

@@ -1,0 +1,25 @@
+import { filesEn } from '../en/files'
+
+export const filesZh: Record<keyof typeof filesEn, string> = {
+  title: '文件',
+  tabGlobal: '全局',
+  tabProject: '项目',
+  tabDirectory: '目录',
+  noFiles: '暂无文件',
+  download: '下载',
+  delete: '删除',
+  view: '查看',
+  uploading: '上传中…',
+  uploadFile: '上传文件',
+  uploadFailed: '上传失败',
+  loading: '加载中…',
+  failedToLoadFiles: '文件加载失败',
+  failedToLoadDirectory: '目录加载失败',
+  failedToReadFile: '[文件读取失败]',
+  copyFromWorkspace: '从工作区复制：',
+  footerWorkspace: 'workspace/ • {count} 个{unit}',
+  footerProject: '项目文件/ • {count} 个{unit}',
+  footerDirectory: '项目目录/ • {count} 个{unit}',
+  fileUnit: '文件',
+  fileUnits: '文件',
+}

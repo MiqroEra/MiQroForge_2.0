@@ -8,6 +8,10 @@ metadata:
     MP3 and MP4 include higher-order perturbation corrections for improved
     accuracy at increased computational cost.
     Supports frozen-core and all-electron variants.
+  description_zh: >
+    使用 Gaussian 16 进行 MP2、MP3 或 MP4 单点能计算。
+    MP3 与 MP4 包含更高阶微扰修正，精度更高但计算量更大。
+    支持冻结核与全电子两种方案。
   node_type: compute
   category: chemistry
   author: MiQroForge Team
@@ -31,6 +35,7 @@ metadata:
       - post-hf
       - correlation
 
+  display_name_zh: Gaussian 微扰理论 (MP2/MP3/MP4)
 stream_inputs:
   - name: xyz_geometry
     display_name: Input Geometry (XYZ)
@@ -40,7 +45,9 @@ stream_inputs:
       shape: array
     required: true
     description: Molecular geometry in standard XYZ format (Angstrom).
+    description_zh: 标准 XYZ 格式（埃）的分子几何结构。
 
+    display_name_zh: 输入几何 (XYZ)
 stream_outputs:
   - name: fchk_file
     display_name: Formatted Checkpoint File
@@ -49,14 +56,18 @@ stream_outputs:
       ecosystem: gaussian
       data_type: formatted-checkpoint
     description: Gaussian formatted checkpoint file (.fchk).
+    description_zh: Gaussian 格式化检查点文件（.fchk）。
 
+    display_name_zh: Formatted Checkpoint 文件
   - name: total_energy
     display_name: Total Energy
     io_type:
       category: physical_quantity
       unit: Ha
     description: Total MP2 electronic energy.
+    description_zh: MP2 总电子能量。
 
+    display_name_zh: 最终能量
 onboard_inputs:
   - name: method_variant
     display_name: Perturbation Theory Order
@@ -67,18 +78,26 @@ onboard_inputs:
       - MP3
       - MP4
     description: "MP3/MP4 include higher-order corrections — higher accuracy but significantly more expensive."
+    description_zh: "MP3/MP4 包含更高阶修正——精度更高，但计算量显著增加。"
 
+    display_name_zh: 耦合簇变体
   - name: charge
     display_name: Molecular Charge
     kind: integer
     default: 0
 
+    display_name_zh: 体系电荷
+    description: Total charge of the system.
+    description_zh: 分子或晶胞的总电荷。
   - name: multiplicity
     display_name: Spin Multiplicity
     kind: integer
     default: 1
     min_value: 1
 
+    display_name_zh: 自旋多重度
+    description: Spin multiplicity (2S+1) of the system.
+    description_zh: 体系的自旋多重度（2S+1）。
   - name: basis_set
     default: "6-31G*"
     _shared_param: basis_sets
@@ -92,18 +111,26 @@ onboard_inputs:
       - None
       - Minimal
 
+    display_name_zh: 布居分析
+    description: Population analysis type (Mulliken / NPA).
+    description_zh: 电荷布居分析类型（Mulliken / NPA 等）。
   - name: frozen_core
     display_name: Frozen Core
     kind: boolean
     default: true
     description: "Use frozen core approximation"
+    description_zh: "使用冻结核近似"
 
+    display_name_zh: 冻结芯
 onboard_outputs:
   - name: scf_energy
     display_name: SCF Energy (Ha)
     kind: float
     unit: Ha
 
+    display_name_zh: 最终能量 (Ha)
+    description: Total energy after SCF convergence (Hartree).
+    description_zh: SCF 收敛后的总能量（Hartree）。
   - name: scf_converged
     display_name: SCF Converged
     kind: boolean
@@ -111,6 +138,10 @@ onboard_outputs:
     gate_default: must_pass
     gate_description: "SCF must converge."
 
+    display_name_zh: SCF 已收敛
+    description: Whether SCF converged.
+    description_zh: SCF 是否已收敛。
+    gate_description_zh: SCF 必须收敛。
 resources:
   cpu_cores: 4
   mem_gb: 8.0

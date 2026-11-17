@@ -8,6 +8,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Trash2, AlertTriangle, Brain, Loader2 } from 'lucide-react'
 import { getToken } from '../lib/auth'
+import { useT } from '../lib/i18n'
 
 const API_BASE = '/api/v1/memory'
 
@@ -55,6 +56,7 @@ async function deleteMemory(params: {
 }
 
 export function MemoryManager() {
+  const { t } = useT()
   const navigate = useNavigate()
   const [software, setSoftware] = useState('gaussian')
   const [entries, setEntries] = useState<MemoryEntry[]>([])
@@ -108,20 +110,20 @@ export function MemoryManager() {
   }
 
   return (
-    <div className="min-h-screen bg-mf-bg text-mf-text-primary">
+    <div className="min-h-screen bg-mf-base text-mf-text-primary">
       {/* Header */}
       <div className="flex items-center gap-3 px-6 h-14 border-b border-mf-border bg-mf-panel">
         <button
           onClick={() => navigate('/')}
           className="p-1.5 rounded hover:bg-mf-hover text-mf-text-muted hover:text-mf-text-primary transition-colors"
-          title="Back to Gallery"
+          title={t('memory.backToGallery')}
         >
           <ArrowLeft size={16} />
         </button>
         <Brain size={18} className="text-purple-400" />
-        <span className="text-sm font-semibold">Memory Manager</span>
+        <span className="text-sm font-semibold">{t('memory.title')}</span>
         <span className="text-[11px] text-mf-text-muted ml-2">
-          Manage agent experience memory
+          {t('memory.subtitle')}
         </span>
       </div>
 
@@ -129,7 +131,7 @@ export function MemoryManager() {
       <div className="max-w-3xl mx-auto px-6 py-6 space-y-4">
         {/* Software selector */}
         <div className="flex items-center gap-3">
-          <span className="text-xs text-mf-text-secondary">Software:</span>
+          <span className="text-xs text-mf-text-secondary">{t('memory.software')}</span>
           <div className="flex gap-1">
             {SOFTWARE_LIST.map((sw) => (
               <button
@@ -159,7 +161,7 @@ export function MemoryManager() {
         {loading && (
           <div className="flex items-center gap-2 text-xs text-mf-text-muted py-8 justify-center">
             <Loader2 size={14} className="animate-spin" />
-            Loading memories...
+            {t('memory.loading')}
           </div>
         )}
 
@@ -167,7 +169,9 @@ export function MemoryManager() {
         {!loading && entries.length === 0 && (
           <div className="text-center py-12 text-mf-text-muted text-xs">
             <Brain size={32} className="mx-auto mb-3 text-mf-text-muted/40" />
-            No memories for <span className="text-mf-text-secondary">{software}</span>.
+            {t('memory.emptyPre')}
+            <span className="text-mf-text-secondary">{software}</span>
+            {t('memory.emptyPost')}
           </div>
         )}
 
@@ -176,7 +180,9 @@ export function MemoryManager() {
           <>
             <div className="flex items-center justify-between">
               <span className="text-xs text-mf-text-muted">
-                {entries.length} entr{entries.length === 1 ? 'y' : 'ies'}
+                {entries.length === 1
+                  ? t('memory.entryOne', { count: entries.length })
+                  : t('memory.entryMany', { count: entries.length })}
               </span>
               {!confirmClear ? (
                 <button
@@ -184,23 +190,23 @@ export function MemoryManager() {
                   className="flex items-center gap-1 px-2 py-1 rounded text-[10px] text-red-400 hover:bg-red-900/30 transition-colors"
                 >
                   <Trash2 size={10} />
-                  Clear all
+                  {t('memory.clearAll')}
                 </button>
               ) : (
                 <div className="flex items-center gap-1.5">
-                  <span className="text-[10px] text-red-400">Are you sure?</span>
+                  <span className="text-[10px] text-red-400">{t('memory.confirmTitle')}</span>
                   <button
                     onClick={handleClearAll}
                     disabled={deleting.has('__all__')}
                     className="px-2 py-0.5 rounded text-[10px] bg-red-700 text-white hover:bg-red-600 disabled:opacity-50"
                   >
-                    {deleting.has('__all__') ? 'Clearing...' : 'Yes, clear all'}
+                    {deleting.has('__all__') ? t('memory.clearing') : t('memory.confirmYes')}
                   </button>
                   <button
                     onClick={() => setConfirmClear(false)}
                     className="px-2 py-0.5 rounded text-[10px] bg-mf-hover text-mf-text-secondary"
                   >
-                    Cancel
+                    {t('memory.cancel')}
                   </button>
                 </div>
               )}
@@ -225,7 +231,9 @@ export function MemoryManager() {
                               : 'bg-red-900/40 text-red-400'
                           }`}
                         >
-                          {entry.result}
+                          {entry.result === 'success'
+                            ? t('memory.resultSuccess')
+                            : t('memory.resultFailed')}
                         </span>
                       </div>
                     </div>
@@ -233,7 +241,7 @@ export function MemoryManager() {
                       onClick={() => handleDelete(entry.id)}
                       disabled={deleting.has(entry.id)}
                       className="flex-shrink-0 p-1 rounded text-mf-text-muted hover:text-red-400 hover:bg-red-900/20 disabled:opacity-30 transition-colors"
-                      title="Delete this memory"
+                      title={t('memory.deleteEntry')}
                     >
                       {deleting.has(entry.id) ? (
                         <Loader2 size={11} className="animate-spin" />

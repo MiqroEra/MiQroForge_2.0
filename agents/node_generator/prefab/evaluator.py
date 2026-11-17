@@ -6,6 +6,9 @@
 from __future__ import annotations
 
 import json
+import re
+import string
+import subprocess
 from pathlib import Path
 from typing import Any
 
@@ -17,25 +20,15 @@ from agents.schemas import EvaluationResult
 from agents.common.prompt_loader import load_prompt
 from agents.common.session_logger import get_session
 from agents.node_generator.prefab.state import PrefabGenState
+from agents.node_generator.shared.parsing import extract_json
 
 # Evaluator 工具调用最大轮次（搜索/阅读文件阶段）
 _MAX_EVAL_TOOL_ROUNDS = 2
 
-
-def _extract_json(text: str) -> str:
-    if "```json" in text:
-        start = text.index("```json") + 7
-        end = text.index("```", start)
-        return text[start:end].strip()
-    if "```" in text:
-        start = text.index("```") + 3
-        end = text.index("```", start)
-        return text[start:end].strip()
-    start = text.find("{")
-    end = text.rfind("}")
-    if start != -1 and end != -1:
-        return text[start:end + 1].strip()
-    return text.strip()
+# string.Template 占位符（$name / ${name}）
+_TEMPLATE_PLACEHOLDER_RE = re.compile(
+    r"\$(?:([a-zA-Z_][a-zA-Z0-9_]*)|\{([a-zA-Z_][a-zA-Z0-9_]*)\})"
+)
 
 
 def _programmatic_check(state: PrefabGenState) -> list[str]:
@@ -103,8 +96,47 @@ def _programmatic_check(state: PrefabGenState) -> list[str]:
     node_type = metadata.get("node_type", "")
     if node_type == "compute" and not run_sh:
         issues.append("compute 节点缺少 run.sh")
-    # 注：不检查 '# MF2 init' — 编译器在编译时已处理（正则替换），
-    #      sandbox 内 run.sh 可能已被替换为 source mf2_init.sh，无标记也能运行
+
+    # run.sh bash 语法检查（bash -n，不执行）
+    if run_sh:
+        try:
+            result = subprocess.run(
+                ["bash", "-n", "-c", run_sh],
+                capture_output=True, text=True, timeout=15,
+            )
+            if result.returncode != 0:
+                issues.append(f"run.sh bash 语法错误: {(result.stderr or '').strip()[:500]}")
+        except Exception as e:
+            issues.append(f"run.sh bash -n 检查失败: {e}")
+
+    # 仅设计时检查：run.sh 用了 mf_* 函数却没有 '# MF2 init' 标记 → 运行时函数未定义（运行时由沙箱实跑覆盖）
+    if node_type == "compute" and run_sh and not state.get("_sandbox_enabled", True):
+        uses_mf_functions = re.search(r"\bmf_(param|banner|write_xyz)\b", run_sh) is not None
+        has_mf2_init = "# MF2 init" in run_sh or "mf2_init.sh" in run_sh
+        if uses_mf_functions and not has_mf2_init:
+            issues.append(
+                "run.sh 使用了 mf_param/mf_banner/mf_write_xyz，但缺少 '# MF2 init' 标记"
+                "（编译器依赖此标记注入 mf2_init.sh，缺失时这些函数未定义）"
+            )
+
+    # 输入模板占位符语法检查（string.Template：$name / ${name}）
+    if _sandbox_dir:
+        profile_dir = Path(_sandbox_dir) / "profile"
+        if profile_dir.exists():
+            for tpl_path in sorted(profile_dir.glob("*.template")):
+                try:
+                    content = tpl_path.read_text("utf-8")
+                    placeholders = {
+                        name
+                        for groups in _TEMPLATE_PLACEHOLDER_RE.findall(content)
+                        for name in groups
+                        if name
+                    }
+                    string.Template(content).substitute(**{p: "" for p in placeholders})
+                except (ValueError, KeyError) as e:
+                    issues.append(f"模板 {tpl_path.name} 占位符语法错误: {e}")
+                except Exception:
+                    pass
 
     # 资源合理性检查
     resources = spec_data.get("resources", {})
@@ -117,7 +149,6 @@ def _programmatic_check(state: PrefabGenState) -> list[str]:
             issues.append(f"mem_gb={mem} 过高（>512GB）")
 
     # 端口名 snake_case 检查
-    import re
     snake_pattern = re.compile(r'^[a-z][a-z0-9_]*$')
     for port in spec_data.get("stream_inputs", []) + spec_data.get("stream_outputs", []):
         name = port.get("name", "")
@@ -125,6 +156,24 @@ def _programmatic_check(state: PrefabGenState) -> list[str]:
             issues.append(f"端口名 '{name}' 不符合 snake_case 规范")
 
     return issues
+
+
+def evaluate_static(state: PrefabGenState) -> dict[str, Any]:
+    """仅程序化静态检查（无沙箱、无 LLM），返回 EvaluationResult。
+
+    用于设计时模式：/node 端点生成后立即验证产物，
+    不通过时用 evaluation.issues 反馈驱动一轮修复。
+    """
+    iteration = state.get("iteration", 0)
+    issues = _programmatic_check(state)
+    return {
+        "evaluation": EvaluationResult(
+            passed=not issues,
+            issues=issues,
+            suggestions=["修正上述静态检查失败项"] if issues else [],
+            iteration=iteration,
+        )
+    }
 
 
 def _check_sandbox_result(state: PrefabGenState) -> list[str]:
@@ -312,8 +361,19 @@ def evaluate_prefab_node(state: PrefabGenState) -> dict[str, Any]:
                 iteration=iteration,
             )
 
-        raw_json = _extract_json(final_response.content)
-        data = json.loads(raw_json)
+        def _parse_evaluation_response(response) -> dict:
+            raw = extract_json(response.content)
+            return json.loads(raw)
+
+        try:
+            data = _parse_evaluation_response(final_response)
+        except (json.JSONDecodeError, ValueError):
+            eval_messages.append(HumanMessage(
+                content="Your previous response was not valid JSON. "
+                        "Output ONLY the JSON object (no prose, no markdown)."
+            ))
+            final_response = llm.invoke(eval_messages)
+            data = _parse_evaluation_response(final_response)
 
         result = EvaluationResult(
             passed=data.get("passed", False),

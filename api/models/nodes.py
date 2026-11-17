@@ -7,18 +7,23 @@ from pydantic import BaseModel
 class PortSummaryResponse(BaseModel):
     name: str
     display_name: str
+    display_name_zh: str = ""
     category: str
     detail: str
     direction: str
+    description: str = ""
+    description_zh: str = ""
 
 
 class OnBoardParamResponse(BaseModel):
     """On-Board 输入参数的完整定义，供前端动态渲染表单。"""
     name: str
     display_name: str
+    display_name_zh: str = ""
     kind: str                          # string | integer | float | boolean | enum | textarea
     default: Any = None
     description: str = ""
+    description_zh: str = ""
     allowed_values: Optional[list[str]] = None
     min_value: Optional[float] = None
     max_value: Optional[float] = None
@@ -32,23 +37,29 @@ class OnBoardOutputResponse(BaseModel):
     """On-Board 输出的完整定义，包含 quality gate 字段。"""
     name: str
     display_name: str
+    display_name_zh: str = ""
     kind: str                          # string | integer | float | boolean | enum
     unit: Optional[str] = None
     description: str = ""
+    description_zh: str = ""
     quality_gate: bool = False
     gate_default: str = "must_pass"    # must_pass | warn | ignore
     gate_description: str = ""
+    gate_description_zh: str = ""
 
 
 class NodeSummaryResponse(BaseModel):
     name: str
     version: str
     display_name: str
+    display_name_zh: str = ""
     description: str
+    description_zh: str = ""
     node_type: str
     category: str
     semantic_type: Optional[str] = None
     semantic_display_name: Optional[str] = None
+    semantic_display_name_zh: Optional[str] = None
     base_image_ref: Optional[str] = None
     nodespec_path: str
     software: Optional[str] = None
@@ -89,7 +100,9 @@ class NodeIndexInfoResponse(BaseModel):
 class SemanticTypeEntry(BaseModel):
     """注册表中单个语义类型的描述。"""
     display_name: str
+    display_name_zh: str = ""
     description: str = ""
+    description_zh: str = ""
     domain: str = ""
 
 
@@ -102,6 +115,7 @@ class SemanticRegistryResponse(BaseModel):
 class SemanticTypeGroup(BaseModel):
     semantic_type: str
     display_name: Optional[str] = None
+    display_name_zh: Optional[str] = None
     nodes: list[NodeSummaryResponse]
 
 

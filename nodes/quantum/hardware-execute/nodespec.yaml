@@ -17,6 +17,11 @@ metadata:
     from the device ARN; SV1 uses us-east-1 (same region as the S3
     results bucket). Returns measurement outcome counts as a JSON
     object mapping bitstrings to integer shot counts.
+  description_zh: >
+    在 AWS Braket 上执行 OpenQASM 3.0 量子电路。支持本地模拟（免费、无需
+    凭证）、SV1 云模拟（默认）以及 QPU 硬件后端。QPU 的 region 由设备 ARN
+    推导；SV1 使用 us-east-1（与 S3 结果桶同 region）。返回测量结果计数，
+    为将比特串映射到整数 shot 计数的 JSON 对象。
   node_type: compute
   category: quantum
   author: MiQroForge Team
@@ -41,6 +46,7 @@ metadata:
       - measurement
       - counts
 
+  display_name_zh: 量子硬件执行
 stream_inputs:
   - name: ansatz_circuit
     display_name: Ansatz Circuit (OQ3)
@@ -53,7 +59,11 @@ stream_inputs:
       OpenQASM 3.0 circuit definition. Must be a valid QASM 3.0 source
       string with measurement operations included. Typically received
       from the quantum-qsci-preparation node.
+    description_zh: >
+      OpenQASM 3.0 电路定义。必须是包含测量操作的有效 QASM 3.0 源字符串。
+      通常来自 quantum-qsci-preparation 节点。
 
+    display_name_zh: Ansatz 电路 (OQ3)
 stream_outputs:
   - name: measurement_counts
     display_name: Measurement Counts
@@ -65,7 +75,11 @@ stream_outputs:
       JSON object mapping measurement bitstrings to integer shot counts.
       Bitstrings are zero-padded to the circuit qubit count.
       Example: {"00": 512, "11": 488}.
+    description_zh: >
+      将测量比特串映射到整数 shot 计数的 JSON 对象。比特串零填充到电路量子
+      比特数。示例：{"00": 512, "11": 488}。
 
+    display_name_zh: 测量计数
 onboard_inputs:
   - name: aws_account
     display_name: AWS Account
@@ -80,7 +94,13 @@ onboard_inputs:
       aws-braket-creds = 主账号（533612071261 / mqe-quantum-dev）；
       aws-braket-creds-ayu = ayu 账号（565950323203 / IAM user ayu）；
       aws-braket-creds-fhj = ayu 账号团队成员凭证（565950323203 / IAM user fhj）。local 后端不使用凭证。
+    description_zh: >
+      AWS 凭证对应的 K8s Secret 名（编译时解析为容器 envFrom 注入）。
+      aws-braket-creds = 主账号（533612071261 / mqe-quantum-dev）；
+      aws-braket-creds-ayu = ayu 账号（565950323203 / IAM user ayu）；
+      aws-braket-creds-fhj = ayu 账号团队成员凭证（565950323203 / IAM user fhj）。local 后端不使用凭证。
 
+    display_name_zh: AWS 账户
   - name: backend
     display_name: Execution Backend
     kind: enum
@@ -105,14 +125,25 @@ onboard_inputs:
       ionq-forte (us-east-1, IonQ Forte-Enterprise-1),
       aqt-ibex (eu-north-1, AQT Ibex-Q1),
       iqm-garnet (eu-north-1, IQM Garnet).
+    description_zh: >
+      AWS Braket 执行后端。'local' 使用 LocalSimulator（免费、无需 AWS 凭证；
+      最多 25 量子比特）。'sv1' 使用 Amazon SV1 云模拟器（需 AWS 凭证；
+      us-east-1；最多 34 量子比特）。其余取值为物理 QPU，各绑定唯一设备 ARN，
+      region 由 ARN 自动推导（需 AWS 凭证）：rigetti-cepheus（us-west-1，
+      Rigetti Cepheus-1-108Q）、iqm-emerald（eu-north-1，IQM Emerald）、
+      ionq-forte（us-east-1，IonQ Forte-Enterprise-1）、aqt-ibex（eu-north-1，
+      AQT Ibex-Q1）、iqm-garnet（eu-north-1，IQM Garnet）。
 
+    display_name_zh: 执行后端
   - name: n_shots
     display_name: Number of Shots
     kind: integer
     default: 1000
     min_value: 1
     description: Number of measurement shots to execute per circuit.
+    description_zh: 每个电路执行的测量 shot 次数。
 
+    display_name_zh: 采样次数
 onboard_outputs:
   - name: task_succeeded
     display_name: Task Succeeded
@@ -121,6 +152,10 @@ onboard_outputs:
     gate_default: must_pass
     gate_description: "Braket task must complete successfully for results to be valid."
 
+    display_name_zh: 任务成功
+    description: Whether the Braket task completed successfully.
+    description_zh: Braket 任务是否成功完成。
+    gate_description_zh: Braket 任务必须成功完成，结果才有效。
 resources:
   cpu_cores: 1
   mem_gb: 2.0

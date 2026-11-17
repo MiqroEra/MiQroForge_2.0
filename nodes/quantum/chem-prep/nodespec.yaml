@@ -19,6 +19,11 @@ metadata:
     first step of the quantum-ewf-qsci pipeline, feeding the
     mean-field wavefunction into downstream embedded wavefunction
     (Vayesta) and QSCI nodes.
+  description_zh: >
+    在优化后的分子几何结构上执行限制性 Hartree-Fock (RHF) 计算，生成平均场参考
+    数据包（mo_coeff、mo_energy、mo_occ、e_tot），以 HDF5 格式输出。这是
+    quantum-ewf-qsci 管线的第一步，将平均场波函数馈入下游的嵌入波函数（Vayesta）
+    与 QSCI 节点。
   node_type: compute
   category: quantum
   author: MiQroForge Quantum Team
@@ -42,6 +47,7 @@ metadata:
       - embedding
       - hdf5
 
+  display_name_zh: 化学平均场制备
 stream_inputs:
   - name: xyz_geometry
     display_name: Input Geometry (XYZ)
@@ -53,7 +59,11 @@ stream_inputs:
     description: >
       Optimized molecular geometry in standard XYZ format (Angstrom).
       Typically from geometry-file-input or a geometry optimization node.
+    description_zh: >
+      优化后的分子几何结构，标准 XYZ 格式（埃）。通常来自 geometry-file-input
+      或几何优化节点。
 
+    display_name_zh: 输入几何 (XYZ)
 stream_outputs:
   - name: meanfield_package
     display_name: Mean-Field HDF5 Package
@@ -65,14 +75,20 @@ stream_outputs:
       HDF5 file containing the converged RHF mean-field data:
       mo_coeff, mo_energy, mo_occ, and e_tot.
       Used as input for quantum embedding (Vayesta) nodes.
+    description_zh: >
+      包含收敛 RHF 平均场数据的 HDF5 文件：mo_coeff、mo_energy、mo_occ 与
+      e_tot。作为量子嵌入（Vayesta）节点的输入。
 
+    display_name_zh: 平均场 HDF5 包
 onboard_inputs:
   - name: charge
     display_name: Molecular Charge
     kind: integer
     default: 0
     description: Total molecular charge (e.g., 0 for neutral, -1 for anion).
+    description_zh: 分子总电荷（如中性分子为 0，阴离子为 -1）。
 
+    display_name_zh: 体系电荷
   - name: multiplicity
     display_name: Spin Multiplicity
     kind: integer
@@ -82,23 +98,33 @@ onboard_inputs:
     description: >
       Spin multiplicity. MUST be 1 — this node supports RHF (restricted
       Hartree-Fock) only. Any other value will cause the node to fail.
+    description_zh: >
+      自旋多重度。必须为 1——本节点仅支持 RHF（限制性 Hartree-Fock）。
+      任何其他值都会导致节点运行失败。
 
+    display_name_zh: 自旋多重度
   - name: basis_set
     display_name: Basis Set
     kind: string
     default: sto-3g
     description: >
       Basis set name recognized by PySCF (e.g., sto-3g, def2-SVP, cc-pVDZ).
+    description_zh: >
+      PySCF 可识别的基组名称（如 sto-3g、def2-SVP、cc-pVDZ）。
 
+    display_name_zh: 基组
 onboard_outputs:
   - name: scf_converged
     display_name: SCF Converged
     kind: boolean
     description: Whether the RHF SCF calculation converged successfully.
+    description_zh: RHF SCF 计算是否成功收敛。
     quality_gate: true
     gate_default: must_pass
     gate_description: "RHF SCF must converge for the mean-field package to be valid."
 
+    display_name_zh: SCF 已收敛
+    gate_description_zh: SCF 必须收敛。
 resources:
   cpu_cores: 2
   mem_gb: 4.0

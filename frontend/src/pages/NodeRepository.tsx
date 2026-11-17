@@ -2,7 +2,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { ArrowLeft, Eye, EyeOff, ChevronDown, ChevronRight, Save, FolderOpen } from 'lucide-react'
 import { useNodeCatalog } from '../hooks/useNodeCatalog'
 import { buildSemanticGroups, useNodeCatalogStore } from '../stores/node-catalog-store'
-import { semanticIcon } from '../lib/semantic-labels'
+import { resolveLabel, semanticIcon, semanticLabel } from '../lib/semantic-labels'
+import { useT } from '../lib/i18n'
 import {
   getNodePrefs,
   saveGlobalPrefs,
@@ -39,6 +40,7 @@ function ParamPrefRow({
   visibility: ParamVisibility
   onToggle: (name: string, next: ParamVisibility) => void
 }) {
+  const { t } = useT()
   const icon =
     visibility === 'hidden' ? <EyeOff size={12} className="text-red-400" /> :
     visibility === 'collapsed' ? <ChevronDown size={12} className="text-yellow-400" /> :
@@ -49,8 +51,8 @@ function ParamPrefRow({
     visibility === 'collapsed' ? 'hidden' : 'visible'
 
   const label =
-    visibility === 'visible' ? 'Visible' :
-    visibility === 'collapsed' ? 'Collapsed' : 'Hidden'
+    visibility === 'visible' ? t('repository.visVisible') :
+    visibility === 'collapsed' ? t('repository.visCollapsed') : t('repository.visHidden')
 
   return (
     <div className="flex items-center justify-between px-3 py-1.5 hover:bg-mf-hover/30 transition-colors">
@@ -61,7 +63,7 @@ function ParamPrefRow({
       <button
         onClick={() => onToggle(param.name, next)}
         className="flex items-center gap-1 text-[10px] text-mf-text-muted hover:text-mf-text-primary transition-colors"
-        title={`Click to change: ${label}`}
+        title={t('repository.visHint', { label })}
       >
         {icon}
         <span>{label}</span>
@@ -81,6 +83,7 @@ function NodePrefEditor({
 }) {
   const [pref, setPref] = useState<NodePreference>(() => getNodePrefs(nodeName))
   const [dirty, setDirty] = useState(false)
+  const { t } = useT()
 
   // Re-read prefs when global prefs load or change
   useEffect(() => {
@@ -112,13 +115,13 @@ function NodePrefEditor({
   return (
     <div className="border-t border-mf-border/40">
       <div className="flex items-center justify-between px-3 py-1.5 bg-mf-hover/20">
-        <span className="text-[10px] text-mf-text-muted uppercase tracking-wide">Parameter Visibility</span>
+        <span className="text-[10px] text-mf-text-muted uppercase tracking-wide">{t('repository.paramVisibility')}</span>
         {dirty && (
           <button
             onClick={() => { onSave(nodeName, pref); setDirty(false) }}
             className="flex items-center gap-1 text-[10px] text-blue-400 hover:text-blue-300 transition-colors"
           >
-            <Save size={10} /> Save Global
+            <Save size={10} /> {t('repository.saveGlobal')}
           </button>
         )}
       </div>
@@ -137,6 +140,7 @@ function NodePrefEditor({
 // ─── Node row ────────────────────────────────────────────────────────────────
 
 function NodeRow({ node }: { node: NodeSummaryResponse }) {
+  const { t, language } = useT()
   const [expanded, setExpanded] = useState(false)
   const [detail, setDetail] = useState<{ onboard_inputs: OnBoardParamResponse[] } | null>(null)
 
@@ -155,19 +159,23 @@ function NodeRow({ node }: { node: NodeSummaryResponse }) {
     await saveGlobalPrefs(all)
   }
 
+  const description =
+    language === 'zh' && node.description_zh ? node.description_zh : node.description
+
   return (
     <div className="border-b border-mf-border/30 last:border-b-0">
       <div
         onClick={handleExpand}
         className="flex items-center justify-between px-4 py-2 hover:bg-mf-hover/30 cursor-pointer transition-colors"
+        title={description}
       >
         <div className="min-w-0 flex items-center gap-2">
           <span className="text-xs font-medium text-mf-text-primary truncate">
-            {node.display_name}
+            {language === 'zh' && node.display_name_zh ? node.display_name_zh : node.display_name}
           </span>
           {node.deprecated && (
             <span className="text-[9px] px-1 py-0.5 rounded bg-yellow-900/40 text-yellow-400 border border-yellow-700/40">
-              deprecated
+              {t('repository.deprecated')}
             </span>
           )}
           {node.software && (
@@ -176,7 +184,7 @@ function NodeRow({ node }: { node: NodeSummaryResponse }) {
         </div>
         <div className="flex items-center gap-3 shrink-0">
           <span className="text-[10px] text-mf-text-muted">
-            {node.onboard_inputs_count} params
+            {t('repository.paramCount', { count: node.onboard_inputs_count })}
           </span>
           <span className="text-mf-text-muted">
             {expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
@@ -197,15 +205,21 @@ function NodeRow({ node }: { node: NodeSummaryResponse }) {
 // ─── Semantic group card ─────────────────────────────────────────────────────
 
 function GroupCard({
-  label,
+  semanticType,
   icon,
   nodes,
 }: {
-  label: string
+  semanticType: string
   icon: string
   nodes: NodeSummaryResponse[]
 }) {
+  const { t } = useT()
   const [expanded, setExpanded] = useState(false)
+
+  const label =
+    semanticType === '__other__'
+      ? t('labels.other')
+      : resolveLabel(semanticLabel(semanticType), t)
 
   return (
     <div className="rounded-lg border border-mf-border bg-mf-panel overflow-hidden">
@@ -219,7 +233,9 @@ function GroupCard({
         </div>
         <div className="flex items-center gap-2">
           <span className="text-[11px] text-mf-text-muted">
-            {nodes.length} node{nodes.length !== 1 ? 's' : ''}
+            {nodes.length === 1
+              ? t('repository.nodeOne', { count: nodes.length })
+              : t('repository.nodeMany', { count: nodes.length })}
           </span>
           {expanded ? <ChevronDown size={14} className="text-mf-text-muted" /> : <ChevronRight size={14} className="text-mf-text-muted" />}
         </div>
@@ -238,13 +254,14 @@ function GroupCard({
 // ─── Page ────────────────────────────────────────────────────────────────────
 
 export function NodeRepository() {
+  const { t } = useT()
   const { isLoading } = useNodeCatalog()
   const [showDeprecated, setShowDeprecatedState] = useState(() => getShowDeprecated())
   const nodes = useNodeCatalogStore((s) => s.filteredNodes)
 
   useEffect(() => {
-    document.title = 'Node Repository — MiQroForge'
-  }, [])
+    document.title = t('repository.docTitle', { app: 'MiQroForge' })
+  }, [t])
 
   // Sync with global prefs when they load
   useEffect(() => {
@@ -271,7 +288,7 @@ export function NodeRepository() {
             className="flex items-center gap-1.5 text-xs text-mf-text-muted hover:text-mf-text-primary transition-colors"
           >
             <ArrowLeft size={14} />
-            Gallery
+            {t('repository.backToGallery')}
           </a>
           <div className="w-px h-5 bg-mf-border" />
           <a
@@ -279,14 +296,14 @@ export function NodeRepository() {
             className="flex items-center gap-1.5 text-xs text-mf-text-muted hover:text-mf-text-primary transition-colors"
           >
             <FolderOpen size={13} />
-            Node Files
+            {t('repository.nodeFiles')}
           </a>
           <div className="w-px h-5 bg-mf-border" />
           <div className="flex items-center gap-2">
             <img src="/logo.png" alt="MiQroForge" className="h-5 w-auto" />
-            <h1 className="text-sm font-semibold tracking-tight">Node Preferences</h1>
+            <h1 className="text-sm font-semibold tracking-tight">{t('repository.title')}</h1>
           </div>
-          <span className="text-[10px] text-mf-text-muted">preference</span>
+          <span className="text-[10px] text-mf-text-muted">{t('repository.preferenceTag')}</span>
           <div className="flex-1" />
           <label className="flex items-center gap-1.5 text-[11px] text-mf-text-muted cursor-pointer select-none">
             <input
@@ -295,7 +312,7 @@ export function NodeRepository() {
               onChange={(e) => handleToggleDeprecated(e.target.checked)}
               className="rounded border-mf-border"
             />
-            Show deprecated
+            {t('repository.showDeprecated')}
           </label>
         </div>
       </header>
@@ -304,18 +321,18 @@ export function NodeRepository() {
         {/* Intro */}
         <div className="mb-6 p-4 rounded-lg border border-mf-border bg-mf-panel">
           <h2 className="text-xs font-semibold text-mf-text-secondary uppercase tracking-wide mb-2">
-            Node Preferences
+            {t('repository.title')}
           </h2>
           <p className="text-[12px] text-mf-text-muted">
-            Configure parameter visibility (visible / collapsed / hidden) for each node.
-            Changes saved here apply <strong className="text-mf-text-primary">globally</strong> to all projects.
-            Includes both built-in nodes and user-added nodes from userdata/nodes/.
+            {t('repository.introPre')}
+            <strong className="text-mf-text-primary">{t('repository.introGlobal')}</strong>
+            {t('repository.introPost')}
           </p>
         </div>
 
         {/* Loading */}
         {isLoading && (
-          <div className="text-sm text-mf-text-muted animate-pulse py-8 text-center">Loading nodes...</div>
+          <div className="text-sm text-mf-text-muted animate-pulse py-8 text-center">{t('repository.loading')}</div>
         )}
 
         {/* Node groups */}
@@ -323,7 +340,7 @@ export function NodeRepository() {
           {groups.map((g) => (
             <GroupCard
               key={g.semanticType}
-              label={g.label}
+              semanticType={g.semanticType}
               icon={semanticIcon(g.semanticType)}
               nodes={g.nodes}
             />
@@ -332,7 +349,9 @@ export function NodeRepository() {
 
         {groups.length === 0 && !isLoading && (
           <div className="text-sm text-mf-text-muted py-8 text-center">
-            No nodes found. Run <code className="text-blue-400">mf2 nodes reindex</code> first.
+            {t('repository.emptyPre')}
+            <code className="text-blue-400">mf2 nodes reindex</code>
+            {t('repository.emptyPost')}
           </div>
         )}
       </main>

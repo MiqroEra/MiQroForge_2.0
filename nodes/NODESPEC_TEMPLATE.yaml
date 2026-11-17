@@ -18,8 +18,11 @@ metadata:
   base_image_ref: orca-6.1             # * compute 必填。对应 base_images/registry.yaml 中的 name
   version: "1.0.0"                     #   语义化版本。改端口 → 升大版本
   display_name: "My Node"              #   人类可读名称（默认从 name 生成）
+  display_name_zh: "我的节点"           #   中文显示名称（为空时前端回退到 display_name）
   description: >                       #   节点功能描述
     一句话描述此节点做什么、适用什么场景。
+  description_zh: >                    #   节点功能中文描述
+    用中文描述此节点做什么、适用什么场景。
   category: chemistry                  #   quantum / chemistry / preprocessing / postprocessing / utility（默认 utility）
   author: "MiQroForge Team"            #   作者
   tags:                                #   检索标签，影响 Phase 2 RAG 检索质量
@@ -46,6 +49,7 @@ stream_inputs:                         #   无上游依赖时写 []
   #     estimated_size_mb: 50          #   预估大小
   #   display_name: "Input Checkpoint" #   显示名（默认从 name 生成）
   #   description: "..."               #   端口说明
+  #   description_zh: "..."            #   端口中文说明
   #   required: true                   #   默认 true
   #
   # 逻辑量：

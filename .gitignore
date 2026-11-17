@@ -33,6 +33,7 @@ CLAUDE.md
 # ── Frontend build & dependencies ──────────────────
 frontend/dist/
 frontend/node_modules/
+.vite/
 
 # ── Backup files ──────────────────────────────────
 bak/

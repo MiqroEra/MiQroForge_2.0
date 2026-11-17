@@ -1,6 +1,9 @@
 import { create } from 'zustand'
 import type { NodeSummaryResponse } from '../types/index-types'
-import { semanticLabel } from '../lib/semantic-labels'
+import { semanticLabel, semanticLabelZh, resolveLabel } from '../lib/semantic-labels'
+import { translate } from '../lib/i18n'
+import type { DictKey } from '../lib/i18n'
+import { useSettingsStore } from './settings-store'
 import { getShowDeprecated, onGlobalPrefsChange } from '../lib/node-preferences'
 
 // ─── Semantic group (pure, exported for Palette) ──────────────────────────────
@@ -67,9 +70,12 @@ export function buildSemanticGroups(nodes: NodeSummaryResponse[]): SemanticGroup
       const shouldSubGroup =
         groupNodes.length > 5 &&
         groupNodes.every((n) => n.methods && n.methods.length > 0)
+      const language = useSettingsStore.getState().language
+      const t = (k: DictKey, vars?: Record<string, string | number>) =>
+        translate(language, k, vars)
       return {
         semanticType: key,
-        label: key === '__other__' ? 'Other' : semanticLabel(key),
+        label: key === '__other__' ? translate(language, 'labels.other') : (language === 'zh' ? semanticLabelZh(key) : resolveLabel(semanticLabel(key), t)),
         nodes: groupNodes,
         subGroups: shouldSubGroup ? buildSubGroups(groupNodes) : undefined,
       }
@@ -104,7 +110,9 @@ function filterNodes(nodes: NodeSummaryResponse[], query: string): NodeSummaryRe
     (n) =>
       n.name.toLowerCase().includes(lower) ||
       n.display_name.toLowerCase().includes(lower) ||
+      n.display_name_zh?.toLowerCase().includes(lower) ||
       n.description.toLowerCase().includes(lower) ||
+      n.description_zh?.toLowerCase().includes(lower) ||
       n.software?.toLowerCase().includes(lower) ||
       n.semantic_type?.toLowerCase().includes(lower) ||
       n.keywords.some((k) => k.toLowerCase().includes(lower)) ||

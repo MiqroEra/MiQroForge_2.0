@@ -4,6 +4,7 @@ import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import type { ProjectMeta } from '../../api/projects-api'
 import { formatDate } from '../../lib/date-utils'
+import { useT } from '../../lib/i18n'
 
 // ─── Common emoji sets ──────────────────────────────────────────────────────────
 
@@ -62,15 +63,15 @@ interface ProjectCardProps {
   onSelect?: (checked: boolean) => void
 }
 
-function timeAgo(iso: string): string {
+function timeAgo(iso: string, t: ReturnType<typeof useT>['t']): string {
   const diff = Date.now() - new Date(iso).getTime()
   const mins = Math.floor(diff / 60000)
-  if (mins < 1) return 'just now'
-  if (mins < 60) return `${mins}m ago`
+  if (mins < 1) return t('gallery.justNow')
+  if (mins < 60) return t('gallery.minutesAgo', { n: mins })
   const hrs = Math.floor(mins / 60)
-  if (hrs < 24) return `${hrs}h ago`
+  if (hrs < 24) return t('gallery.hoursAgo', { n: hrs })
   const days = Math.floor(hrs / 24)
-  if (days < 30) return `${days}d ago`
+  if (days < 30) return t('gallery.daysAgo', { n: days })
   return formatDate(iso)
 }
 
@@ -81,6 +82,7 @@ export function ProjectCard({
   const {
     attributes, listeners, setNodeRef, transform, transition, isDragging,
   } = useSortable({ id: project.id, disabled: !editMode })
+  const { t } = useT()
   const sortableStyle = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -182,7 +184,7 @@ export function ProjectCard({
             {...attributes}
             {...listeners}
             className="p-0.5 text-mf-text-muted hover:text-mf-text-secondary cursor-grab active:cursor-grabbing"
-            title="Drag to reorder"
+            title={t('gallery.dragToReorder')}
           >
             <GripVertical size={14} />
           </button>
@@ -201,7 +203,7 @@ export function ProjectCard({
                   ? 'bg-mf-hover hover:bg-mf-hover'
                   : 'bg-blue-600/15 hover:bg-blue-600/25'
               }`}
-              title="Change icon"
+              title={t('gallery.changeIcon')}
             >
               {icon}
             </button>
@@ -265,26 +267,26 @@ export function ProjectCard({
                 onClick={(e) => { e.stopPropagation(); setMenuOpen(false); setEditing(true) }}
                 className="flex items-center gap-2 w-full px-3 py-1.5 text-xs text-mf-text-secondary hover:text-mf-text-primary hover:bg-mf-hover"
               >
-                <Pencil size={12} /> Rename
+                <Pencil size={12} /> {t('gallery.rename')}
               </button>
               <button
                 onClick={(e) => { e.stopPropagation(); setMenuOpen(false); setDescEditing(true) }}
                 className="flex items-center gap-2 w-full px-3 py-1.5 text-xs text-mf-text-secondary hover:text-mf-text-primary hover:bg-mf-hover"
               >
-                <FileText size={12} /> Edit Note
+                <FileText size={12} /> {t('gallery.editNote')}
               </button>
               <button
                 onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onDuplicate() }}
                 className="flex items-center gap-2 w-full px-3 py-1.5 text-xs text-mf-text-secondary hover:text-mf-text-primary hover:bg-mf-hover"
               >
-                <Copy size={12} /> Duplicate
+                <Copy size={12} /> {t('gallery.duplicate')}
               </button>
               <div className="border-t border-mf-border my-1" />
               <button
                 onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onDelete() }}
                 className="flex items-center gap-2 w-full px-3 py-1.5 text-xs text-red-400 hover:text-red-300 hover:bg-mf-hover"
               >
-                <Trash2 size={12} /> Delete
+                <Trash2 size={12} /> {t('gallery.delete')}
               </button>
             </div>
           )}
@@ -295,9 +297,9 @@ export function ProjectCard({
       {/* Stats + description */}
       <div className="px-4 pb-3 flex-1">
         <div className="flex items-center gap-3 text-[11px] text-mf-text-muted">
-          <span>{project.canvas_node_count} node{project.canvas_node_count !== 1 ? 's' : ''}</span>
-          <span>{project.run_count} run{project.run_count !== 1 ? 's' : ''}</span>
-          <span>{project.conversation_count} chat{project.conversation_count !== 1 ? 's' : ''}</span>
+          <span>{project.canvas_node_count} {t(project.canvas_node_count !== 1 ? 'gallery.nodeUnits' : 'gallery.nodeUnit')}</span>
+          <span>{project.run_count} {t(project.run_count !== 1 ? 'gallery.runUnits' : 'gallery.runUnit')}</span>
+          <span>{project.conversation_count} {t(project.conversation_count !== 1 ? 'gallery.chatUnits' : 'gallery.chatUnit')}</span>
         </div>
 
         {/* Description / Note — inline editable */}
@@ -311,7 +313,7 @@ export function ProjectCard({
               if (e.key === 'Escape') { setDescVal(project.description); setDescEditing(false) }
             }}
             onClick={(e) => e.stopPropagation()}
-            placeholder="Add a note..."
+            placeholder={t('gallery.addNote')}
             rows={2}
             className="mt-1.5 w-full text-[11px] text-mf-text-secondary bg-mf-input border border-mf-border rounded px-2 py-1.5 focus:outline-none focus:border-blue-500 resize-none"
           />
@@ -325,14 +327,14 @@ export function ProjectCard({
       {/* Footer */}
       <div className="px-4 py-2.5 border-t border-mf-border/60 flex items-center justify-between">
         <span className="text-[10px] text-mf-text-muted">
-          Updated {timeAgo(project.updated_at)}
+          {t('gallery.updated', { time: timeAgo(project.updated_at, t) })}
         </span>
         {!editMode && (
           <button
             onClick={(e) => { e.stopPropagation(); onOpen() }}
             className="text-[11px] text-blue-400 hover:text-blue-300 font-medium"
           >
-            Open
+            {t('gallery.open')}
           </button>
         )}
       </div>

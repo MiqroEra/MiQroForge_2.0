@@ -10,14 +10,13 @@ import { useWorkflowValidation } from '../../hooks/useWorkflowValidation'
 import { workflowsApi } from '../../api/workflows-api'
 import { projectsApi } from '../../api/projects-api'
 import { getStoredUser } from '../../lib/auth'
+import { useT } from '../../lib/i18n'
 import {
-  CheckCircle, AlertCircle,
   Trash2, Save, FolderOpen, PlayCircle, Clock,
   MessageSquare, User,
 } from 'lucide-react'
 import type { RightPanel } from '../../stores/ui-store'
 import type { RunPhase } from '../../types/index-types'
-import { phaseEmoji } from '../../lib/phase-utils'
 
 // ─── TopBar ───────────────────────────────────────────────────────────────────
 
@@ -35,6 +34,7 @@ export function TopBar() {
   const { isOpen: chatOpen, toggleChat } = useAgentStore()
   const currentProjectMeta = useProjectStore((s) => s.currentProjectMeta)
   const currentProjectId = useProjectStore((s) => s.currentProjectId)
+  const { t } = useT()
 
   const [editingName, setEditingName] = useState(false)
   const [nameVal, setNameVal] = useState(meta.name)
@@ -52,7 +52,7 @@ export function TopBar() {
   // ── Save workflow ────────────────────────────────────────────────────────
   const handleSave = async () => {
     if (nodes.length === 0) {
-      showNotification('info', 'Canvas is empty — nothing to save')
+      showNotification('info', t('topbar.emptyCanvas'))
       return
     }
 
@@ -65,9 +65,9 @@ export function TopBar() {
           edges: JSON.parse(JSON.stringify(edges)),
         }
         await projectsApi.createSnapshot(currentProjectId, meta.name, canvas)
-        showNotification('success', `Snapshot saved for "${meta.name}"`)
+        showNotification('success', t('topbar.snapshotSaved', { name: meta.name }))
       } catch (err) {
-        showNotification('error', `Snapshot failed: ${err instanceof Error ? err.message : String(err)}`)
+        showNotification('error', t('topbar.snapshotFailed', { error: err instanceof Error ? err.message : String(err) }))
       }
     }
 
@@ -95,7 +95,7 @@ export function TopBar() {
       // Step 2: Submit (backend compiles internally — may take ~2 min for ephemeral nodes)
       const mfYaml = getYaml()
       const projectId = useProjectStore.getState().currentProjectId ?? undefined
-      showNotification('info', 'Compiling and submitting workflow… (may take up to 2 min)')
+      showNotification('info', t('topbar.compiling'))
 
       // Set compiling state on generated/sweep nodes for visual feedback
       const compilingIds = nodes
@@ -119,10 +119,10 @@ export function TopBar() {
       setPendingRunName(resp.workflow_name)
       setRightPanel('runs')
 
-      showNotification('success', `Submitted: ${resp.workflow_name}`)
+      showNotification('success', t('topbar.submitted', { name: resp.workflow_name }))
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : String(err)
-      showNotification('error', `Submit failed: ${errMsg}`)
+      showNotification('error', t('topbar.submitFailed', { error: errMsg }))
 
       // Persist the failure as a local-only run snapshot
       const syntheticName = `compile-error-${new Date().toLocaleTimeString('en-GB').replace(/:/g, '')}`
@@ -152,7 +152,7 @@ export function TopBar() {
 
   // ── Nav panel items ───────────────────────────────────────────────────────
   const navItems: Array<{ id: RightPanel; icon: React.ReactNode; label: string }> = [
-    { id: 'runs', icon: <Clock size={14} />, label: 'History' },
+    { id: 'runs', icon: <Clock size={14} />, label: t('topbar.history') },
   ]
 
   return (
@@ -161,7 +161,7 @@ export function TopBar() {
       <button
         onClick={() => navigate('/')}
         className="flex items-center gap-1.5 flex-shrink-0 hover:opacity-80 transition-opacity"
-        title="Back to Project Gallery"
+        title={t('topbar.backToGallery')}
       >
         <img src="/logo.png" alt="MiQroForge" className="h-6 w-auto" />
         <span className="text-sm font-bold text-mf-text-primary tracking-tight">MiQroForge</span>
@@ -194,7 +194,7 @@ export function TopBar() {
         <button
           onClick={() => { setEditingName(true); setNameVal(meta.name) }}
           className="text-sm text-mf-text-secondary hover:text-mf-text-primary truncate max-w-48"
-          title="Click to rename"
+          title={t('topbar.rename')}
         >
           {meta.name}
         </button>
@@ -210,9 +210,9 @@ export function TopBar() {
             ? 'bg-blue-600 text-white'
             : 'text-mf-text-muted hover:text-mf-text-primary hover:bg-mf-hover'
         }`}
-        title="Toggle Files panel"
+        title={t('topbar.toggleFiles')}
       >
-        <FolderOpen size={14} /> Files
+        <FolderOpen size={14} /> {t('topbar.files')}
       </button>
 
       {/* AI Chat toggle */}
@@ -223,10 +223,12 @@ export function TopBar() {
             ? 'bg-purple-700 text-white'
             : 'text-mf-text-muted hover:text-mf-text-primary hover:bg-mf-hover'
         }`}
-        title="Toggle AI Assistant (Phase 2)"
+        title={t('topbar.toggleChat')}
       >
-        <MessageSquare size={14} /> Chat
+        <MessageSquare size={14} /> {t('topbar.chat')}
       </button>
+
+      {/* Language switch lives in Settings panel */}
 
       <div className="w-px h-5 bg-mf-border" />
 
@@ -236,15 +238,15 @@ export function TopBar() {
           onClick={handleSave}
           disabled={nodes.length === 0}
           className="flex items-center gap-1 px-2 py-1 text-xs text-blue-400 hover:text-blue-200 hover:bg-mf-hover rounded transition-colors disabled:opacity-40 font-medium"
-          title="Save workflow"
+          title={t('topbar.saveWorkflow')}
         >
-          <Save size={13} /> Save
+          <Save size={13} /> {t('topbar.save')}
         </button>
         <button
-          onClick={() => { if (confirm('Clear canvas?')) clearCanvas() }}
+          onClick={() => { if (confirm(t('topbar.confirmClear'))) clearCanvas() }}
           disabled={nodes.length === 0}
           className="flex items-center gap-1 px-2 py-1 text-xs text-mf-text-muted hover:text-red-400 hover:bg-mf-hover rounded transition-colors disabled:opacity-40"
-          title="Clear canvas"
+          title={t('topbar.clearCanvas')}
         >
           <Trash2 size={13} />
         </button>
@@ -257,13 +259,13 @@ export function TopBar() {
         onClick={handleRun}
         disabled={nodes.length === 0 || isRunning || isWorkflowRunning}
         className="flex items-center gap-1.5 px-3 py-1 text-xs font-semibold text-white bg-green-700 hover:bg-green-600 disabled:opacity-40 disabled:cursor-not-allowed rounded transition-colors"
-        title={isWorkflowRunning ? 'A workflow is currently running' : 'Validate and submit workflow (Ctrl+Enter)'}
+        title={isWorkflowRunning ? t('topbar.workflowRunning') : t('topbar.runTitle')}
       >
         {isRunning
           ? <span className="inline-block w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
           : <PlayCircle size={13} />
         }
-        {isRunning ? 'Running…' : 'Run'}
+        {isRunning ? t('topbar.running') : t('topbar.run')}
       </button>
 
       <div className="w-px h-5 bg-mf-border" />
@@ -289,7 +291,7 @@ export function TopBar() {
       <div className="ml-auto flex items-center gap-2">
         <span className="flex items-center gap-1 text-xs text-mf-text-muted">
           <User size={12} />
-          {getStoredUser()?.username ?? '用户'}
+          {getStoredUser()?.username ?? t('topbar.defaultUser')}
         </span>
       </div>
 
@@ -297,75 +299,3 @@ export function TopBar() {
   )
 }
 
-// ─── StatusBar ────────────────────────────────────────────────────────────────
-
-export function StatusBar() {
-  const { nodes, edges, validationResult } = useWorkflowStore()
-  const { notification, clearNotification } = useUIStore()
-  const { activeRunName, workflowPhase, clearOverlay } = useRunOverlayStore()
-
-  React.useEffect(() => {
-    if (!notification) return
-    if (notification.type !== 'success') return
-    const t = setTimeout(clearNotification, 4000)
-    return () => clearTimeout(t)
-  }, [notification, clearNotification])
-
-  const runPhaseEmoji = workflowPhase ? phaseEmoji(workflowPhase as RunPhase) : '⏳'
-
-  return (
-    <div className="h-6 flex items-center px-3 bg-mf-panel border-t border-mf-border text-[11px] text-mf-text-muted gap-4 flex-shrink-0">
-      <span>{nodes.length} node{nodes.length !== 1 ? 's' : ''}</span>
-      <span>{edges.length} connection{edges.length !== 1 ? 's' : ''}</span>
-
-      {validationResult && (
-        <span className={validationResult.valid ? 'text-green-500' : 'text-red-500'}>
-          {validationResult.valid ? '✓ Valid' : `✗ ${validationResult.errors.length} error(s)`}
-        </span>
-      )}
-
-      {/* Active run indicator */}
-      {activeRunName && (
-        <span className="flex items-center gap-1.5 text-[11px]">
-          <span className={
-            workflowPhase === 'Succeeded' ? 'text-green-400' :
-            workflowPhase === 'PartialSuccess' ? 'text-orange-300' :
-            workflowPhase === 'Failed' || workflowPhase === 'Error' ? 'text-red-400' :
-            'text-blue-400'
-          }>
-            {runPhaseEmoji} {activeRunName}
-            {workflowPhase && ` (${workflowPhase})`}
-          </span>
-          <button
-            onClick={clearOverlay}
-            className="text-mf-text-muted hover:text-mf-text-primary ml-0.5"
-            title="Clear run overlay"
-          >
-            ✕
-          </button>
-        </span>
-      )}
-
-      <div className="flex-1" />
-
-      {notification && (
-        <span
-          className={`flex items-center gap-1 cursor-pointer max-w-xs truncate ${
-            notification.type === 'success' ? 'text-green-400' :
-            notification.type === 'error' ? 'text-red-400' :
-            'text-blue-400'
-          }`}
-          title={notification.message}
-          onClick={clearNotification}
-        >
-          {notification.type === 'success' && <CheckCircle size={11} className="flex-shrink-0" />}
-          {notification.type === 'error' && <AlertCircle size={11} className="flex-shrink-0" />}
-          <span className="truncate">{notification.message}</span>
-          {notification.type !== 'success' && (
-            <span className="flex-shrink-0 ml-0.5 text-mf-text-muted hover:text-mf-text-secondary">✕</span>
-          )}
-        </span>
-      )}
-    </div>
-  )
-}

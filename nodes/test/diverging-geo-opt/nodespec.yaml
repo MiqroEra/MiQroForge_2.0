@@ -14,6 +14,9 @@ metadata:
     [TEST/MOCK] Simulates a geometry optimization that fails to converge.
     Always writes converged=false to the quality gate output, which should
     cause all downstream nodes with must_pass policy to be skipped by Argo.
+  description_zh: >
+    [TEST/MOCK] 模拟一个不收敛的几何优化。始终向质量门输出写入 converged=false，
+    从而使所有 must_pass 策略的下游节点被 Argo 跳过。
   node_type: compute
   category: utility
   tags:
@@ -36,6 +39,7 @@ metadata:
   semantic_type: geometry-optimization
   base_image_ref: test-busybox
 
+  display_name_zh: '[TEST] 发散几何优化'
 stream_inputs: []
 
 stream_outputs:
@@ -51,7 +55,11 @@ stream_outputs:
     description: >
       Gaussian checkpoint file from a non-converged run.
       Downstream nodes are blocked by the quality gate and should not use this.
+    description_zh: >
+      来自未收敛运行的 Gaussian 检查点文件。下游节点会被质量门阻断，
+      不应使用该文件。
 
+    display_name_zh: Checkpoint (部分)
   - name: total_energy
     display_name: Total Energy (last step)
     io_type:
@@ -59,7 +67,9 @@ stream_outputs:
       unit: Ha
       shape: scalar
     description: Electronic energy at the last (non-converged) geometry step.
+    description_zh: 最后一个（未收敛）几何步的电子能量。
 
+    display_name_zh: 最终能量
 onboard_inputs:
   - name: functional
     display_name: DFT Functional
@@ -67,18 +77,27 @@ onboard_inputs:
     default: B3LYP
     required: true
 
+    display_name_zh: 泛函
+    description: Density functional, e.g. B3LYP or PBE.
+    description_zh: DFT 交换关联泛函，如 B3LYP、PBE。
   - name: basis_set
     display_name: Basis Set
     kind: string
     default: 6-31G*
     required: true
 
+    display_name_zh: 基组
+    description: Basis set name, e.g. def2-SVP or cc-pVTZ.
+    description_zh: 基组名称，如 def2-SVP、cc-pVTZ。
   - name: charge
     display_name: Molecular Charge
     kind: integer
     default: 0
     required: true
 
+    display_name_zh: 体系电荷
+    description: Total charge of the system.
+    description_zh: 分子或晶胞的总电荷。
   - name: multiplicity
     display_name: Spin Multiplicity
     kind: integer
@@ -86,26 +105,36 @@ onboard_inputs:
     required: true
     min_value: 1
 
+    display_name_zh: 自旋多重度
+    description: Spin multiplicity (2S+1) of the system.
+    description_zh: 体系的自旋多重度（2S+1）。
 onboard_outputs:
   - name: final_energy
     display_name: Final Energy (last step)
     kind: float
     unit: Ha
     description: Energy at the last non-converged geometry.
+    description_zh: 最后一个未收敛几何结构的能量。
 
+    display_name_zh: 最终能量 (Ha)
   - name: n_iterations
     display_name: Optimization Steps Taken
     kind: integer
     description: Number of steps before giving up.
+    description_zh: 放弃前的优化步数。
 
+    display_name_zh: 优化步数
   - name: converged
     display_name: Convergence Flag
     kind: boolean
     description: Always false — this node simulates a diverging optimization.
+    description_zh: 始终为 false——本节点模拟一个发散的优化。
     quality_gate: true
     gate_default: must_pass
     gate_description: "Geometry optimization did not converge. Downstream frequency analysis cannot proceed."
 
+    display_name_zh: 收敛标志
+    gate_description_zh: 几何优化未收敛，下游频率分析无法进行。
 resources:
   cpu_cores: 1
   mem_gb: 0.5

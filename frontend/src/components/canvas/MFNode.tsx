@@ -9,6 +9,7 @@ import type { PickerOption } from '../../lib/semantic-labels'
 import { useRunOverlayStore } from '../../stores/run-overlay-store'
 import type { NodeRunStatus } from '../../stores/run-overlay-store'
 import { phaseBorderClass, phaseBadgeClass, formatElapsed } from '../../lib/phase-utils'
+import { useT } from '../../lib/i18n'
 
 // ─── Type alias for our custom node ──────────────────────────────────────────
 
@@ -26,6 +27,7 @@ interface PortRowProps {
 }
 
 const PortRow = memo(({ name, displayName, category, required, direction, ephemeral }: PortRowProps) => {
+  const { t } = useT()
   const color = PORT_COLORS[category as keyof typeof PORT_COLORS] ?? '#6b7280'
   const isInput = direction === 'input'
 
@@ -61,7 +63,7 @@ const PortRow = memo(({ name, displayName, category, required, direction, epheme
       </span>
 
       {required && (
-        <span className="text-red-500 text-[9px] flex-shrink-0" title="Required">*</span>
+        <span className="text-red-500 text-[9px] flex-shrink-0" title={t('canvas.required')}>*</span>
       )}
     </div>
   )
@@ -76,6 +78,8 @@ interface GateBadgeProps {
 }
 
 function GateBadge({ gate, runValue }: GateBadgeProps) {
+  const { language } = useT()
+  const zh = language === 'zh'
   const color =
     gate.gate_default === 'must_pass' ? '#ef4444' :
     gate.gate_default === 'warn'      ? '#f59e0b' :
@@ -83,18 +87,20 @@ function GateBadge({ gate, runValue }: GateBadgeProps) {
 
   const hasResult = runValue !== undefined
   const passed    = runValue === 'true'
+  const gateName = zh && gate.display_name_zh ? gate.display_name_zh : gate.display_name
+  const gateDesc = zh && gate.gate_description_zh ? gate.gate_description_zh : gate.gate_description
 
   return (
     <span
       className="flex items-center gap-1 text-[9px] font-mono px-1 rounded"
       style={{ color, background: `${color}20` }}
-      title={gate.gate_description || gate.display_name}
+      title={gateDesc || gateName}
     >
       <span
         className="inline-block rounded-full flex-shrink-0"
         style={{ width: 5, height: 5, background: color }}
       />
-      {gate.display_name}
+      {gateName}
       {hasResult && (
         <span className={passed ? 'text-green-500' : 'text-red-500'}>
           {passed ? '✓' : '✗'}
@@ -117,6 +123,7 @@ function RunOverlaySection({
   runName?: string
   onRotate?: (canvasId: string) => void
 }) {
+  const { t } = useT()
   const elapsed = formatElapsed(status.startedAt, status.finishedAt)
   const multi = status.instances.length > 1
   const isFailed = status.phase === 'Failed' || status.phase === 'Error'
@@ -149,11 +156,11 @@ function RunOverlaySection({
       URL.revokeObjectURL(url)
     } catch {
       // Pod not found — show via alert (could be improved with toast)
-      alert('Pod 已被清理或命名空间不可达')
+      alert(t('canvas.podUnreachable'))
     } finally {
       setDownloading(false)
     }
-  }, [runName, nodeId, downloading])
+  }, [runName, nodeId, downloading, t])
 
   return (
     <div className="border-t border-mf-border/50 px-2 py-1.5 space-y-0.5">
@@ -163,7 +170,7 @@ function RunOverlaySection({
           <button
             className="text-[10px] text-purple-300 hover:text-purple-200 font-mono cursor-pointer select-none"
             onClick={(e) => { e.stopPropagation(); onRotate(nodeId) }}
-            title="Click to switch instance"
+            title={t('canvas.clickToSwitchInstance')}
           >
             &lsaquo; {status.currentIndex + 1}/{status.instances.length} &rsaquo;
           </button>
@@ -193,7 +200,7 @@ function RunOverlaySection({
                 </div>
               )}
               <div className="text-[8px] text-red-500/50 mt-0.5 text-center">
-                {expanded ? '▲ collapse' : '▼ expand'}
+                {expanded ? t('canvas.collapse') : t('canvas.expand')}
               </div>
             </div>
           </button>
@@ -207,7 +214,7 @@ function RunOverlaySection({
               {downloading ? (
                 <span className="inline-block w-2.5 h-2.5 border border-red-500/30 border-t-red-500 rounded-full animate-spin" />
               ) : null}
-              {downloading ? 'Downloading…' : '查看完整 log'}
+                  {downloading ? t('canvas.downloading') : t('canvas.viewFullLog')}
             </button>
           )}
         </div>
@@ -248,6 +255,8 @@ function RunOverlaySection({
 // ─── Pending node (semantic type dropped, implementation not yet chosen) ──────
 
 const PendingNodeCard = memo(({ data, selected }: { data: MFNodeData; selected: boolean }) => {
+  const { t, language } = useT()
+  const zh = language === 'zh'
   const options = (data.pending_implementations as PickerOption[] | undefined) ?? []
   const onSelect = data.pending_on_select as ((n: string) => void) | undefined
   const semanticType = data.semantic_type as string | undefined
@@ -292,10 +301,10 @@ const PendingNodeCard = memo(({ data, selected }: { data: MFNodeData; selected: 
         <span className="text-base leading-none mt-0.5">❓</span>
         <div className="min-w-0 flex-1">
           <div className="text-xs font-semibold text-amber-200 truncate leading-tight">
-            {data.display_name}
+            {zh && data.display_name_zh ? data.display_name_zh : data.display_name}
           </div>
           <div className="text-[10px] text-amber-600 font-mono truncate">
-            {semanticType ?? 'select implementation'}
+            {semanticType ?? t('canvas.selectImplementation')}
           </div>
         </div>
       </div>
@@ -358,7 +367,7 @@ const PendingNodeCard = memo(({ data, selected }: { data: MFNodeData; selected: 
           )
         ) : (
           <div className="px-2.5 py-1.5 text-[10px] text-mf-text-muted italic">
-            No implementations found
+            {t('canvas.noImplementationsFound')}
           </div>
         )}
       </div>
@@ -388,6 +397,8 @@ export const MFNode = memo(({ id, data, selected }: NodeProps<MFNodeType>) => {
   const activeRunName = useRunOverlayStore((s) => s.activeRunName)
   const isCompiling = useWorkflowStore((s) => s.compilingNodeIds.includes(id))
   const [flipped, setFlipped] = useState(false)
+  const { t, language } = useT()
+  const zh = language === 'zh'
 
   const isFailed = runStatus && (runStatus.phase === 'Failed' || runStatus.phase === 'Error')
   const errorMsg = runStatus?.error || runStatus?.outputs?._error
@@ -477,11 +488,11 @@ export const MFNode = memo(({ id, data, selected }: NodeProps<MFNodeType>) => {
       a.click()
       URL.revokeObjectURL(url)
     } catch {
-      alert('Pod 已被清理或命名空间不可达')
+      alert(t('canvas.podUnreachable'))
     } finally {
       setDownloading(false)
     }
-  }, [activeRunName, id, downloading])
+  }, [activeRunName, id, downloading, t])
 
   return (
     <div className={nodeClass} style={{ perspective: '800px' }}>
@@ -496,17 +507,17 @@ export const MFNode = memo(({ id, data, selected }: NodeProps<MFNodeType>) => {
         {/* ── Front face (normal node) ─────────────────────────────────────── */}
         <div style={{ backfaceVisibility: 'hidden' }}>
           {/* Header */}
-          <div className="mf-node-header bg-mf-hover/50">
+          <div className="bg-mf-hover/50">
             <div className="flex items-start gap-1.5">
               <span className="text-base leading-none mt-0.5">{emoji}</span>
               <div className="min-w-0 flex-1">
                 <div className="text-xs font-semibold text-mf-text-primary truncate leading-tight">
-                  {data.display_name}
+                  {zh && data.display_name_zh ? data.display_name_zh : data.display_name}
                 </div>
                 {data.prefab ? (
-                  <div className="text-[10px] text-purple-400 font-mono">prefab</div>
+                  <div className="text-[10px] text-purple-400 font-mono">{t('canvas.prefabBadge')}</div>
                 ) : data.ephemeral ? (
-                  <div className="text-[10px] text-orange-400 font-mono">ephemeral</div>
+                  <div className="text-[10px] text-orange-400 font-mono">{t('canvas.ephemeralBadge')}</div>
                 ) : (
                   <div className="text-[10px] text-mf-text-muted truncate font-mono">
                     {data.name} v{data.version}
@@ -516,7 +527,7 @@ export const MFNode = memo(({ id, data, selected }: NodeProps<MFNodeType>) => {
               {/* Sweep badge */}
               {data.parallel_sweep && (
                 <span className="text-[10px] bg-purple-900/40 text-purple-300 px-1.5 py-0.5 rounded flex-shrink-0">
-                  Multi
+                  {t('canvas.sweepMulti')}
                 </span>
               )}
               {/* Phase badge */}
@@ -529,7 +540,7 @@ export const MFNode = memo(({ id, data, selected }: NodeProps<MFNodeType>) => {
               {isCompiling && (
                 <span className="flex items-center gap-1 text-[10px] text-purple-300 flex-shrink-0">
                   <span className="inline-block w-3 h-3 border-2 border-purple-400/30 border-t-purple-400 rounded-full animate-spin" />
-                  Generating…
+                  {t('canvas.generating')}
                 </span>
               )}
             </div>
@@ -537,14 +548,14 @@ export const MFNode = memo(({ id, data, selected }: NodeProps<MFNodeType>) => {
 
           {/* Stream I/O — left (inputs) / right (outputs) */}
           {hasPorts && (
-            <div className={`mf-node-ports border-b border-mf-border/50 flex py-1`}>
+            <div className="border-b border-mf-border/50 flex py-1">
               {inputPorts.length > 0 && (
                 <div className={hasBoth ? 'flex-1 border-r border-mf-border/30 min-w-0' : 'w-full'}>
                   {inputPorts.map((port) => (
                     <PortRow
                       key={port.name}
                       name={port.name}
-                      displayName={port.display_name}
+                      displayName={zh && port.display_name_zh ? port.display_name_zh : port.display_name}
                       category={port.category}
                       required={port.required}
                       direction="input"
@@ -559,7 +570,7 @@ export const MFNode = memo(({ id, data, selected }: NodeProps<MFNodeType>) => {
                     <PortRow
                       key={port.name}
                       name={port.name}
-                      displayName={port.display_name}
+                      displayName={zh && port.display_name_zh ? port.display_name_zh : port.display_name}
                       category={port.category}
                       direction="output"
                       ephemeral={!!(data.ephemeral || data.prefab)}
@@ -593,13 +604,13 @@ export const MFNode = memo(({ id, data, selected }: NodeProps<MFNodeType>) => {
               className="border-t border-mf-border/50 px-2 py-1 text-[9px] text-red-500 text-center cursor-pointer hover:bg-red-950/20 transition-colors nodrag"
               onClick={handleFlipToggle}
             >
-              ▼ 点击查看错误
+              {t('canvas.clickToViewError')}
             </div>
           )}
 
           {/* Footer */}
-          <div className="mf-node-footer flex items-center justify-between text-[10px] text-mf-text-muted">
-            <span>⚙ {paramCount} param{paramCount !== 1 ? 's' : ''}</span>
+          <div className="flex items-center justify-between text-[10px] text-mf-text-muted">
+            <span>{paramCount !== 1 ? t('canvas.paramMany', { count: paramCount }) : t('canvas.paramOne', { count: paramCount })}</span>
             {(cpu || mem) && (
               <span>🖥 {cpu}c {mem}G</span>
             )}
@@ -623,12 +634,12 @@ export const MFNode = memo(({ id, data, selected }: NodeProps<MFNodeType>) => {
         >
           <div className="h-full flex flex-col bg-red-950/40 rounded-lg">
             {/* Header */}
-            <div className="mf-node-header bg-red-900/40">
+            <div className="bg-red-900/40">
               <div className="flex items-start gap-1.5">
                 <span className="text-base leading-none mt-0.5">❌</span>
                 <div className="min-w-0 flex-1">
                   <div className="text-xs font-semibold text-red-400 truncate leading-tight">
-                    {data.display_name}
+                    {zh && data.display_name_zh ? data.display_name_zh : data.display_name}
                   </div>
                   <div className="text-[10px] text-red-500/60 font-mono">
                     {runStatus?.phase}
@@ -655,14 +666,14 @@ export const MFNode = memo(({ id, data, selected }: NodeProps<MFNodeType>) => {
                   {downloading ? (
                     <span className="inline-block w-2.5 h-2.5 border border-red-500/30 border-t-red-500 rounded-full animate-spin" />
                   ) : null}
-                  {downloading ? 'Downloading…' : '查看完整 log'}
+              {downloading ? t('canvas.downloading') : t('canvas.viewFullLog')}
                 </button>
               </div>
             )}
 
             {/* Flip back hint */}
             <div className="text-[8px] text-red-500/40 text-center pb-1">
-              ▲ 点击返回
+              {t('canvas.clickToGoBack')}
             </div>
           </div>
         </div>

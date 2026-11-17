@@ -1,0 +1,16 @@
+export const shortcutsEn = {
+  togglePaletteLabel: 'Toggle Nodes panel',
+  togglePaletteDesc: 'Show / hide the node palette',
+  toggleRunsLabel: 'Toggle History panel',
+  toggleRunsDesc: 'Show / hide the History panel',
+  toggleFilesLabel: 'Toggle Files panel',
+  toggleFilesDesc: 'Show / hide the Files panel',
+  runWorkflowLabel: 'Run Workflow',
+  runWorkflowDesc: 'Validate and submit the current workflow',
+  fitViewLabel: 'Fit Canvas',
+  fitViewDesc: 'Zoom and pan to fit all nodes in view',
+  nodeUndoLabel: 'Node — Go back',
+  nodeUndoDesc: 'Undo implementation for the selected node on canvas',
+  nodeRedoLabel: 'Node — Go forward',
+  nodeRedoDesc: 'Redo implementation for the selected node on canvas',
+} as const

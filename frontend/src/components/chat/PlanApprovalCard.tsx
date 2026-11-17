@@ -9,6 +9,7 @@
 
 import { memo, useState } from 'react'
 import { GitBranch, Play, Eye, ChevronDown, ChevronRight, AlertCircle, CheckCircle } from 'lucide-react'
+import { useT } from '../../lib/i18n'
 import type { SemanticWorkflow } from '../../types/semantic'
 
 interface PlanApprovalCardProps {
@@ -22,6 +23,7 @@ export const PlanApprovalCard = memo(({
   onShowOnCanvas,
   onAutoResolve,
 }: PlanApprovalCardProps) => {
+  const { t } = useT()
   const [expanded, setExpanded] = useState(false)
 
   const hasImplementations = workflow.steps.some(
@@ -35,7 +37,7 @@ export const PlanApprovalCard = memo(({
         <div className="flex items-center gap-1.5">
           <GitBranch size={13} className="text-amber-400 flex-shrink-0" />
           <span className="text-amber-200 font-medium truncate">
-            {workflow.name || 'Semantic Workflow'}
+            {workflow.name || t('chat.workflowDefault')}
           </span>
         </div>
         <button
@@ -48,7 +50,7 @@ export const PlanApprovalCard = memo(({
 
       {/* Summary */}
       <div className="px-3 py-1.5 text-mf-text-muted">
-        {workflow.description || `${workflow.steps.length} steps`}
+        {workflow.description || t('chat.stepsCount', { count: workflow.steps.length })}
         {workflow.target_molecule && (
           <span className="ml-1 text-amber-600/80">— {workflow.target_molecule}</span>
         )}
@@ -78,7 +80,7 @@ export const PlanApprovalCard = memo(({
                   ) : (
                     <div className="flex items-center gap-1 mt-0.5">
                       <AlertCircle size={9} className="text-orange-500" />
-                      <span className="text-orange-500/70 text-[10px]">no implementation found</span>
+                      <span className="text-orange-500/70 text-[10px]">{t('chat.noImplementation')}</span>
                     </div>
                   )}
                 </div>
@@ -99,19 +101,19 @@ export const PlanApprovalCard = memo(({
         <button
           onClick={() => onShowOnCanvas(workflow)}
           className="flex items-center gap-1 px-2 py-1 rounded text-amber-300 hover:text-amber-100 hover:bg-amber-900/30 transition-colors"
-          title="在画布上显示语义节点"
+          title={t('chat.showOnCanvasTitle')}
         >
           <Eye size={11} />
-          Show on Canvas
+          {t('chat.showOnCanvas')}
         </button>
         <button
           onClick={() => onAutoResolve(workflow)}
           disabled={!hasImplementations}
           className="flex items-center gap-1 px-2 py-1 rounded text-green-400 hover:text-green-200 hover:bg-green-900/20 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-          title={hasImplementations ? '自动生成 MF YAML' : '未找到节点实现'}
+          title={hasImplementations ? t('chat.autoResolveTitle') : t('chat.noImplementationTitle')}
         >
           <Play size={11} />
-          Auto-resolve
+          {t('chat.autoResolve')}
         </button>
       </div>
     </div>

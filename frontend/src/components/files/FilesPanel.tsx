@@ -4,6 +4,7 @@ import { Upload, Download, Trash2, FolderOpen, Copy, ChevronDown, ChevronRight, 
 import { filesApi, projectFilesApi } from '../../api/files-api'
 import type { DirectoryEntry } from '../../api/files-api'
 import { useProjectStore } from '../../stores/project-store'
+import { useT } from '../../lib/i18n'
 import type { FileEntry } from '../../types/index-types'
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -38,8 +39,9 @@ function FileList({
   deletePending: boolean
   extraAction?: { label: string; icon: React.ReactNode; onClick: (entry: FileEntry) => void }
 }) {
+  const { t } = useT()
   if (files.length === 0) {
-    return <p className="text-xs text-mf-text-muted px-3 py-4 text-center">No files</p>
+    return <p className="text-xs text-mf-text-muted px-3 py-4 text-center">{t('files.noFiles')}</p>
   }
   return (
     <>
@@ -61,9 +63,9 @@ function FileList({
             <button
               onClick={() => onDownload(entry)}
               className="flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] text-mf-text-secondary hover:text-blue-300 hover:bg-mf-hover rounded transition-colors"
-              title="Download"
+              title={t('files.download')}
             >
-              <Download size={10} /> Download
+              <Download size={10} /> {t('files.download')}
             </button>
             {extraAction && (
               <button
@@ -78,9 +80,9 @@ function FileList({
               onClick={() => onDelete(entry.name)}
               disabled={deletePending}
               className="flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] text-mf-text-secondary hover:text-red-400 hover:bg-mf-hover rounded transition-colors disabled:opacity-50"
-              title="Delete"
+              title={t('files.delete')}
             >
-              <Trash2 size={10} /> Delete
+              <Trash2 size={10} /> {t('files.delete')}
             </button>
           </div>
         </div>
@@ -94,6 +96,7 @@ function FileList({
 function WorkspaceTab() {
   const qc = useQueryClient()
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const { t } = useT()
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['files', 'workspace'],
@@ -139,19 +142,19 @@ function WorkspaceTab() {
           className="flex items-center gap-1.5 px-2 py-1.5 w-full justify-center text-xs bg-blue-600/20 border border-blue-600/40 text-blue-300 hover:bg-blue-600/30 rounded transition-colors disabled:opacity-50"
         >
           <Upload size={12} />
-          {uploadMutation.isPending ? 'Uploading…' : 'Upload File'}
+          {uploadMutation.isPending ? t('files.uploading') : t('files.uploadFile')}
         </button>
         {uploadMutation.isError && (
           <p className="text-[10px] text-red-400 mt-1 truncate">
-            {uploadMutation.error instanceof Error ? uploadMutation.error.message : 'Upload failed'}
+            {uploadMutation.error instanceof Error ? uploadMutation.error.message : t('files.uploadFailed')}
           </p>
         )}
       </div>
 
       {/* List */}
       <div className="flex-1 overflow-y-auto mf-scroll">
-        {isLoading && <p className="text-xs text-mf-text-muted px-3 py-4 text-center">Loading…</p>}
-        {isError && <p className="text-xs text-red-500 px-3 py-4 text-center">Failed to load files</p>}
+        {isLoading && <p className="text-xs text-mf-text-muted px-3 py-4 text-center">{t('files.loading')}</p>}
+        {isError && <p className="text-xs text-red-500 px-3 py-4 text-center">{t('files.failedToLoadFiles')}</p>}
         <FileList
           files={files}
           onDownload={handleDownload}
@@ -162,7 +165,10 @@ function WorkspaceTab() {
 
       <div className="px-3 py-1.5 border-t border-mf-border flex-shrink-0">
         <span className="text-[10px] text-mf-text-muted">
-          workspace/ • {files.length} file{files.length !== 1 ? 's' : ''}
+          {t('files.footerWorkspace', {
+            count: files.length,
+            unit: files.length === 1 ? t('files.fileUnit') : t('files.fileUnits'),
+          })}
         </span>
       </div>
     </div>
@@ -174,6 +180,7 @@ function WorkspaceTab() {
 function ProjectTab({ projectId }: { projectId: string }) {
   const qc = useQueryClient()
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const { t } = useT()
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['files', 'project', projectId],
@@ -236,11 +243,11 @@ function ProjectTab({ projectId }: { projectId: string }) {
           className="flex items-center gap-1.5 px-2 py-1.5 w-full justify-center text-xs bg-blue-600/20 border border-blue-600/40 text-blue-300 hover:bg-blue-600/30 rounded transition-colors disabled:opacity-50"
         >
           <Upload size={12} />
-          {uploadMutation.isPending ? 'Uploading…' : 'Upload File'}
+          {uploadMutation.isPending ? t('files.uploading') : t('files.uploadFile')}
         </button>
         {uploadMutation.isError && (
           <p className="text-[10px] text-red-400 mt-1 truncate">
-            {uploadMutation.error instanceof Error ? uploadMutation.error.message : 'Upload failed'}
+            {uploadMutation.error instanceof Error ? uploadMutation.error.message : t('files.uploadFailed')}
           </p>
         )}
       </div>
@@ -248,7 +255,7 @@ function ProjectTab({ projectId }: { projectId: string }) {
       {/* Copy from workspace */}
       {copyableFiles.length > 0 && (
         <div className="px-3 py-2 border-b border-mf-border flex-shrink-0">
-          <p className="text-[10px] text-mf-text-muted mb-1">Copy from workspace:</p>
+          <p className="text-[10px] text-mf-text-muted mb-1">{t('files.copyFromWorkspace')}</p>
           <div className="space-y-0.5 max-h-24 overflow-y-auto mf-scroll">
             {copyableFiles.map((wf) => (
               <button
@@ -268,8 +275,8 @@ function ProjectTab({ projectId }: { projectId: string }) {
 
       {/* List */}
       <div className="flex-1 overflow-y-auto mf-scroll">
-        {isLoading && <p className="text-xs text-mf-text-muted px-3 py-4 text-center">Loading…</p>}
-        {isError && <p className="text-xs text-red-500 px-3 py-4 text-center">Failed to load files</p>}
+        {isLoading && <p className="text-xs text-mf-text-muted px-3 py-4 text-center">{t('files.loading')}</p>}
+        {isError && <p className="text-xs text-red-500 px-3 py-4 text-center">{t('files.failedToLoadFiles')}</p>}
         <FileList
           files={files}
           onDownload={handleDownload}
@@ -280,7 +287,10 @@ function ProjectTab({ projectId }: { projectId: string }) {
 
       <div className="px-3 py-1.5 border-t border-mf-border flex-shrink-0">
         <span className="text-[10px] text-mf-text-muted">
-          project files/ • {files.length} file{files.length !== 1 ? 's' : ''}
+          {t('files.footerProject', {
+            count: files.length,
+            unit: files.length === 1 ? t('files.fileUnit') : t('files.fileUnits'),
+          })}
         </span>
       </div>
     </div>
@@ -367,6 +377,7 @@ function TreeRow({
   onView: (entry: TreeNode) => void
   onDownload: (entry: TreeNode) => void
 }) {
+  const { t } = useT()
   const [expanded, setExpanded] = useState(depth < 1)
   const hasChildren = node.isDir && node.children.length > 0
 
@@ -413,16 +424,16 @@ function TreeRow({
             <button
               onClick={() => onView(node)}
               className="flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] text-mf-text-secondary hover:text-blue-300 hover:bg-mf-hover rounded transition-colors"
-              title="View"
+              title={t('files.view')}
             >
-              View
+              {t('files.view')}
             </button>
             <button
               onClick={() => onDownload(node)}
               className="flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] text-mf-text-secondary hover:text-green-300 hover:bg-mf-hover rounded transition-colors"
-              title="Download"
+              title={t('files.download')}
             >
-              <Download size={10} /> Download
+              <Download size={10} /> {t('files.download')}
             </button>
           </div>
         )}
@@ -441,6 +452,7 @@ function TreeRow({
 }
 
 function DirectoryTab({ projectId }: { projectId: string }) {
+  const { t } = useT()
   const { data, isLoading, isError } = useQuery({
     queryKey: ['files', 'directory', projectId],
     queryFn: () => projectFilesApi.listDirectory(projectId),
@@ -459,7 +471,7 @@ function DirectoryTab({ projectId }: { projectId: string }) {
       const blob = await projectFilesApi.downloadFromDirectory(projectId, node.path)
       setModalContent(await blob.text())
     } catch {
-      setModalContent('[Failed to read file]')
+      setModalContent(t('files.failedToReadFile'))
     } finally {
       setModalLoading(false)
     }
@@ -481,8 +493,8 @@ function DirectoryTab({ projectId }: { projectId: string }) {
   return (
     <div className="flex flex-col flex-1 min-h-0">
       <div className="flex-1 overflow-y-auto mf-scroll">
-        {isLoading && <p className="text-xs text-mf-text-muted px-3 py-4 text-center">Loading...</p>}
-        {isError && <p className="text-xs text-red-500 px-3 py-4 text-center">Failed to load directory</p>}
+        {isLoading && <p className="text-xs text-mf-text-muted px-3 py-4 text-center">{t('files.loading')}</p>}
+        {isError && <p className="text-xs text-red-500 px-3 py-4 text-center">{t('files.failedToLoadDirectory')}</p>}
         {tree.map((node) => (
           <TreeRow
             key={node.path}
@@ -493,12 +505,15 @@ function DirectoryTab({ projectId }: { projectId: string }) {
           />
         ))}
         {tree.length === 0 && !isLoading && (
-          <p className="text-xs text-mf-text-muted px-3 py-4 text-center">No files</p>
+          <p className="text-xs text-mf-text-muted px-3 py-4 text-center">{t('files.noFiles')}</p>
         )}
       </div>
       <div className="px-3 py-1.5 border-t border-mf-border flex-shrink-0">
         <span className="text-[10px] text-mf-text-muted">
-          project dir/ • {fileCount} file{fileCount !== 1 ? 's' : ''}
+          {t('files.footerDirectory', {
+            count: fileCount,
+            unit: fileCount === 1 ? t('files.fileUnit') : t('files.fileUnits'),
+          })}
         </span>
       </div>
 
@@ -516,7 +531,7 @@ function DirectoryTab({ projectId }: { projectId: string }) {
             </div>
             <div className="flex-1 overflow-y-auto mf-scroll p-4">
               {modalLoading ? (
-                <p className="text-xs text-mf-text-muted">Loading...</p>
+                <p className="text-xs text-mf-text-muted">{t('files.loading')}</p>
               ) : (
                 <pre className="text-xs text-mf-text-primary font-mono whitespace-pre-wrap break-all">{modalContent}</pre>
               )}
@@ -533,6 +548,7 @@ function DirectoryTab({ projectId }: { projectId: string }) {
 export function FilesPanel() {
   const projectId = useProjectStore((s) => s.currentProjectId)
   const [tab, setTab] = useState<'workspace' | 'project' | 'directory'>(projectId ? 'project' : 'workspace')
+  const { t } = useT()
 
   // If projectId changes while panel is open, switch tab
   const effectiveTab = projectId ? tab : 'workspace'
@@ -543,7 +559,7 @@ export function FilesPanel() {
       <div className="flex items-center border-b border-mf-border flex-shrink-0">
         <span className="flex items-center gap-1.5 text-xs font-semibold text-mf-text-secondary uppercase tracking-wide px-3 py-2">
           <FolderOpen size={13} className="text-blue-400" />
-          Files
+          {t('files.title')}
         </span>
         {projectId && (
           <div className="ml-auto flex">
@@ -555,7 +571,7 @@ export function FilesPanel() {
                   : 'text-mf-text-muted hover:text-mf-text-secondary'
               }`}
             >
-              Global
+              {t('files.tabGlobal')}
             </button>
             <button
               onClick={() => setTab('project')}
@@ -565,7 +581,7 @@ export function FilesPanel() {
                   : 'text-mf-text-muted hover:text-mf-text-secondary'
               }`}
             >
-              Project
+              {t('files.tabProject')}
             </button>
             <button
               onClick={() => setTab('directory')}
@@ -575,7 +591,7 @@ export function FilesPanel() {
                   : 'text-mf-text-muted hover:text-mf-text-secondary'
               }`}
             >
-              Dir
+              {t('files.tabDirectory')}
             </button>
           </div>
         )}

@@ -18,6 +18,11 @@ metadata:
     are initialised from the precomputed MP2 t2 seed supplied by ewf-decompose
     (>= 1.2.0) in the cluster contract, so this node needs no PySCF and no
     integral transform.
+  description_zh: >
+    载入 Vayesta 簇嵌入哈密顿量（HDF5），通过 Jordan-Wigner 映射（OpenFermion）
+    构建量子比特哈密顿量，并合成为一个具体的 LUCJ ansatz 电路，以 OpenQASM 3.0
+    导出。Ansatz 参数由 ewf-decompose（>= 1.2.0）在簇契约中提供的预计算 MP2 t2
+    初值初始化，因此本节点无需 PySCF，也无需积分变换。
   node_type: compute
   category: quantum
   author: "MiQroForge Team"
@@ -45,6 +50,7 @@ metadata:
       - jordan-wigner
       - qubit-hamiltonian
 
+  display_name_zh: QSCI 态制备
 stream_inputs:
   - name: cluster_hamiltonian
     display_name: "Cluster Embedding Hamiltonian"
@@ -59,7 +65,12 @@ stream_inputs:
       Contains heff (1-body), eris (2-body, physicist ordering), e_core,
       the MP2 ansatz seed (t2_amps, eps_mo, C_mo), and metadata
       (norb, n_elec, source, molecule).  Requires ewf-decompose >= 1.2.0.
+    description_zh: >
+      HDF5 格式的 Vayesta 簇嵌入哈密顿量。包含 heff（单体项）、eris（双体项，
+      物理学家排序）、e_core、MP2 ansatz 初值（t2_amps、eps_mo、C_mo）以及
+      元数据（norb、n_elec、source、molecule）。要求 ewf-decompose >= 1.2.0。
 
+    display_name_zh: 簇 Hamiltonian (HDF5)
 stream_outputs:
   - name: qubit_hamiltonian
     display_name: "Qubit Hamiltonian (JSON)"
@@ -70,7 +81,11 @@ stream_outputs:
     description: >
       OpenFermion QubitOperator serialised as JSON.  Each Pauli term is
       recorded with its qubit indices, Pauli string, and complex coefficient.
+    description_zh: >
+      序列化为 JSON 的 OpenFermion QubitOperator。每个 Pauli 项记录其量子比特
+      索引、Pauli 字符串与复系数。
 
+    display_name_zh: 量子比特 Hamiltonian (JSON)
   - name: ansatz_circuit
     display_name: "Ansatz Circuit (QASM 3.0)"
     io_type:
@@ -82,7 +97,11 @@ stream_outputs:
       Concrete LUCJ ansatz circuit in OpenQASM 3.0.  All gate parameters are
       numeric (no free symbols), initialised from the precomputed MP2 t2 seed
       carried in the cluster contract.
+    description_zh: >
+      OpenQASM 3.0 格式的具体 LUCJ ansatz 电路。所有门参数均为数值（无自由
+      符号），由簇契约中携带的预计算 MP2 t2 初值初始化。
 
+    display_name_zh: Ansatz 电路 (OQ3)
 onboard_inputs:
   - name: coefficient_threshold
     display_name: Integral Cutoff (Hartree)
@@ -95,7 +114,12 @@ onboard_inputs:
       transform.  Lower = more accurate but more memory.  For QSCI subspace
       diagonalisation, 1e-4 is sufficient; reduce to 1e-6 for near-FCI accuracy
       (requires more RAM).
+    description_zh: >
+      低于该阈值的双体积分在 Jordan-Wigner 变换前被置零。值越低越精确，但占用
+      内存越多。对于 QSCI 子空间对角化，1e-4 已足够；若要接近 FCI 精度可降至
+      1e-6（需要更多内存）。
 
+    display_name_zh: 积分截断 (Hartree)
 onboard_outputs:
   - name: n_qubits
     display_name: "Number of Qubits"
@@ -103,7 +127,10 @@ onboard_outputs:
     description: >
       Total qubits required for the Jordan-Wigner encoding
       (2 × number of active spatial orbitals in the cluster).
+    description_zh: >
+      Jordan-Wigner 编码所需的总量子比特数（2 × 簇中活性空间轨道数）。
 
+    display_name_zh: 量子比特数
 resources:
   cpu_cores: 4
   mem_gb: 16.0

@@ -12,6 +12,7 @@ metadata:
     Performs CCSD or CCSD(T) single-point energy calculation using Psi4.
     CCSD(T) includes perturbative triple excitations for higher accuracy.
     Supports frozen-core approximation.
+  description_zh: 使用 Psi4 进行 CCSD 或 CCSD(T) 单点能计算。CCSD(T) 包含微扰三重激发，精度更高。支持冻结芯近似。
   node_type: compute
   category: chemistry
   author: MiQroForge Team
@@ -35,6 +36,7 @@ metadata:
       - coupled-cluster
       - open-source
 
+  display_name_zh: Psi4 耦合簇 (CCSD/CCSD(T))
 stream_inputs:
   - name: xyz_geometry
     display_name: Input Geometry (XYZ)
@@ -44,7 +46,9 @@ stream_inputs:
       shape: array
     required: true
     description: Molecular geometry in standard XYZ format (Angstrom).
+    description_zh: 标准 XYZ 格式（埃）的分子几何结构。
 
+    display_name_zh: 输入几何 (XYZ)
 stream_outputs:
   - name: total_energy
     display_name: Total Energy
@@ -52,7 +56,9 @@ stream_outputs:
       category: physical_quantity
       unit: Ha
     description: Total CCSD electronic energy.
+    description_zh: 总的 CCSD 电子能量。
 
+    display_name_zh: 最终能量
   - name: wavefunction_data
     display_name: Wavefunction Data
     io_type:
@@ -60,7 +66,9 @@ stream_outputs:
       ecosystem: psi4
       data_type: wavefunction
     description: Psi4 wavefunction data (JSON serialized).
+    description_zh: Psi4 波函数数据（JSON 序列化）。
 
+    display_name_zh: 波函数数据
 onboard_inputs:
   - name: method_variant
     display_name: Coupled Cluster Variant
@@ -70,18 +78,26 @@ onboard_inputs:
       - CCSD
       - "CCSD(T)"
     description: "CCSD(T) includes perturbative triple excitations — higher accuracy but significantly more expensive."
+    description_zh: CCSD(T) 包含微扰三重激发——精度更高但计算成本显著增加。
 
+    display_name_zh: 耦合簇变体
   - name: charge
     display_name: Molecular Charge
     kind: integer
     default: 0
 
+    display_name_zh: 体系电荷
+    description: Total charge of the system.
+    description_zh: 分子或晶胞的总电荷。
   - name: multiplicity
     display_name: Spin Multiplicity
     kind: integer
     default: 1
     min_value: 1
 
+    display_name_zh: 自旋多重度
+    description: Spin multiplicity (2S+1) of the system.
+    description_zh: 体系的自旋多重度（2S+1）。
   - name: basis_set
     default: cc-pVDZ
     _shared_param: basis_sets
@@ -95,6 +111,9 @@ onboard_inputs:
       - uhf
       - rohf
 
+    display_name_zh: SCF 参考
+    description: 'SCF reference: RHF / UHF / ROHF.'
+    description_zh: SCF 参考态：RHF / UHF / ROHF。
   - name: scf_type
     display_name: SCF Algorithm
     kind: enum
@@ -104,22 +123,33 @@ onboard_inputs:
       - direct
       - df
 
+    display_name_zh: SCF 算法
+    description: SCF iteration algorithm (e.g. DIIS).
+    description_zh: SCF 迭代算法（如 DIIS）。
   - name: frozen_core
     display_name: Frozen Core
     kind: boolean
     default: true
     description: Freeze core electrons in CCSD correlation treatment.
+    description_zh: 在 CCSD 关联处理中冻结芯电子。
 
+    display_name_zh: 冻结芯
 onboard_outputs:
   - name: scf_energy
     display_name: SCF Energy (Ha)
     kind: float
     unit: Ha
 
+    display_name_zh: 最终能量 (Ha)
+    description: Total energy after SCF convergence (Hartree).
+    description_zh: SCF 收敛后的总能量（Hartree）。
   - name: scf_iterations
     display_name: SCF Iterations
     kind: integer
 
+    display_name_zh: SCF 迭代次数
+    description: Number of SCF iterations.
+    description_zh: SCF 实际迭代次数。
   - name: scf_converged
     display_name: SCF Converged
     kind: boolean
@@ -127,6 +157,10 @@ onboard_outputs:
     gate_default: must_pass
     gate_description: "SCF must converge for the CCSD energy to be meaningful."
 
+    display_name_zh: SCF 已收敛
+    description: Whether SCF converged.
+    description_zh: SCF 是否已收敛。
+    gate_description_zh: SCF 必须收敛。
 resources:
   cpu_cores: 4
   mem_gb: 4.0

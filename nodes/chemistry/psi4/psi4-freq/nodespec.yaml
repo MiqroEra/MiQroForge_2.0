@@ -12,6 +12,7 @@ metadata:
     Performs harmonic vibrational frequency analysis using Psi4.
     Computes ZPE, enthalpy, Gibbs free energy, and checks for imaginary
     frequencies to confirm true minima.
+  description_zh: 使用 Psi4 进行谐振振动频率分析。计算零点能、焓、吉布斯自由能，并通过检查虚频确认结构为真实极小值。
   node_type: compute
   category: chemistry
   author: MiQroForge Team
@@ -36,6 +37,7 @@ metadata:
       - vibration
       - thermochemistry
 
+  display_name_zh: Psi4 频率分析
 stream_inputs:
   - name: xyz_geometry
     display_name: Input Geometry (XYZ)
@@ -47,7 +49,9 @@ stream_inputs:
     description: >
       Molecular geometry in standard XYZ format (Angstrom).
       Should be a stationary point (optimized geometry).
+    description_zh: 标准 XYZ 格式（埃）的分子几何结构。应为驻点（优化后的几何结构）。
 
+    display_name_zh: 输入几何 (XYZ)
 stream_outputs:
   - name: zpe
     display_name: Zero-Point Energy
@@ -55,52 +59,70 @@ stream_outputs:
       category: physical_quantity
       unit: Ha
     description: Zero-point vibrational energy.
+    description_zh: 零点振动能。
 
+    display_name_zh: 零点能
   - name: gibbs_free_energy
     display_name: Gibbs Free Energy
     io_type:
       category: physical_quantity
       unit: Ha
     description: Gibbs free energy at the specified temperature and pressure.
+    description_zh: 指定温度和压强下的吉布斯自由能。
 
+    display_name_zh: Gibbs 自由能
   - name: enthalpy
     display_name: Enthalpy
     io_type:
       category: physical_quantity
       unit: Ha
     description: Enthalpy (electronic + ZPE + thermal).
+    description_zh: 焓（电子能量 + 零点能 + 热贡献）。
 
+    display_name_zh: 焓
   - name: thermo_report
     display_name: Thermochemistry Report
     io_type:
       category: report_object
       format: json
     description: Complete thermochemistry results in JSON format.
+    description_zh: JSON 格式的完整热化学计算结果。
 
+    display_name_zh: 热化学报告
 onboard_inputs:
   - name: charge
     display_name: Molecular Charge
     kind: integer
     default: 0
 
+    display_name_zh: 体系电荷
+    description: Total charge of the system.
+    description_zh: 分子或晶胞的总电荷。
   - name: multiplicity
     display_name: Spin Multiplicity
     kind: integer
     default: 1
     min_value: 1
 
+    display_name_zh: 自旋多重度
+    description: Spin multiplicity (2S+1) of the system.
+    description_zh: 体系的自旋多重度（2S+1）。
   - name: method
     display_name: Electronic Structure Method
     kind: string
     default: B3LYP
     description: "Psi4 method keyword, e.g. B3LYP, PBE0, HF, MP2"
+    description_zh: Psi4 方法关键字，例如 B3LYP、PBE0、HF、MP2。
 
+    display_name_zh: 方法
   - name: basis_set
     display_name: Basis Set
     kind: string
     default: cc-pVDZ
     description: "Basis set name, e.g. cc-pVDZ, cc-pVTZ, 6-31G*"
+    description_zh: 基组名称，例如 cc-pVDZ、cc-pVTZ、6-31G*。
 
+    display_name_zh: 基组
   - name: reference
     display_name: SCF Reference
     kind: enum
@@ -110,6 +132,9 @@ onboard_inputs:
       - uhf
       - rohf
 
+    display_name_zh: SCF 参考
+    description: 'SCF reference: RHF / UHF / ROHF.'
+    description_zh: SCF 参考态：RHF / UHF / ROHF。
   - name: scf_type
     display_name: SCF Algorithm
     kind: enum
@@ -119,6 +144,9 @@ onboard_inputs:
       - direct
       - df
 
+    display_name_zh: SCF 算法
+    description: SCF iteration algorithm (e.g. DIIS).
+    description_zh: SCF 迭代算法（如 DIIS）。
   - name: temperature
     display_name: Temperature (K)
     kind: float
@@ -127,7 +155,9 @@ onboard_inputs:
     max_value: 5000.0
     unit: K
     description: Temperature for thermochemical analysis.
+    description_zh: 热化学分析的温度。
 
+    display_name_zh: 温度 (K)
   - name: pressure
     display_name: Pressure (atm)
     kind: float
@@ -136,21 +166,28 @@ onboard_inputs:
     max_value: 1000.0
     unit: atm
     description: Pressure for thermochemical analysis.
+    description_zh: 热化学分析的压强。
 
+    display_name_zh: 压力 (atm)
 onboard_outputs:
   - name: n_imaginary
     display_name: Number of Imaginary Frequencies
     kind: integer
     description: Count of imaginary frequencies. 0 = true minimum, 1 = transition state.
+    description_zh: 虚频个数。0 表示真实极小值，1 表示过渡态。
 
+    display_name_zh: 虚频数
   - name: is_true_minimum
     display_name: Is True Minimum
     kind: boolean
     description: True if no imaginary frequencies found.
+    description_zh: 若未发现虚频则为 true。
     quality_gate: true
     gate_default: must_pass
     gate_description: "Structure must be a true minimum (no imaginary frequencies)."
 
+    display_name_zh: 是否真极小点
+    gate_description_zh: 结构必须是真极小点（无虚频）。
 resources:
   cpu_cores: 4
   mem_gb: 4.0

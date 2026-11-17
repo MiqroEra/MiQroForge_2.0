@@ -14,6 +14,11 @@ metadata:
     structure. Supports all ORCA-compatible DFT functionals and basis sets.
     The optimized GBW wavefunction file can be passed directly to orca-freq
     for thermochemical analysis. Requires an initial XYZ geometry.
+  description_zh: >
+    使用 ORCA 进行 DFT 几何优化，寻找能量最低的结构。
+    支持所有 ORCA 兼容的 DFT 泛函与基组。
+    优化得到的 GBW 波函数文件可直接传给 orca-freq 进行热化学分析。
+    需要初始 XYZ 几何。
   node_type: compute
   category: chemistry
   author: MiQroForge Team
@@ -40,6 +45,7 @@ metadata:
       - b3lyp
       - def2-svp
 
+  display_name_zh: ORCA 几何优化
 stream_inputs:
   - name: xyz_geometry
     display_name: Input Geometry (XYZ)
@@ -51,7 +57,11 @@ stream_inputs:
     description: >
       Molecular geometry in standard XYZ format (Angstrom).
       Typically from geometry-file-input or another geometry source.
+    description_zh: >
+      标准 XYZ 格式（埃）的分子几何结构。
+      通常来自 geometry-file-input 或其他几何来源。
 
+    display_name_zh: 输入几何 (XYZ)
 stream_outputs:
   - name: gbw_file
     display_name: Optimized GBW Wavefunction
@@ -62,7 +72,11 @@ stream_outputs:
     description: >
       ORCA binary wavefunction file at optimized geometry.
       Pass this to orca-freq for thermochemical analysis.
+    description_zh: >
+      优化几何下的 ORCA 二进制波函数文件。
+      将其传给 orca-freq 以进行热化学分析。
 
+    display_name_zh: GBW 波函数文件
   - name: optimized_xyz
     display_name: Optimized Geometry (XYZ)
     io_type:
@@ -70,38 +84,52 @@ stream_outputs:
       unit: Ang
       shape: array
     description: Optimized molecular geometry in standard XYZ format (Angstrom).
+    description_zh: 标准 XYZ 格式（埃）的优化分子几何结构。
 
+    display_name_zh: 优化后几何
   - name: total_energy
     display_name: Total Energy at Optimized Geometry
     io_type:
       category: physical_quantity
       unit: Ha
     description: Total DFT energy at the converged geometry.
+    description_zh: 收敛几何下的 DFT 总能量。
 
+    display_name_zh: 最终能量
 onboard_inputs:
   - name: charge
     display_name: Molecular Charge
     kind: integer
     default: 0
 
+    display_name_zh: 体系电荷
+    description: Total charge of the system.
+    description_zh: 分子或晶胞的总电荷。
   - name: multiplicity
     display_name: Spin Multiplicity
     kind: integer
     default: 1
     min_value: 1
 
+    display_name_zh: 自旋多重度
+    description: Spin multiplicity (2S+1) of the system.
+    description_zh: 体系的自旋多重度（2S+1）。
   - name: method
     display_name: DFT Functional / Method
     kind: string
     default: B3LYP
     description: "ORCA method keyword: B3LYP, PBE0, M062X, wB97X-D3, etc."
+    description_zh: "ORCA 方法关键词：B3LYP、PBE0、M062X、wB97X-D3 等。"
 
+    display_name_zh: 方法
   - name: basis_set
     display_name: Basis Set
     kind: string
     default: def2-SVP
     description: "Basis set: def2-SVP, def2-TZVP, 6-31G*, cc-pVTZ, etc."
+    description_zh: "基组：def2-SVP、def2-TZVP、6-31G*、cc-pVTZ 等。"
 
+    display_name_zh: 基组
   - name: dispersion
     display_name: Dispersion Correction
     kind: enum
@@ -112,6 +140,9 @@ onboard_inputs:
       - D3BJ
       - D4
 
+    display_name_zh: 色散校正
+    description: Dispersion correction scheme; 'none' disables it.
+    description_zh: 色散校正方法（D3/D3BJ 等），none 表示关闭。
   - name: convergence
     display_name: Convergence Criteria
     kind: enum
@@ -122,6 +153,9 @@ onboard_inputs:
       - TightOpt
       - VeryTightOpt
 
+    display_name_zh: 收敛标准
+    description: SCF or optimization convergence criterion.
+    description_zh: SCF 或优化的收敛判据。
   - name: max_iter
     display_name: Max Optimization Cycles
     kind: integer
@@ -129,26 +163,36 @@ onboard_inputs:
     min_value: 10
     max_value: 2000
 
+    display_name_zh: 最大优化步数
+    description: Maximum geometry optimization iterations.
+    description_zh: 几何优化最大迭代步数。
 onboard_outputs:
   - name: final_energy
     display_name: Final Energy (Ha)
     kind: float
     unit: Ha
     description: DFT energy at optimized geometry.
+    description_zh: 优化几何下的 DFT 能量。
 
+    display_name_zh: 最终能量 (Ha)
   - name: opt_cycles
     display_name: Optimization Cycles
     kind: integer
     description: Number of geometry optimization steps taken.
+    description_zh: 已执行的几何优化步数。
 
+    display_name_zh: 优化循环数
   - name: opt_converged
     display_name: Optimization Converged
     kind: boolean
     description: Whether the geometry optimization converged to a minimum.
+    description_zh: 几何优化是否收敛到极小值。
     quality_gate: true
     gate_default: must_pass
     gate_description: "Geometry optimization must converge before frequency analysis."
 
+    display_name_zh: 优化已收敛
+    gate_description_zh: 晶胞优化必须收敛。
 resources:
   cpu_cores: 4
   mem_gb: 8.0

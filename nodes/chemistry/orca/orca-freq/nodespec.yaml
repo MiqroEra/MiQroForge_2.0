@@ -15,6 +15,11 @@ metadata:
     free energy, enthalpy, and entropy via statistical thermodynamics.
     Accepts the optimized XYZ geometry from orca-geo-opt (standard XYZ format).
     Also verifies the structure is a true minimum (no imaginary frequencies).
+  description_zh: >
+    使用 ORCA 在优化后的几何结构上进行谐振振动频率分析。
+    通过统计热力学计算零点能（ZPE）、热力学校正、Gibbs 自由能、焓和熵。
+    接受来自 orca-geo-opt 的优化 XYZ 几何（标准 XYZ 格式）。
+    同时验证结构为真正的极小值（不存在虚频）。
   node_type: compute
   category: chemistry
   author: MiQroForge Team
@@ -44,6 +49,7 @@ metadata:
       - zpe
       - vibrational
 
+  display_name_zh: ORCA 频率分析
 stream_inputs:
   - name: xyz_geometry
     display_name: Input Geometry (XYZ)
@@ -55,7 +61,11 @@ stream_inputs:
     description: >
       Molecular geometry in standard XYZ format (Angstrom).
       Accepts geometry from geometry-file-input, orca-geo-opt, or any geometry source.
+    description_zh: >
+      标准 XYZ 格式（埃）的分子几何结构。
+      接受来自 geometry-file-input、orca-geo-opt 或任意几何来源的几何。
 
+    display_name_zh: 输入几何 (XYZ)
 stream_outputs:
   - name: thermo_package
     display_name: Thermochemistry Data Package
@@ -66,28 +76,38 @@ stream_outputs:
     description: >
       JSON file containing all thermochemical quantities (ZPE, Gibbs, enthalpy,
       entropy, frequencies). For programmatic bulk consumption by analysis nodes.
+    description_zh: >
+      包含所有热化学量（ZPE、Gibbs、焓、熵、频率）的 JSON 文件。
+      供分析节点以程序化方式批量读取。
 
+    display_name_zh: 热化学数据包
   - name: zpe
     display_name: Zero-Point Energy
     io_type:
       category: physical_quantity
       unit: Ha
     description: Zero-point vibrational energy in Hartree.
+    description_zh: 零点振动能（Hartree）。
 
+    display_name_zh: 零点能
   - name: gibbs_free_energy
     display_name: Gibbs Free Energy
     io_type:
       category: physical_quantity
       unit: Ha
     description: Gibbs free energy at specified temperature and pressure.
+    description_zh: 指定温度和压力下的 Gibbs 自由能。
 
+    display_name_zh: Gibbs 自由能
   - name: enthalpy
     display_name: Enthalpy
     io_type:
       category: physical_quantity
       unit: Ha
     description: Total enthalpy (electronic + thermal) at specified temperature.
+    description_zh: 指定温度下的总焓（电子 + 热力学校正）。
 
+    display_name_zh: 焓
   - name: thermo_report
     display_name: Thermochemistry Report
     io_type:
@@ -98,20 +118,26 @@ stream_outputs:
          "entropy_ha_per_k": float, "n_imaginary": int, "is_true_minimum": bool,
          "frequencies_cm1": [float], "temperature_k": float}
     description: Machine-readable summary of all thermochemical results.
+    description_zh: 所有热化学结果的机器可读摘要。
 
+    display_name_zh: 热化学报告
 onboard_inputs:
   - name: method
     display_name: DFT Functional / Method
     kind: string
     default: B3LYP
     description: Must match the method used in the preceding geometry optimization.
+    description_zh: 必须与此前几何优化所用的方法一致。
 
+    display_name_zh: 方法
   - name: basis_set
     display_name: Basis Set
     kind: string
     default: def2-SVP
     description: Must match the basis set used in the preceding geometry optimization.
+    description_zh: 必须与此前几何优化所用的基组一致。
 
+    display_name_zh: 基组
   - name: dispersion
     display_name: Dispersion Correction
     kind: enum
@@ -122,6 +148,9 @@ onboard_inputs:
       - D3BJ
       - D4
 
+    display_name_zh: 色散校正
+    description: Dispersion correction scheme; 'none' disables it.
+    description_zh: 色散校正方法（D3/D3BJ 等），none 表示关闭。
   - name: temperature
     display_name: Temperature (K)
     kind: float
@@ -130,7 +159,9 @@ onboard_inputs:
     max_value: 3000.0
     unit: K
     description: Temperature for thermochemical calculations (statistical mechanics).
+    description_zh: 热化学计算所用温度（统计力学）。
 
+    display_name_zh: 温度 (K)
   - name: pressure
     display_name: Pressure (atm)
     kind: float
@@ -138,47 +169,65 @@ onboard_inputs:
     min_value: 0.0
     unit: atm
 
+    display_name_zh: 压力 (atm)
+    description: Pressure for thermochemistry.
+    description_zh: 热力学计算的压力。
   - name: charge
     display_name: Molecular Charge
     kind: integer
     default: 0
     description: Must match the charge used in the preceding geometry optimization.
+    description_zh: 必须与此前几何优化所用的电荷一致。
 
+    display_name_zh: 体系电荷
   - name: multiplicity
     display_name: Spin Multiplicity
     kind: integer
     default: 1
     min_value: 1
     description: Must match the multiplicity used in the preceding geometry optimization.
+    description_zh: 必须与此前几何优化所用的多重度一致。
 
+    display_name_zh: 自旋多重度
 onboard_outputs:
   - name: n_imaginary
     display_name: Number of Imaginary Frequencies
     kind: integer
     description: Count of imaginary (negative) frequencies. Should be 0 for a true minimum.
+    description_zh: 虚频（负频率）的个数。真正的极小值应为 0。
 
+    display_name_zh: 虚频数
   - name: gibbs_energy
     display_name: Gibbs Free Energy (Ha)
     kind: float
     unit: Ha
     description: Gibbs free energy at specified temperature.
+    description_zh: 指定温度下的 Gibbs 自由能。
 
+    display_name_zh: Gibbs 自由能 (Ha)
   - name: enthalpy_ha
     display_name: Enthalpy (Ha)
     kind: float
     unit: Ha
     description: Enthalpy at specified temperature.
+    description_zh: 指定温度下的焓。
 
+    display_name_zh: 焓 (Ha)
   - name: is_true_minimum
     display_name: Is True Minimum
     kind: boolean
     description: >
       True if no imaginary frequencies found (structure is a true minimum on PES).
       False if imaginary frequencies present (saddle point or not converged).
+    description_zh: >
+      若不存在虚频则为 true（结构是势能面上的真正极小值）。
+      若存在虚频则为 false（鞍点或未收敛）。
     quality_gate: true
     gate_default: must_pass
     gate_description: "Structure must be a true minimum (no imaginary frequencies) for valid thermochemistry."
 
+    display_name_zh: 是否真极小点
+    gate_description_zh: 结构必须是真极小点（无虚频）。
 resources:
   cpu_cores: 4
   mem_gb: 8.0

@@ -18,7 +18,9 @@ export interface MFNodeData extends Record<string, unknown> {
   name: string
   version: string
   display_name: string
+  display_name_zh?: string
   description: string
+  description_zh?: string
   node_type: string
   category: string
   software?: string

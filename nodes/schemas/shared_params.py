@@ -49,9 +49,17 @@ class CategoryMeta(BaseModel):
         default="",
         description="该类别的默认显示名称，用于自动填充 OnBoardInput.display_name",
     )
+    display_name_zh: str = Field(
+        default="",
+        description="该类别的默认中文显示名称，用于自动填充 OnBoardInput.display_name_zh",
+    )
     description: str = Field(
         default="",
         description="该类别的默认参数说明，用于自动填充 OnBoardInput.description",
+    )
+    description_zh: str = Field(
+        default="",
+        description="该类别的默认中文参数说明，用于自动填充 OnBoardInput.description_zh",
     )
     allow_other: bool = Field(
         default=True,
@@ -63,6 +71,7 @@ class SharedParamEntry(BaseModel):
     """单个 canonical 参数值的跨软件映射。"""
 
     display_name: str = Field(description="人类可读名称")
+    display_name_zh: Optional[str] = Field(default=None, description="中文显示名称")
     gaussian: Optional[str] = Field(default=None, description="Gaussian 原生关键字")
     psi4: Optional[str] = Field(default=None, description="Psi4 原生关键字")
     orca: Optional[str] = Field(default=None, description="ORCA 原生关键字")

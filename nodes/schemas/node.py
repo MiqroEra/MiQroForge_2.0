@@ -377,12 +377,14 @@ class NodeSpec(BaseModel):
         return OnBoardInput(
             name=param_name,
             display_name=cfg.get("display_name"),  # None → auto-gen from name
+            display_name_zh=cfg.get("display_name_zh"),
             kind=kind,
             default=static_value,
             min_value=cfg.get("min_value"),
             max_value=cfg.get("max_value"),
             unit=cfg.get("unit"),
             description=cfg.get("description", ""),
+            description_zh=cfg.get("description_zh", ""),
             resource_param=True,
         )
 

@@ -3,6 +3,7 @@ import { Search, RefreshCw, ChevronLeft, ChevronRight, ChevronDown, Zap, Sparkle
 import { useNodeCatalog } from '../../hooks/useNodeCatalog'
 import { useNodeCatalogStore, buildSemanticGroups, type SubGroup } from '../../stores/node-catalog-store'
 import { useUIStore } from '../../stores/ui-store'
+import { useT } from '../../lib/i18n'
 import { semanticIcon } from '../../lib/semantic-labels'
 import type { PickerOption } from '../../lib/semantic-labels'
 import type { NodeSummaryResponse } from '../../types/index-types'
@@ -10,6 +11,7 @@ import type { NodeSummaryResponse } from '../../types/index-types'
 // ─── Ephemeral type card (fixed, draggable) ──────────────────────────────────
 
 function EphemeralTypeCard() {
+  const { t } = useT()
   const onDragStart = useCallback((e: React.DragEvent) => {
     e.dataTransfer.setData('application/mf-ephemeral', 'true')
     e.dataTransfer.effectAllowed = 'copy'
@@ -29,7 +31,7 @@ function EphemeralTypeCard() {
               Ephemeral Node
             </div>
             <div className="text-[10px] text-orange-500/80">
-              temporary · drag to create
+              {t('palette.ephemeralHint')}
             </div>
           </div>
         </div>
@@ -41,6 +43,7 @@ function EphemeralTypeCard() {
 // ─── Node Generator type card (fixed, draggable) ─────────────────────────────
 
 function NodeGeneratorTypeCard() {
+  const { t } = useT()
   const onDragStart = useCallback((e: React.DragEvent) => {
     e.dataTransfer.setData('application/mf-node-gen', 'true')
     e.dataTransfer.effectAllowed = 'copy'
@@ -60,7 +63,7 @@ function NodeGeneratorTypeCard() {
               Generate Node
             </div>
             <div className="text-[10px] text-purple-500/80">
-              AI-assisted · drag to create
+              {t('palette.nodeGenHint')}
             </div>
           </div>
         </div>
@@ -72,6 +75,8 @@ function NodeGeneratorTypeCard() {
 // ─── Software row (secondary-menu item, draggable with node-name protocol) ────
 
 function SoftwareRow({ node }: { node: NodeSummaryResponse }) {
+  const { t, language } = useT()
+  const zh = language === 'zh'
   const onDragStart = useCallback(
     (e: React.DragEvent) => {
       e.stopPropagation()
@@ -86,10 +91,10 @@ function SoftwareRow({ node }: { node: NodeSummaryResponse }) {
       draggable
       onDragStart={onDragStart}
       className="flex items-center justify-between px-2.5 py-1.5 hover:bg-mf-hover cursor-grab active:cursor-grabbing transition-colors select-none group"
-      title={`Drag to place ${node.name}`}
+      title={t('palette.dragToPlace', { name: node.name })}
     >
       <span className="text-xs font-medium text-blue-400 group-hover:text-blue-300 truncate">
-        {node.software ?? node.display_name}
+        {node.software ?? (zh && node.display_name_zh ? node.display_name_zh : node.display_name)}
       </span>
       <span className="text-[10px] text-mf-text-muted font-mono ml-2 shrink-0">
         {node.name}
@@ -107,6 +112,7 @@ interface SubGroupRowProps {
 }
 
 function SubGroupRow({ subGroup, expanded, onToggle }: SubGroupRowProps) {
+  const { t } = useT()
   return (
     <div>
       <div
@@ -122,7 +128,9 @@ function SubGroupRow({ subGroup, expanded, onToggle }: SubGroupRowProps) {
           </span>
         </div>
         <span className="text-[10px] text-mf-text-muted">
-          {subGroup.nodes.length} impl{subGroup.nodes.length !== 1 ? 's' : ''}
+          {subGroup.nodes.length === 1
+            ? t('palette.implUnit', { count: subGroup.nodes.length })
+            : t('palette.implUnits', { count: subGroup.nodes.length })}
         </span>
       </div>
       {expanded && (
@@ -148,6 +156,8 @@ interface SemanticTypeCardProps {
 }
 
 function SemanticTypeCard({ semanticType, label, nodes, subGroups, expanded, onToggle }: SemanticTypeCardProps) {
+  const { t, language } = useT()
+  const zh = language === 'zh'
   const icon = semanticIcon(semanticType)
   const [expandedSubs, setExpandedSubs] = React.useState<Set<string>>(new Set())
 
@@ -165,7 +175,7 @@ function SemanticTypeCard({ semanticType, label, nodes, subGroups, expanded, onT
       const options: PickerOption[] = nodes.map((n) => ({
         nodeName: n.name,
         software: n.software ?? null,
-        label: n.display_name,
+        label: zh && n.display_name_zh ? n.display_name_zh : n.display_name,
         methods: n.methods,
       }))
       e.dataTransfer.setData('application/mf-semantic-type', semanticType)
@@ -195,7 +205,9 @@ function SemanticTypeCard({ semanticType, label, nodes, subGroups, expanded, onT
                 {label}
               </div>
               <div className="text-[10px] text-mf-text-muted font-mono">
-                {nodes.length} impl{nodes.length !== 1 ? 's' : ''}
+                {nodes.length === 1
+                  ? t('palette.implUnit', { count: nodes.length })
+                  : t('palette.implUnits', { count: nodes.length })}
               </div>
             </div>
           </div>
@@ -234,6 +246,7 @@ function SemanticTypeCard({ semanticType, label, nodes, subGroups, expanded, onT
 // ─── NodePalette ──────────────────────────────────────────────────────────────
 
 export function NodePalette() {
+  const { t } = useT()
   const { isLoading, refreshWithReindex } = useNodeCatalog()
   const { filteredNodes, searchQuery, setSearchQuery, expandedTypes, toggleExpanded } = useNodeCatalogStore()
   const { paletteCollapsed, togglePalette } = useUIStore()
@@ -246,7 +259,7 @@ export function NodePalette() {
         <button
           onClick={togglePalette}
           className="text-mf-text-muted hover:text-mf-text-primary p-1"
-          title="Expand palette"
+          title={t('palette.expandPalette')}
         >
           <ChevronRight size={16} />
         </button>
@@ -258,12 +271,12 @@ export function NodePalette() {
     <div className="flex flex-col bg-mf-panel h-full">
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-mf-border">
-        <span className="text-xs font-semibold text-mf-text-secondary uppercase tracking-wide">Nodes</span>
+        <span className="text-xs font-semibold text-mf-text-secondary uppercase tracking-wide">{t('palette.nodesTitle')}</span>
         <div className="flex gap-1 items-center">
           <button
             onClick={() => refreshWithReindex()}
             className="text-mf-text-muted hover:text-mf-text-primary p-0.5"
-            title="Refresh node catalog (re-scan filesystem)"
+            title={t('palette.refreshCatalog')}
             disabled={isLoading}
           >
             <RefreshCw size={13} className={isLoading ? 'animate-spin' : ''} />
@@ -271,7 +284,7 @@ export function NodePalette() {
           <button
             onClick={togglePalette}
             className="text-mf-text-muted hover:text-mf-text-primary p-0.5"
-            title="Collapse palette"
+            title={t('palette.collapsePalette')}
           >
             <ChevronLeft size={13} />
           </button>
@@ -284,7 +297,7 @@ export function NodePalette() {
           <Search size={11} className="absolute left-2 top-1/2 -translate-y-1/2 text-mf-text-muted" />
           <input
             type="text"
-            placeholder="Search nodes..."
+            placeholder={t('palette.searchNodes')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-6 pr-2 py-1 bg-mf-input border border-mf-border rounded text-xs text-mf-text-primary placeholder-mf-text-muted focus:outline-none focus:border-gray-400"
@@ -301,12 +314,12 @@ export function NodePalette() {
         <NodeGeneratorTypeCard />
 
         {isLoading && (
-          <div className="px-3 py-4 text-xs text-mf-text-muted text-center">Loading nodes…</div>
+          <div className="px-3 py-4 text-xs text-mf-text-muted text-center">{t('palette.loadingNodes')}</div>
         )}
 
         {!isLoading && filteredNodes.length === 0 && (
           <div className="px-3 py-4 text-xs text-mf-text-muted text-center">
-            {searchQuery ? 'No nodes match your search.' : 'No nodes found. Run mf2 nodes reindex.'}
+            {searchQuery ? t('palette.noMatches') : t('palette.noNodesFound')}
           </div>
         )}
 
@@ -325,7 +338,7 @@ export function NodePalette() {
 
       {/* Footer hint */}
       <div className="px-3 py-1.5 border-t border-mf-border text-[10px] text-mf-text-muted">
-        Drag to canvas · Click to select software
+        {t('palette.dragHint')}
       </div>
     </div>
   )

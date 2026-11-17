@@ -1,4 +1,9 @@
 import type { PortCategory } from '../types/nodespec'
+import { resolveLabelEn } from './semantic-labels'
+import type { LabelsKey } from './semantic-labels'
+
+// Re-export the label resolver so importers of this module can wire `t()`.
+export { resolveLabel, type LabelsKey } from './semantic-labels'
 
 // ─── Color maps ───────────────────────────────────────────────────────────────
 
@@ -12,11 +17,12 @@ export const PORT_COLORS: Record<PortCategory, string> = {
 // Ephemeral wildcard port — rainbow gradient, rendered via inline style
 export const EPHEMERAL_PORT_COLOR = '#f97316'  // orange-500 fallback
 
-export const PORT_LABELS: Record<PortCategory, string> = {
-  physical_quantity:     'Physical',
-  software_data_package: 'Software',
-  logic_value:           'Logic',
-  report_object:         'Report',
+// Values are i18n dict keys; resolve through `resolveLabel` at call sites.
+export const PORT_LABELS: Record<PortCategory, LabelsKey> = {
+  physical_quantity:     'labels.portPhysical',
+  software_data_package: 'labels.portSoftware',
+  logic_value:           'labels.portLogic',
+  report_object:         'labels.portReport',
 }
 
 export const PORT_DOT_CLASS: Record<PortCategory, string> = {
@@ -36,7 +42,7 @@ export const PORT_HANDLE_CLASS: Record<PortCategory, string> = {
 // ─── Category label helpers ───────────────────────────────────────────────────
 
 export function portCategoryLabel(cat: PortCategory): string {
-  return PORT_LABELS[cat] ?? cat
+  return resolveLabelEn(PORT_LABELS[cat])
 }
 
 export function portColor(cat: PortCategory): string {

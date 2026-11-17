@@ -19,36 +19,8 @@ from agents.node_generator.ephemeral.sandbox import (
     make_sandbox_tool,
     make_pip_install_tool,
 )
+from agents.node_generator.shared.parsing import extract_script
 from agents.node_generator.shared.sandbox_base import create_sandbox_dir, save_pip_history
-
-
-def _extract_script(text: str) -> str:
-    """从 LLM 纯文本响应中提取脚本。"""
-    script = text.strip()
-
-    if "```python" in script:
-        try:
-            start = script.index("```python") + 9
-            end = script.index("```", start)
-            return script[start:end].strip()
-        except ValueError:
-            pass
-    elif "```bash" in script:
-        try:
-            start = script.index("```bash") + 7
-            end = script.index("```", start)
-            return script[start:end].strip()
-        except ValueError:
-            pass
-    elif "```" in script:
-        try:
-            start = script.index("```") + 3
-            end = script.index("```", start)
-            return script[start:end].strip()
-        except ValueError:
-            pass
-
-    return script
 
 
 def _load_ephemeral_settings() -> dict[str, Any]:
@@ -166,7 +138,7 @@ def generate_ephemeral_node(state: EphemeralGenState) -> dict[str, Any]:
                         if script:
                             break
                 if not script:
-                    script = _extract_script(response.content)
+                    script = extract_script(response.content)
                 break
 
             messages.append(response)
@@ -234,7 +206,7 @@ def generate_ephemeral_node(state: EphemeralGenState) -> dict[str, Any]:
                     if script:
                         break
                 elif isinstance(msg, AIMessage) and msg.content:
-                    script = _extract_script(msg.content)
+                    script = extract_script(msg.content)
                     break
 
         save_pip_history(

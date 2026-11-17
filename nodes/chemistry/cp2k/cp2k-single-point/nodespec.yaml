@@ -12,6 +12,10 @@ metadata:
     Performs a single-point energy calculation for periodic systems using
     CP2K (GPW/GAPW method). Supports PBC, plane-wave cutoff, and electronic
     smearing for metals. Requires cell parameters for the simulation box.
+  description_zh: >
+    使用 CP2K（GPW/GAPW 方法）对周期性体系进行单点能计算。
+    支持周期性边界条件（PBC）、平面波截断以及金属体系的电子展宽。
+    需要提供模拟盒的晶胞参数。
   node_type: compute
   category: chemistry
   author: MiQroForge Team
@@ -40,6 +44,7 @@ metadata:
       - slab
       - bulk
 
+  display_name_zh: CP2K 单点能
 stream_inputs:
   - name: xyz_geometry
     display_name: Input Geometry (XYZ)
@@ -51,7 +56,11 @@ stream_inputs:
     description: >
       Atomic positions in XYZ format (Angstrom).
       Cell parameters are provided via the cell_abc onboard input.
+    description_zh: >
+      XYZ 格式的原子坐标（单位为埃）。
+      晶胞参数通过 cell_abc 板载输入提供。
 
+    display_name_zh: 输入几何 (XYZ)
 stream_outputs:
   - name: total_energy
     display_name: Total Energy
@@ -59,7 +68,9 @@ stream_outputs:
       category: physical_quantity
       unit: Ha
     description: Total electronic energy (FORCE_EVAL result).
+    description_zh: "总电子能量（FORCE_EVAL 结果）。"
 
+    display_name_zh: 最终能量
   - name: cell_parameters
     display_name: Cell Parameters
     io_type:
@@ -67,19 +78,27 @@ stream_outputs:
       unit: Ang
       shape: array
     description: Cell vectors (a, b, c, alpha, beta, gamma) as space-separated values.
+    description_zh: "晶胞矢量（a、b、c、alpha、beta、gamma），以空格分隔的数值表示。"
 
+    display_name_zh: 晶胞参数
 onboard_inputs:
   - name: charge
     display_name: System Charge
     kind: integer
     default: 0
 
+    display_name_zh: 体系电荷
+    description: Total charge of the system.
+    description_zh: 分子或晶胞的总电荷。
   - name: multiplicity
     display_name: Spin Multiplicity
     kind: integer
     default: 1
     min_value: 1
 
+    display_name_zh: 自旋多重度
+    description: Spin multiplicity (2S+1) of the system.
+    description_zh: 体系的自旋多重度（2S+1）。
   - name: cell_abc
     display_name: Cell Parameters (a b c alpha beta gamma)
     kind: string
@@ -87,7 +106,11 @@ onboard_inputs:
     description: >
       Unit cell parameters: a b c (Angstrom) alpha beta gamma (degrees).
       Space-separated. For cubic: "5.43 5.43 5.43 90 90 90".
+    description_zh: >
+      晶胞参数：a b c（单位为埃）与 alpha beta gamma（单位为度）。
+      以空格分隔。立方晶胞示例："5.43 5.43 5.43 90 90 90"。
 
+    display_name_zh: 初始晶胞参数 (a b c α β γ)
   - name: xc_functional
     display_name: Exchange-Correlation Functional
     kind: enum
@@ -102,12 +125,17 @@ onboard_inputs:
       - SCAN
       - HSE06
 
+    display_name_zh: 交换关联泛函
+    description: Exchange-correlation functional for DFT.
+    description_zh: DFT 交换关联泛函。
   - name: basis_set
     display_name: Basis Set
     kind: string
     default: DZVP-MOLOPT-SR-GTH
     description: "CP2K MOLOPT basis set name, e.g. DZVP-MOLOPT-SR-GTH, TZVP-MOLOPT-GTH"
+    description_zh: "CP2K MOLOPT 基组名称，例如 DZVP-MOLOPT-SR-GTH、TZVP-MOLOPT-GTH。"
 
+    display_name_zh: 基组
   - name: cutoff
     display_name: Plane-Wave Cutoff (Ry)
     kind: integer
@@ -116,7 +144,9 @@ onboard_inputs:
     max_value: 2000
     unit: Ry
     description: "PW cutoff in Rydberg. 300-600 typical for MOLOPT basis."
+    description_zh: "平面波截断，单位为 Rydberg。MOLOPT 基组常用 300-600。"
 
+    display_name_zh: 平面波截断 (Ry)
   - name: rel_cutoff
     display_name: Relative Cutoff (Ry)
     kind: integer
@@ -124,6 +154,9 @@ onboard_inputs:
     min_value: 20
     max_value: 200
 
+    display_name_zh: 相对截断 (Ry)
+    description: Relative cutoff for CP2K.
+    description_zh: CP2K 的相对截断。
   - name: max_scf
     display_name: Max SCF Cycles
     kind: integer
@@ -131,12 +164,17 @@ onboard_inputs:
     min_value: 5
     max_value: 500
 
+    display_name_zh: 最大 SCF 循环数
+    description: Maximum number of SCF iterations.
+    description_zh: SCF 迭代最大次数。
   - name: eps_scf
     display_name: SCF Convergence Threshold
     kind: float
     default: 1.0e-6
     description: "Energy convergence criterion for SCF (Ha)."
+    description_zh: "SCF 能量收敛判据（单位为 Ha）。"
 
+    display_name_zh: SCF 收敛阈值
   - name: smearing
     display_name: Electronic Smearing
     kind: enum
@@ -145,6 +183,9 @@ onboard_inputs:
       - "none"
       - "fermi_dirac"
 
+    display_name_zh: 电子 Smearing
+    description: Occupation smearing scheme.
+    description_zh: 占据函数的 Smearing 方式。
   - name: electronic_temperature
     display_name: Electronic Temperature (K)
     kind: integer
@@ -152,21 +193,29 @@ onboard_inputs:
     min_value: 0
     max_value: 10000
     description: "Fermi-Dirac smearing temperature. 0 = no smearing."
+    description_zh: "Fermi-Dirac 展宽温度。0 表示不展宽。"
 
+    display_name_zh: 电子温度 (K)
 onboard_outputs:
   - name: scf_energy
     display_name: Final Energy (Ha)
     kind: float
     unit: Ha
 
+    display_name_zh: 最终能量 (Ha)
+    description: Total energy after SCF convergence (Hartree).
+    description_zh: SCF 收敛后的总能量（Hartree）。
   - name: scf_converged
     display_name: SCF Converged
     kind: boolean
     description: Whether SCF converged.
+    description_zh: "SCF 是否收敛。"
     quality_gate: true
     gate_default: must_pass
     gate_description: "SCF must converge."
 
+    display_name_zh: SCF 已收敛
+    gate_description_zh: SCF 必须收敛。
 resources:
   cpu_cores: 4
   mem_gb: 16.0

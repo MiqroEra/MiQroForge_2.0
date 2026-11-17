@@ -5,6 +5,7 @@
 import { memo, useState } from 'react'
 import { Bot, User, AlertCircle, ChevronDown, ChevronRight, Copy, Check } from 'lucide-react'
 import type { ChatMessage } from '../../types/semantic'
+import { useT } from '../../lib/i18n'
 import { PlanApprovalCard } from './PlanApprovalCard'
 import type { SemanticWorkflow } from '../../types/semantic'
 import { formatClock } from '../../lib/date-utils'
@@ -16,6 +17,7 @@ interface YamlResultCardProps {
 }
 
 const YamlResultCard = memo(({ yamlResult }: YamlResultCardProps) => {
+  const { t } = useT()
   const [expanded, setExpanded] = useState(false)
   const [copied, setCopied] = useState(false)
 
@@ -42,10 +44,10 @@ const YamlResultCard = memo(({ yamlResult }: YamlResultCardProps) => {
           : <ChevronRight size={12} className="text-mf-text-muted flex-shrink-0" />
         }
         <span className={`text-[10px] font-medium flex-1 ${valid ? 'text-green-400' : 'text-amber-400'}`}>
-          {valid ? '✓ MF YAML' : '⚠ MF YAML (validation issues)'}
+          {valid ? t('chat.yamlValid') : t('chat.yamlInvalid')}
         </span>
         <span className="text-[9px] text-mf-text-muted">
-          {yamlResult.mf_yaml.split('\n').length} lines
+          {t('chat.lines', { count: yamlResult.mf_yaml.split('\n').length })}
         </span>
       </button>
 
@@ -65,11 +67,11 @@ const YamlResultCard = memo(({ yamlResult }: YamlResultCardProps) => {
             <button
               onClick={handleCopy}
               className="flex items-center gap-1 text-[9px] text-mf-text-muted hover:text-mf-text-primary transition-colors"
-              title="Copy YAML"
+              title={t('chat.copyYaml')}
             >
               {copied
-                ? <><Check size={10} className="text-green-400" /> Copied</>
-                : <><Copy size={10} /> Copy</>
+                ? <><Check size={10} className="text-green-400" /> {t('chat.copied')}</>
+                : <><Copy size={10} /> {t('chat.copy')}</>
               }
             </button>
           </div>

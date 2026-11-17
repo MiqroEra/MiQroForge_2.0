@@ -4,11 +4,13 @@ import { useSavedWorkflowsStore, snapshotToRF } from '../../stores/saved-workflo
 import { useWorkflowStore } from '../../stores/workflow-store'
 import { useUIStore } from '../../stores/ui-store'
 import { useRunOverlayStore } from '../../stores/run-overlay-store'
+import { useT } from '../../lib/i18n'
 import { formatDateTime } from '../../lib/date-utils'
 
 // ─── WorkflowsSidebar ─────────────────────────────────────────────────────────
 
 export function WorkflowsSidebar() {
+  const { t } = useT()
   const { savedWorkflows, deleteWorkflow } = useSavedWorkflowsStore()
   const { loadFromNodes, setMeta } = useWorkflowStore()
   const { showNotification, selectNode } = useUIStore()
@@ -25,18 +27,18 @@ export function WorkflowsSidebar() {
       // Clear any active run overlay so the restored canvas shows the clean
       // pre-run design, not stale phase badges / outputs from a previous run
       clearOverlay()
-      showNotification('success', `Loaded "${wf.name}"`)
+      showNotification('success', t('workflow.loaded', { name: wf.name }))
     },
-    [loadFromNodes, setMeta, selectNode, showNotification, clearOverlay],
+    [loadFromNodes, setMeta, selectNode, showNotification, clearOverlay, t],
   )
 
   const handleDelete = useCallback(
     (id: string, name: string, e: React.MouseEvent) => {
       e.stopPropagation()
-      if (!confirm(`Delete saved workflow "${name}"?`)) return
+      if (!confirm(t('workflow.confirmDelete', { name }))) return
       deleteWorkflow(id)
     },
-    [deleteWorkflow],
+    [deleteWorkflow, t],
   )
 
   return (
@@ -46,7 +48,7 @@ export function WorkflowsSidebar() {
         <div className="flex items-center gap-1.5">
           <Workflow size={11} className="text-mf-text-muted" />
           <span className="text-[10px] font-semibold text-mf-text-muted uppercase tracking-wider">
-            Saved Workflows
+            {t('workflow.savedWorkflows')}
           </span>
         </div>
         <span className="text-[10px] text-mf-text-muted">{savedWorkflows.length}</span>
@@ -56,7 +58,7 @@ export function WorkflowsSidebar() {
       <div className="flex-1 overflow-y-auto mf-scroll bg-mf-panel/60">
         {savedWorkflows.length === 0 ? (
           <p className="px-3 py-3 text-[10px] text-mf-text-muted text-center">
-            No saved workflows.<br />Click Save in the toolbar.
+            {t('workflow.noSavedWorkflows')}<br />{t('workflow.noSavedClickSave')}
           </p>
         ) : (
           <div className="divide-y divide-mf-border/50">
@@ -78,7 +80,7 @@ export function WorkflowsSidebar() {
                 <button
                   onClick={(e) => handleDelete(wf.id, wf.name, e)}
                   className="opacity-0 group-hover:opacity-100 text-mf-text-muted hover:text-red-400 transition-all flex-shrink-0 p-0.5"
-                  title="Delete saved workflow"
+                  title={t('workflow.deleteWorkflow')}
                 >
                   <Trash2 size={11} />
                 </button>

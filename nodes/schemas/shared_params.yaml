@@ -2,7 +2,7 @@
 # Shared Parameter Table — canonical name → software-native keyword mapping
 #
 # 当节点 OnBoardInput 设置 _shared_param 时，此表是参数的唯一事实来源：
-# - kind / display_name / description / allow_other → 从 categories 元数据推导
+# - kind / display_name(±_zh) / description(±_zh) / allow_other → 从 categories 元数据推导
 # - allowed_values → 从条目列表按 software 过滤推导
 # - 编译时翻译 → 从条目的软件映射推导
 #
@@ -16,17 +16,23 @@ categories:
   functionals:
     kind: enum
     display_name: "DFT Functional"
-    description: "DFT 泛函名称。下拉选择常用泛函，或手动输入任意泛函。"
+    display_name_zh: "DFT 泛函"
+    description: "DFT functional name. Pick a common functional from the dropdown, or type any custom functional."
+    description_zh: "DFT 泛函名称。下拉选择常用泛函，或手动输入任意泛函。"
     allow_other: true
   basis_sets:
     kind: enum
     display_name: "Basis Set"
-    description: "基组名称。下拉选择常用基组，或手动输入任意基组。"
+    display_name_zh: "基组"
+    description: "Basis set name. Pick a common basis set from the dropdown, or type any custom basis set."
+    description_zh: "基组名称。下拉选择常用基组，或手动输入任意基组。"
     allow_other: true
   dispersions:
     kind: enum
     display_name: "Dispersion Correction"
-    description: "色散校正方法。选择 none 表示不使用色散校正。"
+    display_name_zh: "色散校正"
+    description: "Dispersion correction method. Choose 'none' to disable dispersion correction."
+    description_zh: "色散校正方法。选择 none 表示不使用色散校正。"
     allow_other: false
 
 # ── DFT 泛函（15 个）────────────────────────────────────────────────────
@@ -34,90 +40,105 @@ categories:
 functionals:
   B3LYP:
     display_name: "B3LYP (hybrid, 20% HF)"
+    display_name_zh: "B3LYP（杂化，20% HF）"
     orca: "B3LYP"
     gaussian: "B3LYP"
     psi4: "B3LYP"
     cp2k: "B3LYP"
   PBE:
     display_name: "PBE (GGA)"
+    display_name_zh: "PBE（GGA）"
     orca: "PBE"
     gaussian: "PBE"
     psi4: "PBE"
     cp2k: "PBE"
   PBE0:
     display_name: "PBE0 (hybrid GGA, 25% HF)"
+    display_name_zh: "PBE0（杂化 GGA，25% HF）"
     orca: "PBE0"
     gaussian: "PBE1PBE"
     psi4: "PBE0"
     cp2k: "PBE0"
   BLYP:
     display_name: "BLYP (GGA)"
+    display_name_zh: "BLYP（GGA）"
     orca: "BLYP"
     gaussian: "BLYP"
     psi4: "BLYP"
     cp2k: "BLYP"
   BP86:
     display_name: "BP86 (GGA)"
+    display_name_zh: "BP86（GGA）"
     orca: "BP86"
     gaussian: "BP86"
     psi4: "BP86"
     cp2k: "BP86"
   LDA:
     display_name: "LDA (local density)"
+    display_name_zh: "LDA（局域密度）"
     orca: "LDA"
     gaussian: "LDA"
     psi4: "LDA"
     cp2k: "LDA"
   TPSS:
     display_name: "TPSS (meta-GGA)"
+    display_name_zh: "TPSS（meta-GGA）"
     orca: "TPSS"
     gaussian: "TPSS"
     psi4: "TPSS"
     cp2k: "TPSS"
   SCAN:
     display_name: "SCAN (meta-GGA, strongly constrained)"
+    display_name_zh: "SCAN（meta-GGA，强约束）"
     orca: "SCANfunc"
     gaussian: "SCAN"
     psi4: "SCAN"
     cp2k: "SCAN"
   r2SCAN:
     display_name: "r2SCAN (regularized meta-GGA)"
+    display_name_zh: "r2SCAN（正则化 meta-GGA）"
     orca: "r2SCAN"
     gaussian: "r2SCAN"
     psi4: "r2SCAN"
     cp2k: null
   HSE06:
     display_name: "HSE06 (range-separated hybrid)"
+    display_name_zh: "HSE06（区间分离杂化）"
     orca: "HSE06"
     gaussian: "HSEhPBE"
     psi4: "HSE06"
     cp2k: "HSE06"
   M06:
     display_name: "M06 (Minnesota hybrid)"
+    display_name_zh: "M06（Minnesota 杂化）"
     orca: "M06"
     gaussian: "M06"
     psi4: "M06"
     cp2k: null
   M062X:
     display_name: "M06-2X (Minnesota, 54% HF)"
+    display_name_zh: "M06-2X（Minnesota，54% HF）"
     orca: "M062X"
     gaussian: "M062X"
     psi4: "M062X"
     cp2k: null
   CAM-B3LYP:
     display_name: "CAM-B3LYP (range-separated)"
+    display_name_zh: "CAM-B3LYP（区间分离）"
     orca: "CAM-B3LYP"
     gaussian: "CAM-B3LYP"
     psi4: "CAM-B3LYP"
     cp2k: null
   wB97X-D:
     display_name: "wB97X-D (range-separated + dispersion)"
+    display_name_zh: "wB97X-D（区间分离 + 色散）"
     orca: "wB97X-D3"
     gaussian: "wB97XD"
     psi4: "wB97X-D"
     cp2k: null
   B2PLYP:
     display_name: "B2PLYP (double-hybrid)"
+    display_name_zh: "B2PLYP（双杂化）"
     orca: "B2PLYP"
     gaussian: "B2PLYP"
     psi4: "B2PLYP"
@@ -127,72 +148,84 @@ functionals:
 basis_sets:
   "STO-3G":
     display_name: "STO-3G (minimal)"
+    display_name_zh: "STO-3G（极小基组）"
     orca: "STO-3G"
     gaussian: "STO-3G"
     psi4: "STO-3G"
     cp2k: null
   "6-31G*":
     display_name: "6-31G(d) (Pople with polarization)"
+    display_name_zh: "6-31G(d)（Pople，含极化）"
     orca: "6-31G*"
     gaussian: "6-31G*"
     psi4: "6-31G*"
     cp2k: null
   "6-31+G*":
     display_name: "6-31+G(d) (with diffuse functions)"
+    display_name_zh: "6-31+G(d)（含弥散函数）"
     orca: "6-31+G*"
     gaussian: "6-31+G*"
     psi4: "6-31+G*"
     cp2k: null
   "6-311G**":
     display_name: "6-311G(d,p) (triple-zeta)"
+    display_name_zh: "6-311G(d,p)（三 zeta）"
     orca: "6-311G**"
     gaussian: "6-311G**"
     psi4: "6-311G**"
     cp2k: null
   "def2-SVP":
     display_name: "def2-SVP (Karlsruhe split-valence)"
+    display_name_zh: "def2-SVP（Karlsruhe 分裂价层）"
     orca: "def2-SVP"
     gaussian: "Def2SVP"
     psi4: "def2-SVP"
     cp2k: null
   "def2-TZVP":
     display_name: "def2-TZVP (Karlsruhe triple-zeta)"
+    display_name_zh: "def2-TZVP（Karlsruhe 三 zeta）"
     orca: "def2-TZVP"
     gaussian: "Def2TZVP"
     psi4: "def2-TZVP"
     cp2k: null
   "def2-TZVPP":
     display_name: "def2-TZVPP (triple-zeta + 2 polarization)"
+    display_name_zh: "def2-TZVPP（三 zeta + 2 极化）"
     orca: "def2-TZVPP"
     gaussian: "Def2TZVPP"
     psi4: "def2-TZVPP"
     cp2k: null
   "def2-QZVP":
     display_name: "def2-QZVP (Karlsruhe quadruple-zeta)"
+    display_name_zh: "def2-QZVP（Karlsruhe 四 zeta）"
     orca: "def2-QZVP"
     gaussian: "Def2QZVP"
     psi4: "def2-QZVP"
     cp2k: null
   "cc-pVDZ":
     display_name: "cc-pVDZ (Dunning double-zeta)"
+    display_name_zh: "cc-pVDZ（Dunning 双 zeta）"
     orca: "cc-pVDZ"
     gaussian: "cc-pVDZ"
     psi4: "cc-pVDZ"
     cp2k: null
   "cc-pVTZ":
     display_name: "cc-pVTZ (Dunning triple-zeta)"
+    display_name_zh: "cc-pVTZ（Dunning 三 zeta）"
     orca: "cc-pVTZ"
     gaussian: "cc-pVTZ"
     psi4: "cc-pVTZ"
     cp2k: null
   "cc-pVQZ":
     display_name: "cc-pVQZ (Dunning quadruple-zeta)"
+    display_name_zh: "cc-pVQZ（Dunning 四 zeta）"
     orca: "cc-pVQZ"
     gaussian: "cc-pVQZ"
     psi4: "cc-pVQZ"
     cp2k: null
   "aug-cc-pVTZ":
     display_name: "aug-cc-pVTZ (augmented triple-zeta)"
+    display_name_zh: "aug-cc-pVTZ（增广三 zeta）"
     orca: "aug-cc-pVTZ"
     gaussian: "aug-cc-pVTZ"
     psi4: "aug-cc-pVTZ"
@@ -202,24 +235,28 @@ basis_sets:
 dispersions:
   none:
     display_name: "No dispersion"
+    display_name_zh: "无色散校正"
     orca: "none"
     gaussian: "none"
     psi4: "none"
     cp2k: "none"
   D3:
     display_name: "DFT-D3 (Grimme)"
+    display_name_zh: "DFT-D3（Grimme）"
     orca: "D3"
     gaussian: "GD3"
     psi4: "D3"
     cp2k: null
   D3BJ:
     display_name: "DFT-D3(BJ) (Becke-Johnson damping)"
+    display_name_zh: "DFT-D3(BJ)（Becke-Johnson 阻尼）"
     orca: "D3BJ"
     gaussian: "GD3BJ"
     psi4: "D3BJ"
     cp2k: null
   D4:
     display_name: "DFT-D4 (Grimme)"
+    display_name_zh: "DFT-D4（Grimme）"
     orca: "D4"
     gaussian: null
     psi4: "D4"

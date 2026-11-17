@@ -23,8 +23,9 @@ import { useConnectionValidator } from '../../hooks/useConnectionValidator'
 import { nodesApi } from '../../api/nodes-api'
 import { agentsApi } from '../../api/agents-api'
 import { buildNodeData } from '../../lib/node-utils'
-import { semanticLabel } from '../../lib/semantic-labels'
+import { semanticLabel, resolveLabel } from '../../lib/semantic-labels'
 import type { PickerOption } from '../../lib/semantic-labels'
+import { useT } from '../../lib/i18n'
 import { useSettingsStore, getColorMode, getMinimapMaskColor } from '../../stores/settings-store'
 import { useShortcutsStore, keyMatch, displayKey } from '../../stores/shortcuts-store'
 
@@ -57,6 +58,7 @@ export function WorkflowCanvas() {
   const { isValidConnection: checkConnection } = useConnectionValidator()
   const { fitView } = useReactFlow()
   const theme = useSettingsStore((s) => s.theme)
+  const { t } = useT()
   const reactFlowWrapper = useRef<HTMLDivElement>(null)
   const [contextMenu, setContextMenu] = useState<ContextMenu | null>(null)
 
@@ -123,7 +125,7 @@ export function WorkflowCanvas() {
     const gen = (node?.data as MFNodeData | undefined)?.node_generator
     const result = gen?.result as Record<string, unknown> | undefined
     if (!result?.nodespec_yaml || !result?.node_name) {
-      showNotification('error', 'No generated node files to save')
+      showNotification('error', t('canvas.noGeneratedFiles'))
       setContextMenu(null)
       return
     }
@@ -137,14 +139,14 @@ export function WorkflowCanvas() {
       })
       showNotification('success',
         acceptResult.collision_renamed
-          ? `Saved as ${acceptResult.node_name}`
-          : `Saved ${acceptResult.node_name} to library`
+          ? t('canvas.savedAs', { name: acceptResult.node_name })
+          : t('canvas.savedToLibrary', { name: acceptResult.node_name })
       )
     } catch (err: unknown) {
-      showNotification('error', err instanceof Error ? err.message : 'Save failed')
+      showNotification('error', err instanceof Error ? err.message : t('canvas.saveFailed'))
     }
     setContextMenu(null)
-  }, [contextMenu, nodes, showNotification])
+  }, [contextMenu, nodes, showNotification, t])
 
   // ── Create a brand-new resolved node at a canvas position (direct drag) ──
 
@@ -191,7 +193,7 @@ export function WorkflowCanvas() {
   const createPendingNode = useCallback(
     (stType: string, options: PickerOption[], position: { x: number; y: number }) => {
       const nodeId = `pending-${stType}-${Date.now()}`
-      const label = semanticLabel(stType)
+      const label = resolveLabel(semanticLabel(stType), t)
 
       // handleSelect is stable: captures nodeId (fixed string) and resolveNodeInPlace
       // When undo restores the pending state the same callback is still valid.
@@ -225,7 +227,7 @@ export function WorkflowCanvas() {
       addNode(pendingNode)
       selectNode(nodeId)
     },
-    [addNode, selectNode, resolveNodeInPlace],
+    [addNode, selectNode, resolveNodeInPlace, t],
   )
 
   // ── Drag-and-drop from palette ────────────────────────────────────────────
@@ -470,7 +472,7 @@ export function WorkflowCanvas() {
               className="w-full text-left px-3 py-1.5 text-xs text-mf-text-secondary hover:bg-mf-hover hover:text-mf-text-primary transition-colors flex items-center justify-between"
               onClick={() => { undoNode(contextMenu.nodeId); setContextMenu(null) }}
             >
-              <span>↩ Go back</span>
+              <span>{t('canvas.undo')}</span>
               <kbd className="text-[10px] text-mf-text-muted font-mono ml-3">{undoLabel}</kbd>
             </button>
           )}
@@ -479,7 +481,7 @@ export function WorkflowCanvas() {
               className="w-full text-left px-3 py-1.5 text-xs text-mf-text-secondary hover:bg-mf-hover hover:text-mf-text-primary transition-colors flex items-center justify-between"
               onClick={() => { redoNode(contextMenu.nodeId); setContextMenu(null) }}
             >
-              <span>↪ Go forward</span>
+              <span>{t('canvas.redo')}</span>
               <kbd className="text-[10px] text-mf-text-muted font-mono ml-3">{redoLabel}</kbd>
             </button>
           )}
@@ -493,7 +495,7 @@ export function WorkflowCanvas() {
                 className="w-full text-left px-3 py-1.5 text-xs text-green-400 hover:bg-mf-hover hover:text-green-300 transition-colors"
                 onClick={handleSaveNodeToLibrary}
               >
-                💾 Save node to library
+                {t('canvas.saveNodeToLibrary')}
               </button>
               <div className="border-t border-mf-border/60 my-0.5" />
             </>
@@ -502,13 +504,13 @@ export function WorkflowCanvas() {
             className="w-full text-left px-3 py-1.5 text-xs text-red-400 hover:bg-mf-hover hover:text-red-300 transition-colors"
             onClick={handleDeleteFromMenu}
           >
-            🗑 Delete node
+            {t('canvas.deleteNode')}
           </button>
           <button
             className="w-full text-left px-3 py-1.5 text-xs text-mf-text-muted hover:bg-mf-hover hover:text-mf-text-secondary transition-colors"
             onClick={() => setContextMenu(null)}
           >
-            Cancel
+            {t('canvas.cancel')}
           </button>
         </div>
       )}

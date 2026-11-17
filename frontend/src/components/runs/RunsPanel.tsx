@@ -10,6 +10,7 @@ import type { RunSummaryResponse, RunPhase, RunDetailResponse } from '../../type
 import { RefreshCw, ChevronRight, Terminal, RotateCcw, Trash2, AlertTriangle, Info, Square } from 'lucide-react'
 import { phaseBadgeClass, formatDurationSeconds } from '../../lib/phase-utils'
 import { formatDateTime } from '../../lib/date-utils'
+import { useT } from '../../lib/i18n'
 
 // ─── Helpers for RunDetail ────────────────────────────────────────────────────
 
@@ -137,6 +138,7 @@ function SweepProgressBar({
 
 /** Render step groups: single-instance groups as plain rows, multi-instance as progress bars. */
 function StepsDisplay({ steps }: { steps: ArgoStepNode[] }) {
+  const { t } = useT()
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
   const groups = groupSteps(steps)
 
@@ -154,7 +156,7 @@ function StepsDisplay({ steps }: { steps: ArgoStepNode[] }) {
 
   return (
     <div>
-      <div className="text-[10px] text-mf-text-muted mb-1 uppercase tracking-wide">Steps</div>
+      <div className="text-[10px] text-mf-text-muted mb-1 uppercase tracking-wide">{t('runs.steps')}</div>
       <div className="max-h-48 overflow-y-auto mf-scroll space-y-1">
         {groups.map((group) =>
           group.total === 1 ? (
@@ -204,6 +206,7 @@ function RunList({
   onSelect: (name: string) => void
 }) {
   const queryClient = useQueryClient()
+  const { t } = useT()
   const { runSnapshots } = useSavedWorkflowsStore()
   const { loadFromNodes, setMeta } = useWorkflowStore()
   const { showNotification, selectNode, setRightPanel } = useUIStore()
@@ -240,7 +243,7 @@ function RunList({
           } else {
             setActiveRun(runName)
           }
-          showNotification('success', `Restored canvas from run "${runName}"`)
+          showNotification('success', t('runs.restored', { name: runName }))
           return
         } catch {
           // afterrun_canvas not found, fall through to localStorage
@@ -255,9 +258,9 @@ function RunList({
       selectNode(null)
       setRightPanel(null)
       setActiveRun(runName)
-      showNotification('success', `Restored canvas from run "${runName}"`)
+      showNotification('success', t('runs.restored', { name: runName }))
     },
-    [loadFromNodes, setMeta, selectNode, setRightPanel, showNotification, setActiveRun],
+    [loadFromNodes, setMeta, selectNode, setRightPanel, showNotification, setActiveRun, t],
   )
 
   const TERMINAL_PHASES = new Set(['Succeeded', 'Failed', 'Error', 'Unknown'])
@@ -265,37 +268,37 @@ function RunList({
   const handleDelete = useCallback(
     async (runName: string, e: React.MouseEvent) => {
       e.stopPropagation()
-      if (!confirm(`删除 run "${runName}" 的本地运行数据？\nArgo 数据将按保留策略自动清理。`)) return
+      if (!confirm(t('runs.deleteConfirm', { name: runName }))) return
       try {
         await argoApi.deleteRun(runName, useProjectStore.getState().currentProjectId ?? undefined)
         useSavedWorkflowsStore.getState().deleteRunSnapshot(runName)
-        showNotification('success', `Deleted run "${runName}"`)
+        showNotification('success', t('runs.deleted', { name: runName }))
         queryClient.invalidateQueries({ queryKey: ['runs'] })
       } catch (err) {
-        showNotification('error', `Delete failed: ${err instanceof Error ? err.message : String(err)}`)
+        showNotification('error', t('runs.deleteFailed', { error: err instanceof Error ? err.message : String(err) }))
       }
     },
-    [showNotification, queryClient],
+    [showNotification, queryClient, t],
   )
 
   const handleStop = useCallback(
     async (runName: string, e: React.MouseEvent) => {
       e.stopPropagation()
-      if (!confirm(`中止并删除 run "${runName}"？`)) return
+      if (!confirm(t('runs.stopConfirm', { name: runName }))) return
       try {
         await argoApi.stopRun(runName, useProjectStore.getState().currentProjectId ?? undefined)
         useSavedWorkflowsStore.getState().deleteRunSnapshot(runName)
-        showNotification('success', `Stopped run "${runName}"`)
+        showNotification('success', t('runs.stopped', { name: runName }))
         queryClient.invalidateQueries({ queryKey: ['runs'] })
       } catch (err) {
-        showNotification('error', `Stop failed: ${err instanceof Error ? err.message : String(err)}`)
+        showNotification('error', t('runs.stopFailed', { error: err instanceof Error ? err.message : String(err) }))
       }
     },
-    [showNotification, queryClient],
+    [showNotification, queryClient, t],
   )
 
   if (runs.length === 0) {
-    return <p className="px-3 py-4 text-xs text-mf-text-muted text-center">No runs found</p>
+    return <p className="px-3 py-4 text-xs text-mf-text-muted text-center">{t('runs.noRuns')}</p>
   }
 
   return (
@@ -327,7 +330,7 @@ function RunList({
                 <button
                   onClick={(e) => handleRestore(run.name, e)}
                   className="p-1 text-blue-400 hover:text-blue-200 hover:bg-mf-hover rounded transition-colors"
-                  title="Restore canvas to this run's workflow"
+                  title={t('runs.restoreTitleList')}
                 >
                   <RotateCcw size={11} />
                 </button>
@@ -336,7 +339,7 @@ function RunList({
                 <button
                   onClick={(e) => handleStop(run.name, e)}
                   className="p-1 text-orange-400 hover:text-orange-200 hover:bg-mf-hover rounded transition-colors"
-                  title="中止运行"
+                  title={t('runs.stopTitle')}
                 >
                   <Square size={10} />
                 </button>
@@ -345,7 +348,7 @@ function RunList({
                 <button
                   onClick={(e) => handleDelete(run.name, e)}
                   className="p-1 text-mf-text-muted hover:text-red-400 hover:bg-mf-hover rounded transition-colors"
-                  title="删除本地运行数据"
+                  title={t('runs.deleteTitle')}
                 >
                   <Trash2 size={11} />
                 </button>
@@ -361,6 +364,7 @@ function RunList({
 // ─── Run logs ─────────────────────────────────────────────────────────────────
 
 function RunLogs({ runName }: { runName: string }) {
+  const { t } = useT()
   const query = useQuery({
     queryKey: ['run-logs', runName],
     queryFn: () => argoApi.getLogs(runName),
@@ -371,11 +375,11 @@ function RunLogs({ runName }: { runName: string }) {
     <div className="mt-2">
       <div className="flex items-center gap-1 text-[11px] text-mf-text-muted px-1 mb-1">
         <Terminal size={11} />
-        Logs
+        {t('runs.logs')}
         {query.isLoading && <RefreshCw size={10} className="animate-spin ml-1" />}
       </div>
       <pre className="bg-mf-base border border-mf-border rounded p-2 text-[10px] text-green-300 font-mono max-h-60 overflow-auto mf-scroll whitespace-pre-wrap">
-        {query.data?.logs || (query.isLoading ? 'Loading…' : 'No logs')}
+        {query.data?.logs || (query.isLoading ? t('runs.loading') : t('runs.noLogs'))}
       </pre>
     </div>
   )
@@ -384,6 +388,7 @@ function RunLogs({ runName }: { runName: string }) {
 // ─── Validation summary (warnings/infos stored with snapshot) ─────────────────
 
 function ValidationSummary({ runName }: { runName: string }) {
+  const { t } = useT()
   const snap = useSavedWorkflowsStore.getState().runSnapshots[runName]
   if (!snap) return null
 
@@ -394,7 +399,7 @@ function ValidationSummary({ runName }: { runName: string }) {
   return (
     <div className="mt-2">
       <div className="text-[10px] text-mf-text-muted mb-1 uppercase tracking-wide px-1">
-        Validation
+        {t('runs.validation')}
       </div>
       <div className="bg-mf-card border border-mf-border rounded p-2 space-y-0.5 max-h-32 overflow-y-auto mf-scroll">
         {warnings.map((w, i) => (
@@ -423,6 +428,7 @@ function ValidationSummary({ runName }: { runName: string }) {
 // ─── Run detail — restore button at top ──────────────────────────────────────
 
 function RunDetailHeader({ runName, onBack, isLocalOnly }: { runName: string; onBack: () => void; isLocalOnly?: boolean }) {
+  const { t } = useT()
   const { loadFromNodes, setMeta } = useWorkflowStore()
   const { showNotification, selectNode, setRightPanel } = useUIStore()
   const { setActiveRun } = useRunOverlayStore()
@@ -456,7 +462,7 @@ function RunDetailHeader({ runName, onBack, isLocalOnly }: { runName: string; on
         } else {
           setActiveRun(runName)
         }
-        showNotification('success', `Restored canvas from run "${runName}"`)
+        showNotification('success', t('runs.restored', { name: runName }))
         return
       } catch {
         // afterrun_canvas not found, fall through to localStorage
@@ -471,7 +477,7 @@ function RunDetailHeader({ runName, onBack, isLocalOnly }: { runName: string; on
     selectNode(null)
     setRightPanel(null)
     setActiveRun(runName)
-    showNotification('success', `Restored canvas from run "${runName}"`)
+    showNotification('success', t('runs.restored', { name: runName }))
   }
 
   return (
@@ -480,16 +486,16 @@ function RunDetailHeader({ runName, onBack, isLocalOnly }: { runName: string; on
         onClick={onBack}
         className="text-xs text-mf-text-muted hover:text-mf-text-primary flex items-center gap-1"
       >
-        ← Back
+        {t('runs.back')}
       </button>
       {!isLocalOnly && (
         <button
           onClick={handleRestore}
           className="flex items-center gap-1 px-2 py-0.5 text-[11px] text-blue-400 hover:text-blue-200 hover:bg-mf-hover rounded transition-colors"
-          title="Restore canvas to this workflow"
+          title={t('runs.restoreTitleDetail')}
         >
           <RotateCcw size={11} />
-          Restore Canvas
+          {t('runs.restoreCanvas')}
         </button>
       )}
     </div>
@@ -500,6 +506,7 @@ function RunDetailHeader({ runName, onBack, isLocalOnly }: { runName: string; on
 
 export function RunsPanel() {
   const [selectedRun, setSelectedRun] = useState<string | null>(null)
+  const { t } = useT()
   const { pendingRunName, setPendingRunName } = useUIStore()
   const { runSnapshots } = useSavedWorkflowsStore()
 
@@ -549,12 +556,12 @@ export function RunsPanel() {
     <div className="w-80 mf-panel border-l border-r-0 flex-shrink-0">
       <div className="flex items-center justify-between px-3 py-2 border-b border-mf-border">
         <span className="text-xs font-semibold text-mf-text-secondary uppercase tracking-wide">
-          History {listQuery.data ? `(${listQuery.data.total + localRuns.length})` : `(${localRuns.length})`}
+          {t('runs.historyCount', { count: listQuery.data ? listQuery.data.total + localRuns.length : localRuns.length })}
         </span>
         <button
           onClick={() => listQuery.refetch()}
           className="text-mf-text-muted hover:text-mf-text-primary"
-          title="Refresh"
+          title={t('runs.refresh')}
         >
           <RefreshCw size={12} className={listQuery.isFetching ? 'animate-spin' : ''} />
         </button>
@@ -584,7 +591,7 @@ export function RunsPanel() {
                 {runSnapshots[selectedRun].error && (
                   <div className="mt-2">
                     <div className="text-[10px] text-red-400 mb-1 uppercase tracking-wide px-1">
-                      Error
+                      {t('runs.error')}
                     </div>
                     <pre className="bg-mf-base border border-red-500/30 rounded p-2 text-[11px] text-red-300 font-mono max-h-60 overflow-auto mf-scroll whitespace-pre-wrap select-text">
                       {runSnapshots[selectedRun].error}

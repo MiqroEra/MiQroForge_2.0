@@ -5,17 +5,22 @@ import type { PortCategory } from './nodespec'
 export interface PortSummaryResponse {
   name: string
   display_name: string
+  display_name_zh?: string
   category: PortCategory
   detail: string
   direction: 'input' | 'output'
+  description?: string
+  description_zh?: string
 }
 
 export interface OnBoardParamResponse {
   name: string
   display_name: string
+  display_name_zh?: string
   kind: 'string' | 'integer' | 'float' | 'boolean' | 'enum' | 'textarea'
   default?: unknown
   description?: string
+  description_zh?: string
   allowed_values?: string[]
   min_value?: number
   max_value?: number
@@ -28,23 +33,29 @@ export interface OnBoardParamResponse {
 export interface OnBoardOutputResponse {
   name: string
   display_name: string
+  display_name_zh?: string
   kind: 'string' | 'integer' | 'float' | 'boolean' | 'enum' | 'textarea'
   unit?: string
   description: string
+  description_zh?: string
   quality_gate: boolean
   gate_default: 'must_pass' | 'warn' | 'ignore'
   gate_description: string
+  gate_description_zh?: string
 }
 
 export interface NodeSummaryResponse {
   name: string
   version: string
   display_name: string
+  display_name_zh?: string
   description: string
+  description_zh?: string
   node_type: string
   category: string
   semantic_type?: string
   semantic_display_name?: string
+  semantic_display_name_zh?: string
   software?: string
   methods: string[]
   domains: string[]
@@ -90,7 +101,9 @@ export interface NodeIndexInfoResponse {
 
 export interface SemanticTypeEntry {
   display_name: string
+  display_name_zh?: string
   description: string
+  description_zh?: string
   domain: string
 }
 

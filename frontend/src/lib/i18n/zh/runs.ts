@@ -1,0 +1,26 @@
+import { runsEn } from '../en/runs'
+
+export const runsZh: Record<keyof typeof runsEn, string> = {
+  steps: '步骤',
+  validation: '校验',
+  logs: '日志',
+  noLogs: '暂无日志',
+  loading: '加载中…',
+  noRuns: '暂无运行记录',
+  back: '← 返回',
+  restoreCanvas: '恢复画布',
+  restoreTitleList: '恢复到此运行的工作流画布',
+  restoreTitleDetail: '恢复到此工作流的画布',
+  restored: '已从运行 "{name}" 恢复画布',
+  deleteTitle: '删除本地运行数据',
+  deleteConfirm: '删除 run "{name}" 的本地运行数据？\nArgo 数据将按保留策略自动清理。',
+  deleted: '已删除运行 "{name}"',
+  deleteFailed: '删除失败: {error}',
+  stopTitle: '中止运行',
+  stopConfirm: '中止并删除 run "{name}"？',
+  stopped: '已中止运行 "{name}"',
+  stopFailed: '中止失败: {error}',
+  historyCount: '运行历史 ({count})',
+  refresh: '刷新',
+  error: '错误',
+}

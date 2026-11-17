@@ -9,10 +9,12 @@ export type PortCategory =
 export interface StreamPort {
   name: string
   display_name: string
+  display_name_zh?: string
   category: PortCategory
   detail: string          // e.g. "orca/gbw-file" or "energy/Ha/scalar"
   required?: boolean
   description?: string
+  description_zh?: string
 }
 
 // ─── OnBoard Parameter ──────────────────────────────────────────────────────
@@ -24,9 +26,11 @@ export type GateDefault = 'must_pass' | 'warn' | 'ignore'
 export interface OnBoardParam {
   name: string
   display_name: string
+  display_name_zh?: string
   type: ParamType
   default?: unknown
   description?: string
+  description_zh?: string
   enum_values?: string[]
   min?: number
   max?: number
@@ -39,12 +43,15 @@ export interface OnBoardParam {
 export interface OnBoardOutput {
   name: string
   display_name: string
+  display_name_zh?: string
   kind: ParamType
   unit?: string
   description?: string
+  description_zh?: string
   quality_gate?: boolean
   gate_default?: GateDefault
   gate_description?: string
+  gate_description_zh?: string
 }
 
 // ─── Resource Spec ──────────────────────────────────────────────────────────
@@ -67,6 +74,7 @@ export interface NodeSpec {
   name: string
   version: string
   display_name: string
+  display_name_zh?: string
   description: string
   node_type: NodeType
   category: string

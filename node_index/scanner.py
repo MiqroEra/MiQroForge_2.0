@@ -169,9 +169,12 @@ def _port_summary(port: StreamInputPort | StreamOutputPort, direction: str) -> P
     return PortSummary(
         name=port.name,
         display_name=port.display_name,
+        display_name_zh=port.display_name_zh or "",
         category=category,
         detail=detail,
         direction=direction,
+        description=port.description,
+        description_zh=port.description_zh,
     )
 
 
@@ -205,10 +208,12 @@ def _spec_to_entry(
 
     # 从注册表填充 semantic_display_name
     semantic_display_name: str | None = None
+    semantic_display_name_zh: str | None = None
     if m.semantic_type:
         try:
             registry = load_semantic_registry()
             semantic_display_name = registry.display_name(m.semantic_type)
+            semantic_display_name_zh = registry.display_name_zh(m.semantic_type)
         except Exception:
             pass
 
@@ -217,9 +222,11 @@ def _spec_to_entry(
         OnBoardInputSummary(
             name=p.name,
             display_name=p.display_name,
+            display_name_zh=p.display_name_zh or "",
             kind=p.kind.value,
             default=p.default,
             description=p.description,
+            description_zh=p.description_zh,
             allowed_values=p.allowed_values,
             min_value=p.min_value,
             max_value=p.max_value,
@@ -236,12 +243,15 @@ def _spec_to_entry(
         OnBoardOutputSummary(
             name=o.name,
             display_name=o.display_name,
+            display_name_zh=o.display_name_zh or "",
             kind=o.kind.value,
             unit=o.unit,
             description=o.description,
+            description_zh=o.description_zh,
             quality_gate=o.quality_gate,
             gate_default=o.gate_default.value,
             gate_description=o.gate_description,
+            gate_description_zh=o.gate_description_zh,
         )
         for o in spec.onboard_outputs
     ]
@@ -267,7 +277,9 @@ def _spec_to_entry(
         name=m.name,
         version=m.version,
         display_name=m.display_name or m.name.replace("-", " ").title(),
+        display_name_zh=m.display_name_zh or "",
         description=m.description,
+        description_zh=m.description_zh,
         node_type=m.node_type.value,
         category=m.category.value,
         base_image_ref=m.base_image_ref,
@@ -277,6 +289,7 @@ def _spec_to_entry(
         software=m.tags.software,
         semantic_type=m.semantic_type,
         semantic_display_name=semantic_display_name,
+        semantic_display_name_zh=semantic_display_name_zh,
         methods=m.tags.method,
         domains=m.tags.domain,
         capabilities=m.tags.capabilities,

@@ -1,0 +1,16 @@
+export const workflowEn = {
+  savedWorkflows: 'Saved Workflows',
+  noSavedWorkflows: 'No saved workflows.',
+  noSavedClickSave: 'Click Save in the toolbar.',
+  confirmDelete: 'Delete saved workflow "{name}"?',
+  deleteWorkflow: 'Delete saved workflow',
+  loaded: 'Loaded "{name}"',
+  runWorkflow: 'Run Workflow',
+  validating: 'Validating…',
+  submitting: 'Submitting…',
+  addNodesBeforeRun: 'Add nodes to the canvas before running.',
+  valid: 'Valid',
+  errorUnit: '{count} error',
+  errorUnits: '{count} errors',
+  submitted: 'Submitted:',
+} as const

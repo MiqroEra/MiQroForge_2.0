@@ -9,21 +9,29 @@ import {
   displayKey,
 } from '../../stores/shortcuts-store'
 import type { ShortcutId } from '../../stores/shortcuts-store'
+import { useT } from '../../lib/i18n'
+import type { DictKey } from '../../lib/i18n'
 
 // ─── Theme definitions ───────────────────────────────────────────────────────────
 
 interface ThemeOption {
   id: Theme
-  label: string
+  labelKey: DictKey
   icon: string
 }
 const THEMES: ThemeOption[] = [
-  { id: 'light',    label: 'Warm',      icon: '☀' },
-  { id: 'dark',     label: 'Dark',      icon: '🌙' },
-  { id: 'forest',   label: 'Forest',    icon: '🌲' },
-  { id: 'ocean',    label: 'Ocean',     icon: '🌊' },
-  { id: 'sunset',   label: 'Sunset',    icon: '🌇' },
-  { id: 'midnight', label: 'Midnight',  icon: '🌌' },
+  { id: 'light',    labelKey: 'settings.themeWarm',     icon: '☀' },
+  { id: 'dark',     labelKey: 'settings.themeDark',     icon: '🌙' },
+  { id: 'forest',   labelKey: 'settings.themeForest',   icon: '🌲' },
+  { id: 'ocean',    labelKey: 'settings.themeOcean',    icon: '🌊' },
+  { id: 'sunset',   labelKey: 'settings.themeSunset',   icon: '🌇' },
+  { id: 'midnight', labelKey: 'settings.themeMidnight', icon: '🌌' },
+]
+
+const FONT_SIZE_OPTIONS: { id: FontSize; labelKey: DictKey }[] = [
+  { id: 'small',  labelKey: 'settings.fontSmall' },
+  { id: 'medium', labelKey: 'settings.fontMedium' },
+  { id: 'large',  labelKey: 'settings.fontLarge' },
 ]
 
 // RGB triplets for color preview: [bg-base, bg-card, text-primary]
@@ -39,6 +47,7 @@ const THEME_COLORS: Record<Theme, [string, string, string]> = {
 // ─── Shortcut row ──────────────────────────────────────────────────────────────
 
 function ShortcutRow({ id }: { id: ShortcutId }) {
+  const { t } = useT()
   const def = SHORTCUT_DEFS[id]
   const binding   = useShortcutsStore((s) => s.bindings[id])
   const setBinding  = useShortcutsStore((s) => s.setBinding)
@@ -63,10 +72,8 @@ function ShortcutRow({ id }: { id: ShortcutId }) {
   return (
     <div className="flex items-center gap-2 py-1">
       <div className="flex-1 min-w-0">
-        <div className="text-xs text-mf-text-secondary truncate">{def.label}</div>
-        {def.description && (
-          <div className="text-[10px] text-mf-text-muted truncate">{def.description}</div>
-        )}
+        <div className="text-xs text-mf-text-secondary truncate">{t(def.labelKey)}</div>
+        <div className="text-[10px] text-mf-text-muted truncate">{t(def.descKey)}</div>
       </div>
 
       <div className="flex items-center gap-1 flex-shrink-0">
@@ -75,21 +82,21 @@ function ShortcutRow({ id }: { id: ShortcutId }) {
           onClick={() => setRecording(true)}
           onKeyDown={recording ? handleKeyDown : undefined}
           onBlur={() => setRecording(false)}
-          title="Click then press a key to rebind"
+          title={t('settings.rebindTitle')}
           className={`px-2 py-0.5 rounded border text-[11px] font-mono transition-colors ${
             recording
               ? 'bg-blue-600 border-blue-400 text-white animate-pulse'
               : 'bg-mf-card border-mf-border text-mf-text-secondary hover:border-gray-400 hover:text-mf-text-primary'
           }`}
         >
-          {recording ? 'press key…' : displayKey(binding)}
+          {recording ? t('settings.recordingHint') : displayKey(binding)}
         </button>
 
         {/* Reset to default — only shown when overridden */}
         {!isDefault && (
           <button
             onClick={() => resetBinding(id)}
-            title="Reset to default"
+            title={t('settings.resetBindingTitle')}
             className="text-mf-text-muted hover:text-mf-text-secondary text-[10px] px-1"
           >
             ↺
@@ -103,7 +110,8 @@ function ShortcutRow({ id }: { id: ShortcutId }) {
 // ─── SettingsContent (shared between panel and modal) ──────────────────────────
 
 export function SettingsContent() {
-  const { theme, fontSize, setTheme, setFontSize } = useSettingsStore()
+  const { t } = useT()
+  const { theme, fontSize, language, setTheme, setFontSize, setLanguage } = useSettingsStore()
   const resetAll = useShortcutsStore((s) => s.resetAll)
 
   const shortcutIds = Object.keys(SHORTCUT_DEFS) as ShortcutId[]
@@ -113,18 +121,18 @@ export function SettingsContent() {
       {/* Theme */}
       <div>
         <div className="text-xs font-semibold text-mf-text-secondary uppercase tracking-wide mb-2">
-          Theme
+          {t('settings.themeSection')}
         </div>
         <div className="grid grid-cols-3 gap-2">
-          {THEMES.map((t) => {
-            const colors = THEME_COLORS[t.id]
+          {THEMES.map((opt) => {
+            const colors = THEME_COLORS[opt.id]
             return (
               <button
-                key={t.id}
-                onClick={() => setTheme(t.id)}
-                title={t.label}
+                key={opt.id}
+                onClick={() => setTheme(opt.id)}
+                title={t(opt.labelKey)}
                 className={`flex flex-col items-center gap-1 p-2 rounded-lg border transition-all ${
-                  theme === t.id
+                  theme === opt.id
                     ? 'border-blue-500 bg-blue-500/10 ring-1 ring-blue-400'
                     : 'border-mf-border bg-mf-card hover:bg-mf-hover hover:border-mf-text-muted'
                 }`}
@@ -146,14 +154,14 @@ export function SettingsContent() {
                 </div>
                 {/* Icon + name */}
                 <div className="flex items-center gap-1 text-[11px] font-medium">
-                  <span className="text-xs leading-none">{t.icon}</span>
-                  <span className={theme === t.id ? 'text-blue-400' : 'text-mf-text-secondary'}>
-                    {t.label}
+                  <span className="text-xs leading-none">{opt.icon}</span>
+                  <span className={theme === opt.id ? 'text-blue-400' : 'text-mf-text-secondary'}>
+                    {t(opt.labelKey)}
                   </span>
                 </div>
                 {/* Checkmark for selected */}
-                {theme === t.id && (
-                  <div className="text-[9px] text-blue-400 font-semibold">● Active</div>
+                {theme === opt.id && (
+                  <div className="text-[9px] text-blue-400 font-semibold">{t('settings.activeBadge')}</div>
                 )}
               </button>
             )
@@ -164,14 +172,10 @@ export function SettingsContent() {
       {/* Font size */}
       <div>
         <div className="text-xs font-semibold text-mf-text-secondary uppercase tracking-wide mb-2">
-          Font Size
+          {t('settings.fontSizeSection')}
         </div>
         <div className="flex gap-2">
-          {([
-            { id: 'small', label: 'S' },
-            { id: 'medium', label: 'M' },
-            { id: 'large', label: 'L' },
-          ] as { id: FontSize; label: string }[]).map(({ id, label }) => (
+          {FONT_SIZE_OPTIONS.map(({ id, labelKey }) => (
             <button
               key={id}
               onClick={() => setFontSize(id)}
@@ -181,31 +185,60 @@ export function SettingsContent() {
                   : 'bg-mf-card border-mf-border text-mf-text-secondary hover:bg-mf-hover hover:text-mf-text-primary'
               }`}
             >
-              {label}
+              {t(labelKey)}
             </button>
           ))}
         </div>
         <p className="text-[10px] text-mf-text-muted mt-1.5">
-          Scales all text and spacing proportionally.
+          {t('settings.fontSizeHint')}
         </p>
+      </div>
+
+      {/* Language */}
+      <div>
+        <div className="text-xs font-semibold text-mf-text-secondary uppercase tracking-wide mb-2">
+          {t('settings.languageSection')}
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setLanguage('zh')}
+            className={`flex-1 py-1.5 text-xs rounded border transition-colors ${
+              language === 'zh'
+                ? 'bg-blue-600 border-blue-500 text-white'
+                : 'bg-mf-card border-mf-border text-mf-text-secondary hover:bg-mf-hover hover:text-mf-text-primary'
+            }`}
+          >
+            中文
+          </button>
+          <button
+            onClick={() => setLanguage('en')}
+            className={`flex-1 py-1.5 text-xs rounded border transition-colors ${
+              language === 'en'
+                ? 'bg-blue-600 border-blue-500 text-white'
+                : 'bg-mf-card border-mf-border text-mf-text-secondary hover:bg-mf-hover hover:text-mf-text-primary'
+            }`}
+          >
+            English
+          </button>
+        </div>
       </div>
 
       {/* Keyboard shortcuts */}
       <div>
         <div className="flex items-center justify-between mb-2">
           <div className="text-xs font-semibold text-mf-text-secondary uppercase tracking-wide">
-            Keyboard Shortcuts
+            {t('settings.shortcutsSection')}
           </div>
           <button
             onClick={resetAll}
             className="text-[10px] text-mf-text-muted hover:text-mf-text-secondary transition-colors"
-            title="Reset all shortcuts to defaults"
+            title={t('settings.resetAllTitle')}
           >
-            Reset all
+            {t('settings.resetAll')}
           </button>
         </div>
         <p className="text-[10px] text-mf-text-muted mb-2">
-          Click a key badge, then press the new shortcut key.
+          {t('settings.shortcutsHint')}
         </p>
         <div className="bg-mf-card rounded border border-mf-border px-2 py-1 divide-y divide-mf-border/50">
           {shortcutIds.map((id) => (
@@ -215,7 +248,7 @@ export function SettingsContent() {
       </div>
 
       <p className="text-[10px] text-mf-text-muted pt-2 border-t border-mf-border">
-        Settings are saved automatically.
+        {t('settings.savedAutomatically')}
       </p>
     </div>
   )

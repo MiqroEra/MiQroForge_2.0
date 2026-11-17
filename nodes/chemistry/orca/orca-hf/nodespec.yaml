@@ -12,6 +12,9 @@ metadata:
     Performs a Hartree-Fock (HF) single-point electronic energy calculation
     using ORCA. Computes the total energy at a fixed molecular geometry.
     Requires an XYZ geometry as stream input.
+  description_zh: >
+    使用 ORCA 进行 Hartree-Fock（HF）单点电子能量计算。
+    在固定的分子几何结构下计算总能量。需要 XYZ 几何作为流输入。
   node_type: compute
   category: chemistry
   author: MiQroForge Team
@@ -36,6 +39,7 @@ metadata:
       - single-point
       - energy
 
+  display_name_zh: ORCA HF 单点能
 stream_inputs:
   - name: xyz_geometry
     display_name: Input Geometry (XYZ)
@@ -47,7 +51,11 @@ stream_inputs:
     description: >
       Molecular geometry in standard XYZ format (Angstrom).
       Typically from geometry-file-input or another geometry source.
+    description_zh: >
+      标准 XYZ 格式（埃）的分子几何结构。
+      通常来自 geometry-file-input 或其他几何来源。
 
+    display_name_zh: 输入几何 (XYZ)
 stream_outputs:
   - name: gbw_file
     display_name: GBW Wavefunction File
@@ -56,13 +64,17 @@ stream_outputs:
       ecosystem: orca
       data_type: gbw-file
     description: ORCA binary wavefunction file (GBW). Used as input for subsequent calculations.
+    description_zh: ORCA 二进制波函数文件（GBW）。可用作后续计算的输入。
 
+    display_name_zh: GBW 波函数文件
   - name: total_energy
     io_type:
       category: physical_quantity
       unit: Ha
     description: Total electronic energy at the given geometry.
+    description_zh: 给定几何结构下的电子总能量。
 
+    display_name_zh: 最终能量
   - name: mulliken_report
     display_name: Mulliken Population Report
     io_type:
@@ -71,19 +83,27 @@ stream_outputs:
       content_schema: '{"charges": [float], "spin_populations": [float], "atom_labels": [str]}'
       description: Mulliken population analysis results.
     description: JSON report of Mulliken charges and spin populations.
+    description_zh: Mulliken 电荷与自旋布居的 JSON 报告。
 
+    display_name_zh: Mulliken 布居报告
 onboard_inputs:
   - name: charge
     display_name: Molecular Charge
     kind: integer
     default: 0
 
+    display_name_zh: 体系电荷
+    description: Total charge of the system.
+    description_zh: 分子或晶胞的总电荷。
   - name: multiplicity
     display_name: Spin Multiplicity
     kind: integer
     default: 1
     min_value: 1
 
+    display_name_zh: 自旋多重度
+    description: Spin multiplicity (2S+1) of the system.
+    description_zh: 体系的自旋多重度（2S+1）。
   - name: basis_set
     default: def2-SVP
     _shared_param: basis_sets
@@ -94,20 +114,27 @@ onboard_outputs:
     kind: float
     unit: Ha
     description: Final SCF energy.
+    description_zh: 最终 SCF 能量。
 
+    display_name_zh: 最终能量 (Ha)
   - name: scf_iterations
     display_name: SCF Iterations
     kind: integer
     description: Number of SCF cycles to convergence.
+    description_zh: 达到收敛所需的 SCF 迭代次数。
 
+    display_name_zh: SCF 迭代次数
   - name: scf_converged
     display_name: SCF Converged
     kind: boolean
     description: Whether the SCF calculation converged successfully.
+    description_zh: SCF 计算是否成功收敛。
     quality_gate: true
     gate_default: must_pass
     gate_description: "SCF must converge for the energy to be meaningful."
 
+    display_name_zh: SCF 已收敛
+    gate_description_zh: SCF 必须收敛。
 resources:
   cpu_cores: 4
   mem_gb: 8.0

@@ -20,35 +20,6 @@ from agents.node_generator.prefab.state import PrefabGenState
 from agents.node_generator.shared.knowledge import load_available_images
 
 
-def _extract_script(text: str) -> str:
-    """从 LLM 纯文本响应中提取脚本。"""
-    script = text.strip()
-
-    if "```python" in script:
-        try:
-            start = script.index("```python") + 9
-            end = script.index("```", start)
-            return script[start:end].strip()
-        except ValueError:
-            pass
-    elif "```bash" in script:
-        try:
-            start = script.index("```bash") + 7
-            end = script.index("```", start)
-            return script[start:end].strip()
-        except ValueError:
-            pass
-    elif "```" in script:
-        try:
-            start = script.index("```") + 3
-            end = script.index("```", start)
-            return script[start:end].strip()
-        except ValueError:
-            pass
-
-    return script
-
-
 def _parse_prefab_output(text: str) -> dict[str, str]:
     """解析 prefab 模式 ReAct Agent 最终输出中的各部分。"""
     sections: dict[str, str] = {}

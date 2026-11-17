@@ -29,9 +29,17 @@ class SemanticTypeEntry(BaseModel):
         ...,
         description="人类可读的显示名称。",
     )
+    display_name_zh: str = Field(
+        default="",
+        description="中文显示名称。为空时前端回退到 display_name。",
+    )
     description: str = Field(
         default="",
         description="该语义类型的详细描述。",
+    )
+    description_zh: str = Field(
+        default="",
+        description="该语义类型的中文详细描述。",
     )
     domain: str = Field(
         default="",
@@ -59,6 +67,13 @@ class SemanticRegistry(BaseModel):
         if entry:
             return entry.display_name
         return semantic_type.replace("-", " ").title()
+
+    def display_name_zh(self, semantic_type: str) -> str:
+        """获取中文显示名称，不存在时回退到英文 display_name。"""
+        entry = self.types.get(semantic_type)
+        if entry and entry.display_name_zh:
+            return entry.display_name_zh
+        return self.display_name(semantic_type)
 
     def all_keys(self) -> list[str]:
         """返回所有已注册的语义类型 key（有序）。"""

@@ -2228,7 +2228,7 @@ def _load_profile_files(
         if filepath.is_file():
             content = filepath.read_text(encoding="utf-8")
             if filepath.name == "run.sh":
-                content = _process_run_sh(content)
+                content = process_run_sh(content)
             data[filepath.name] = content
 
     # 注入公共运行时库 mf2_init.sh
@@ -2237,16 +2237,19 @@ def _load_profile_files(
         data["mf2_init.sh"] = common_init.read_text(encoding="utf-8")
 
     # 注入编译器生成的节点参数加载文件
-    data["mf_node_params.sh"] = _generate_node_params_sh(spec)
+    data["mf_node_params.sh"] = generate_node_params_sh(spec)
 
     return data
 
 
-def _process_run_sh(content: str) -> str:
+def process_run_sh(content: str) -> str:
     """处理 run.sh 中的 ``# MF2 init`` 指令，替换为 source 命令。
 
     匹配整行（允许行尾空白），只替换第一次出现。
     未找到该指令时原样返回（兼容未使用该约定的旧脚本）。
+
+    Node Generator 沙箱工具（agents/node_generator/prefab/tools.py）也调用此函数，
+    保证沙箱测试与真实 Argo 编译路径完全一致。
     """
     return re.sub(
         r"^# MF2 init[^\S\n]*$",
@@ -2271,7 +2274,7 @@ def _translate_shared_param(
     return resolved if resolved is not None else canonical_value
 
 
-def _generate_node_params_sh(spec: NodeSpec) -> str:
+def generate_node_params_sh(spec: NodeSpec) -> str:
     """从 spec.onboard_inputs 生成 mf_node_params.sh 内容。
 
     为每个 onboard input 生成一行 BASH 变量赋值：
@@ -2282,6 +2285,9 @@ def _generate_node_params_sh(spec: NodeSpec) -> str:
 
     如果参数设置了 shared_param，编译器会将 canonical 默认值翻译为
     对应计算软件的原生关键字（compile-time 硬映射）。
+
+    Node Generator 沙箱工具（agents/node_generator/prefab/tools.py）也调用此函数，
+    保证沙箱测试与真实 Argo 编译路径完全一致。
     """
     software = spec.metadata.tags.software or ""
 
@@ -2291,7 +2297,11 @@ def _generate_node_params_sh(spec: NodeSpec) -> str:
         "",
     ]
     for param in spec.onboard_inputs:
-        default = "" if param.default is None else str(param.default)
+        # 布尔值统一小写，避免 bash 中 True/False 大小写问题
+        if isinstance(param.default, bool):
+            default = "true" if param.default else "false"
+        else:
+            default = "" if param.default is None else str(param.default)
 
         # _shared_param 翻译：将 canonical name 映射为软件原生关键字
         if param.shared_param and software:

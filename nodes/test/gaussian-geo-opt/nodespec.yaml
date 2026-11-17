@@ -9,87 +9,111 @@ metadata:
   name: test-gaussian-geo-opt
   version: 1.0.0
   display_name: '[TEST] Gaussian Geometry Optimization'
-  description: '[TEST/MOCK] Performs DFT geometry optimization using Gaussian. Mock
-    version for pipeline testing.'
+  description: '[TEST/MOCK] Performs DFT geometry optimization using Gaussian. Mock version for pipeline testing.'
+  description_zh: '[TEST/MOCK] 使用 Gaussian 执行 DFT 几何优化。用于管线测试的模拟 版本。'
   node_type: compute
   category: utility
   tags:
     software: test
     version: '0.0'
     method:
-    - DFT
-    - B3LYP
+      - DFT
+      - B3LYP
     domain:
-    - molecular
+      - molecular
     capabilities:
-    - geometry-optimization
+      - geometry-optimization
     keywords:
-    - test
-    - mock
-    - geo-opt
-    - optimization
-    - gaussian
+      - test
+      - mock
+      - geo-opt
+      - optimization
+      - gaussian
   author: MiQroForge Team
   semantic_type: geometry-optimization
   base_image_ref: test-busybox
+  display_name_zh: '[TEST] Gaussian 几何优化'
 stream_inputs: []
 stream_outputs:
-- name: optimized_checkpoint
-  display_name: Optimized Checkpoint
-  io_type:
-    category: software_data_package
-    ecosystem: gaussian
-    data_type: checkpoint
-    file_patterns:
-    - '*.chk'
-    estimated_size_mb: 50.0
-  description: Gaussian checkpoint file containing optimized geometry and wavefunction.
-- name: total_energy
-  display_name: Total Energy
-  io_type:
-    category: physical_quantity
-    unit: Ha
-    shape: scalar
-  description: Total electronic energy at optimized geometry.
+  - name: optimized_checkpoint
+    display_name: Optimized Checkpoint
+    io_type:
+      category: software_data_package
+      ecosystem: gaussian
+      data_type: checkpoint
+      file_patterns:
+        - '*.chk'
+      estimated_size_mb: 50.0
+    description: Gaussian checkpoint file containing optimized geometry and wavefunction.
+    description_zh: 包含优化几何结构与波函数的 Gaussian 检查点文件。
+    display_name_zh: Checkpoint (部分)
+  - name: total_energy
+    display_name: Total Energy
+    io_type:
+      category: physical_quantity
+      unit: Ha
+      shape: scalar
+    description: Total electronic energy at optimized geometry.
+    description_zh: 优化几何结构处的总电子能量。
+    display_name_zh: 最终能量
 onboard_inputs:
-- name: functional
-  display_name: DFT Functional
-  kind: string
-  default: B3LYP
-  required: true
-- name: basis_set
-  display_name: Basis Set
-  kind: string
-  default: 6-31G*
-  required: true
-- name: charge
-  display_name: Molecular Charge
-  kind: integer
-  default: 0
-  required: true
-- name: multiplicity
-  display_name: Spin Multiplicity
-  kind: integer
-  default: 1
-  required: true
-  min_value: 1
+  - name: functional
+    display_name: DFT Functional
+    kind: string
+    default: B3LYP
+    required: true
+    display_name_zh: 泛函
+    description: Density functional, e.g. B3LYP or PBE.
+    description_zh: DFT 交换关联泛函，如 B3LYP、PBE。
+  - name: basis_set
+    display_name: Basis Set
+    kind: string
+    default: 6-31G*
+    required: true
+    display_name_zh: 基组
+    description: Basis set name, e.g. def2-SVP or cc-pVTZ.
+    description_zh: 基组名称，如 def2-SVP、cc-pVTZ。
+  - name: charge
+    display_name: Molecular Charge
+    kind: integer
+    default: 0
+    required: true
+    display_name_zh: 体系电荷
+    description: Total charge of the system.
+    description_zh: 分子或晶胞的总电荷。
+  - name: multiplicity
+    display_name: Spin Multiplicity
+    kind: integer
+    default: 1
+    required: true
+    min_value: 1
+    display_name_zh: 自旋多重度
+    description: Spin multiplicity (2S+1) of the system.
+    description_zh: 体系的自旋多重度（2S+1）。
 onboard_outputs:
-- name: final_energy
-  display_name: Final Energy
-  kind: float
-  unit: Ha
-  description: Total energy at converged geometry.
-- name: n_iterations
-  display_name: Optimization Steps
-  kind: integer
-  description: Number of optimization iterations.
-- name: converged
-  display_name: Convergence Flag
-  kind: boolean
-  description: Whether the geometry optimization converged successfully.
-  quality_gate: true
-  gate_default: must_pass
-  gate_description: "Geometry optimization must converge before frequency analysis."
+  - name: final_energy
+    display_name: Final Energy
+    kind: float
+    unit: Ha
+    description: Total energy at converged geometry.
+    description_zh: 收敛几何结构处的总能量。
+    display_name_zh: 最终能量 (Ha)
+  - name: n_iterations
+    display_name: Optimization Steps
+    kind: integer
+    description: Number of optimization iterations.
+    description_zh: 优化迭代次数。
+    display_name_zh: 优化步数
+  - name: converged
+    display_name: Convergence Flag
+    kind: boolean
+    description: Whether the geometry optimization converged successfully.
+    description_zh: 几何优化是否成功收敛。
+    quality_gate: true
+    gate_default: must_pass
+    gate_description: "Geometry optimization must converge before frequency analysis."
+    display_name_zh: 收敛标志
+    gate_description_zh: 几何优化未收敛，下游频率分析无法进行。
 resources:
   cpu_cores: 1
   mem_gb: 0.5
@@ -102,5 +126,5 @@ execution:
   entrypoint_script: run.sh
 semantic_identity: '[TEST] DFT geometry optimization using Gaussian software'
 distinguishing_ports:
-- optimized_checkpoint
+  - optimized_checkpoint
 rag_summary: ''

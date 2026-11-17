@@ -16,6 +16,7 @@ from __future__ import annotations
 import asyncio
 import json
 from pathlib import Path
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
 
@@ -36,7 +37,7 @@ from api.models.agents import (
 from agents.llm_config import LLMConfig
 from agents.schemas import NodeGenRequest, EvaluationResult
 from agents.common.session_logger import (
-    start_session, end_session,
+    start_session, end_session, get_session,
     save_agent_log, save_conversation,
 )
 from agents.common.timeutil import now_cn
@@ -244,6 +245,7 @@ async def generate_node(
 
         last_state = None
         last_error = None
+        last_evaluation = None
 
         # 使用 proj/tmp/pending/ 作为工作目录，Agent 通过 write_file 写入
         pending_dir = None
@@ -253,11 +255,13 @@ async def generate_node(
 
         prefab_cfg = _load_prefab_settings()
         mf_test_design = prefab_cfg.get("mf_test", False)
+        repair_raw = prefab_cfg.get("design_repair_rounds", 1)
+        design_repair_rounds = int(repair_raw) if repair_raw is not None else 1
 
         tracker2 = TokenUsageTracker(paths, purpose="node_generator", currency=_load_currency(settings))
 
         def _run_with_session():
-            nonlocal last_state, last_error
+            nonlocal last_state, last_error, last_evaluation
             LLMConfig.set_token_tracker(tracker2)
             start_session("prefab_design", {
                 "semantic_type": request.semantic_type,
@@ -279,6 +283,33 @@ async def generate_node(
                 state = run_prefab_node_generator(gen_request, **extra)
                 last_state = state
                 last_error = state.get("error")
+
+                # ── 设计时静态验证 + 修复循环：不再输出零验证产物 ──
+                from agents.node_generator.prefab.evaluator import evaluate_static
+                from agents.node_generator.prefab.state import PrefabGenState
+                for repair in range(design_repair_rounds + 1):
+                    eval_state: PrefabGenState = {
+                        "request": gen_request,
+                        "nodespec_yaml": state.get("nodespec_yaml", ""),
+                        "run_sh": state.get("run_sh", ""),
+                        "available_images": state.get("available_images") or [],
+                        "semantic_types": state.get("semantic_types") or {},
+                        "_sandbox_enabled": False,
+                        "_sandbox_dir": state.get("_sandbox_dir") or str(pending_dir or ""),
+                        "iteration": repair,
+                    }
+                    evaluation = evaluate_static(eval_state).get("evaluation")
+                    last_evaluation = evaluation
+                    if not evaluation or evaluation.passed or repair >= design_repair_rounds:
+                        break
+                    extra_retry = dict(extra)
+                    extra_retry["iteration"] = repair + 1
+                    extra_retry["evaluation"] = evaluation
+                    extra_retry["nodespec_yaml"] = state.get("nodespec_yaml", "")
+                    extra_retry["run_sh"] = state.get("run_sh", "")
+                    state = run_prefab_node_generator(gen_request, **extra_retry)
+                    last_state = state
+                    last_error = state.get("error")
             finally:
                 log = end_session()
                 if log:
@@ -387,7 +418,7 @@ async def generate_node(
             run_sh=run_sh,
             input_templates=input_templates,
             saved_path=saved_path,
-            evaluation=None,
+            evaluation=last_evaluation,
             error=last_error,
         )
 
@@ -890,9 +921,14 @@ async def run_node_runtime(
                     except Exception:
                         pass
 
-        # ── 管理 Agent 记录的经验（record_lesson 工具输出，跨轮次累积）──
-        if _recorded_lesson:
-            print(f"[Memory Curator] Starting review of lesson: {_recorded_lesson[:80]}...", flush=True)
+        # ── 经验入库：record_lesson 显式教训 + 成功运行由 curator 从上下文蒸馏（不依赖 Agent 自觉）──
+        run_success = bool(evaluation and evaluation.passed)
+        if _recorded_lesson or run_success:
+            print(
+                f"[Memory Curator] Starting review. lesson={'yes' if _recorded_lesson else 'no'}, "
+                f"run_success={run_success}",
+                flush=True,
+            )
             try:
                 import json as _json_local, re as _re_local
                 from agents.llm_config import LLMConfig as _LLMCfg
@@ -931,6 +967,7 @@ async def run_node_runtime(
                 prompt = _load_prompt(
                     "subagent/memory_curator/prompts/curator.jinja2",
                     lesson=_recorded_lesson,
+                    run_success=run_success,
                     software=sw_name,
                     existing=existing_text,
                     context=context,
@@ -941,16 +978,20 @@ async def run_node_runtime(
                     m = _re_local.search(r'\{[^}]+\}', content)
                     decision = _json_local.loads(m.group()) if m else _json_local.loads(content)
                 except Exception:
-                    decision = {"action": "add", "modified_lesson": _recorded_lesson}
+                    decision = (
+                        {"action": "add", "modified_lesson": _recorded_lesson}
+                        if _recorded_lesson
+                        else {"action": "skip", "modified_lesson": ""}
+                    )
 
                 action = decision.get("action", "add")
-                if action in ("add", "modify"):
-                    lesson = decision.get("modified_lesson", _recorded_lesson)[:200]
+                lesson = (decision.get("modified_lesson") or "").strip()
+                if action in ("add", "modify") and lesson:
                     entry = _build_entry(
                         task=request.description or "",
                         software=sw_name,
-                        result="failure",
-                        lessons=[lesson],
+                        result="success" if run_success else "failure",
+                        lessons=[lesson[:200]],
                     )
                     store.add(entry)
                     print(f"[Memory Curator] {action} for '{sw_name}': {lesson[:80]}", flush=True)
@@ -964,6 +1005,7 @@ async def run_node_runtime(
                         "timestamp": timestamp,
                         "action": action,
                         "proposed_lesson": _recorded_lesson,
+                        "run_success": run_success,
                         "curator_decision": decision,
                         "software": sw_name,
                     }
@@ -977,20 +1019,21 @@ async def run_node_runtime(
                     pass
             except Exception as e:
                 print(f"[Memory Curator] Failed: {e}. Fallback save.", flush=True)
-                try:
-                    from agents.node_generator.shared.memory import (
-                        get_experience_store as _fb_store,
-                        build_experience_entry as _fb_entry,
-                    )
-                    s = _fb_store(request.target_software or "general")
-                    s.add(_fb_entry(
-                        task=request.description or "",
-                        software=request.target_software or "general",
-                        result="failure",
-                        lessons=[_recorded_lesson[:200]],
-                    ))
-                except Exception:
-                    pass
+                if _recorded_lesson:
+                    try:
+                        from agents.node_generator.shared.memory import (
+                            get_experience_store as _fb_store,
+                            build_experience_entry as _fb_entry,
+                        )
+                        s = _fb_store(request.target_software or "general")
+                        s.add(_fb_entry(
+                            task=request.description or "",
+                            software=request.target_software or "general",
+                            result="success" if run_success else "failure",
+                            lessons=[_recorded_lesson[:200]],
+                        ))
+                    except Exception:
+                        pass
 
         # 保存到 run 目录
         saved_path = None

@@ -7,6 +7,7 @@
 import { useEffect, useState } from 'react'
 import { getStoredUser } from '../lib/auth'
 import { fetchJSON } from '../api/client'
+import { useT } from '../lib/i18n'
 import {
   Shield, Users, Cpu, Coins, Zap, ArrowLeft, Loader2,
 } from 'lucide-react'
@@ -53,6 +54,7 @@ interface AdminUserUsage {
 }
 
 export function AdminUsagePage() {
+  const { t } = useT()
   const storedUser = getStoredUser()
   const [days, setDays] = useState(30)
   const [data, setData] = useState<AdminUsageSummary | null>(null)
@@ -62,18 +64,18 @@ export function AdminUsagePage() {
   // ── Access control ──────────────────────────────────────────────────────
   if (storedUser?.role !== 'admin') {
     return (
-      <div className="min-h-screen bg-mf-bg flex items-center justify-center">
+      <div className="min-h-screen bg-mf-base flex items-center justify-center">
         <div className="text-center">
           <Shield className="mx-auto mb-4 text-red-400" size={48} />
-          <h1 className="text-xl font-bold text-mf-text-primary mb-2">Access Denied</h1>
+          <h1 className="text-xl font-bold text-mf-text-primary mb-2">{t('admin.accessDenied')}</h1>
           <p className="text-mf-text-secondary text-sm">
-            Admin access required to view usage statistics.
+            {t('admin.accessDeniedMsg')}
           </p>
           <a
             href="/"
             className="mt-4 inline-block text-blue-400 hover:text-blue-300 text-sm transition-colors"
           >
-            ← Back to Gallery
+            ← {t('admin.backToGallery')}
           </a>
         </div>
       </div>
@@ -91,7 +93,7 @@ export function AdminUsagePage() {
         if (!cancelled) setData(res)
       })
       .catch((err) => {
-        if (!cancelled) setError(err instanceof Error ? err.message : 'Failed to load usage data')
+        if (!cancelled) setError(err instanceof Error ? err.message : t('admin.loadFailed'))
       })
       .finally(() => {
         if (!cancelled) setLoading(false)
@@ -102,20 +104,20 @@ export function AdminUsagePage() {
 
   // ── Render ──────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-mf-bg">
+    <div className="min-h-screen bg-mf-base">
       {/* Header */}
       <div className="flex items-center gap-3 px-6 h-14 border-b border-mf-border bg-mf-panel">
         <a
           href="/"
           className="p-1.5 rounded hover:bg-mf-hover text-mf-text-muted hover:text-mf-text-primary transition-colors"
-          title="Back to Gallery"
+          title={t('admin.backToGallery')}
         >
           <ArrowLeft size={16} />
         </a>
         <Shield size={18} className="text-yellow-400" />
-        <span className="text-sm font-semibold">Usage Statistics</span>
+        <span className="text-sm font-semibold">{t('admin.title')}</span>
         <span className="text-[11px] text-mf-text-muted ml-2">
-          Token + compute consumption overview
+          {t('admin.subtitle')}
         </span>
 
         <div className="flex-1" />
@@ -132,7 +134,7 @@ export function AdminUsagePage() {
                   : 'text-mf-text-secondary hover:text-mf-text-primary'
               }`}
             >
-              {d}d
+              {t('admin.daysShort', { count: d })}
             </button>
           ))}
         </div>
@@ -151,7 +153,7 @@ export function AdminUsagePage() {
         {loading && (
           <div className="flex items-center gap-2 text-xs text-mf-text-muted py-12 justify-center">
             <Loader2 size={14} className="animate-spin" />
-            Loading statistics...
+            {t('admin.loading')}
           </div>
         )}
 
@@ -161,11 +163,11 @@ export function AdminUsagePage() {
             {/* Summary cards */}
             <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
               {[
-                { label: 'Users', value: data.total_users, icon: Users, color: 'text-blue-400' },
-                { label: 'Core Hours', value: data.total_core_hours.toFixed(1), icon: Cpu, color: 'text-green-400' },
-                { label: 'GPU Hours', value: data.total_gpu_hours.toFixed(1), icon: Zap, color: 'text-purple-400' },
-                { label: 'Tokens', value: formatTokens(data.total_tokens), icon: Coins, color: 'text-yellow-400' },
-                { label: 'Est. Cost', value: formatCost(data.total_estimated_cost, data.currency || 'USD'), icon: Coins, color: 'text-orange-400' },
+                { label: t('admin.statUsers'), value: data.total_users, icon: Users, color: 'text-blue-400' },
+                { label: t('admin.statCoreHours'), value: data.total_core_hours.toFixed(1), icon: Cpu, color: 'text-green-400' },
+                { label: t('admin.statGpuHours'), value: data.total_gpu_hours.toFixed(1), icon: Zap, color: 'text-purple-400' },
+                { label: t('admin.statTokens'), value: formatTokens(data.total_tokens), icon: Coins, color: 'text-yellow-400' },
+                { label: t('admin.statEstCost'), value: formatCost(data.total_estimated_cost, data.currency || 'USD'), icon: Coins, color: 'text-orange-400' },
               ].map((card) => (
                 <div
                   key={card.label}
@@ -189,31 +191,31 @@ export function AdminUsagePage() {
                   <thead>
                     <tr className="border-b border-mf-border bg-mf-hover/50">
                       <th className="text-left px-4 py-2 text-mf-text-secondary font-semibold">
-                        User
+                        {t('admin.colUser')}
                       </th>
                       <th className="text-right px-3 py-2 text-mf-text-secondary font-semibold">
-                        Calls
+                        {t('admin.colCalls')}
                       </th>
                       <th className="text-right px-3 py-2 text-mf-text-secondary font-semibold">
-                        Tokens
+                        {t('admin.colTokens')}
                       </th>
                       <th className="text-right px-3 py-2 text-mf-text-secondary font-semibold">
-                        Token Cost
+                        {t('admin.colTokenCost')}
                       </th>
                       <th className="text-right px-3 py-2 text-mf-text-secondary font-semibold">
-                        Core Hrs
+                        {t('admin.colCoreHrs')}
                       </th>
                       <th className="text-right px-3 py-2 text-mf-text-secondary font-semibold">
-                        GPU Hrs
+                        {t('admin.colGpuHrs')}
                       </th>
                       <th className="text-right px-3 py-2 text-mf-text-secondary font-semibold">
-                        WFs
+                        {t('admin.colWfs')}
                       </th>
                       <th className="text-right px-3 py-2 text-mf-text-secondary font-semibold">
-                        Comp Cost
+                        {t('admin.colCompCost')}
                       </th>
                       <th className="text-right px-4 py-2 text-mf-text-secondary font-semibold">
-                        Total
+                        {t('admin.colTotal')}
                       </th>
                     </tr>
                   </thead>
@@ -263,9 +265,8 @@ export function AdminUsagePage() {
                           colSpan={9}
                           className="text-center py-8 text-mf-text-muted"
                         >
-                          No usage data in this period.
-                        </td>
-                      </tr>
+                          {t('admin.noData')}
+                        </td>                      </tr>
                     )}
                   </tbody>
                 </table>
@@ -273,7 +274,7 @@ export function AdminUsagePage() {
             </div>
 
             <p className="text-[10px] text-mf-text-muted text-right">
-              Last {data.period_days} days · Costs ({data.currency || 'USD'}) based on models.yaml &amp; compute_pricing.yaml
+              {t('admin.footnote', { days: data.period_days, currency: data.currency || 'USD' })}
             </p>
           </>
         )}

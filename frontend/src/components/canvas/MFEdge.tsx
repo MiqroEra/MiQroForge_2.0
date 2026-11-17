@@ -6,6 +6,7 @@ import {
 } from '@xyflow/react'
 import type { EdgeProps } from '@xyflow/react'
 import { PORT_COLORS } from '../../lib/port-type-utils'
+import { useT } from '../../lib/i18n'
 
 export const MFEdge = memo((props: EdgeProps) => {
   const {
@@ -15,6 +16,7 @@ export const MFEdge = memo((props: EdgeProps) => {
     data,
   } = props
 
+  const { t } = useT()
   const [hovered, setHovered] = useState(false)
 
   const sourcePort = (data?.sourcePort as { name: string; category: string } | undefined)
@@ -62,7 +64,7 @@ export const MFEdge = memo((props: EdgeProps) => {
             }}
             className="nopan nodrag w-4 h-4 rounded-full bg-red-600 text-white text-[10px] font-bold flex items-center justify-center shadow-lg hover:bg-red-500 transition-colors leading-none"
             data-edge-id={id}
-            title="Delete connection"
+            title={t('canvas.deleteConnection')}
           >
             ×
           </button>

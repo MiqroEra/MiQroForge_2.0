@@ -2,27 +2,39 @@ version: "1.0"
 types:
   geometry-input:
     display_name: Geometry Input
+    display_name_zh: 几何输入
     description: "Reads or provides molecular geometry as input for downstream calculations."
+    description_zh: "读取或提供分子几何结构作为下游计算的输入。"
     domain: computational-chemistry
   geometry-optimization:
     display_name: Geometry Optimization
+    display_name_zh: 几何优化
     description: "Structural relaxation to find the minimum-energy geometry."
+    description_zh: "结构弛豫以寻找能量最低的几何构型。"
     domain: computational-chemistry
   frequency-analysis:
     display_name: Frequency Analysis
+    display_name_zh: 频率分析
     description: "Harmonic vibrational frequency calculation at a stationary point."
+    description_zh: "在驻点上进行谐振振动频率计算。"
     domain: computational-chemistry
   single-point-energy:
     display_name: "Single Energy [mol]"
+    display_name_zh: 单点能 [分子]
     description: "Electronic energy at a fixed molecular geometry. Supports HF, DFT, MP2, CCSD, CASCI, TD-DFT."
+    description_zh: "固定分子几何下的电子能量。支持 HF、DFT、MP2、CCSD、CASCI、TD-DFT。"
     domain: computational-chemistry
   crystal-single-point-energy:
     display_name: "Single Energy [crystal]"
+    display_name_zh: 单点能 [晶体]
     description: "Periodic DFT energy for crystal/slab/bulk with PBC. Plane-wave or GPW methods."
+    description_zh: "周期边界条件下晶体/表面/块体的周期性 DFT 能量。平面波或 GPW 方法。"
     domain: computational-chemistry
   cell-optimization:
     display_name: Cell Optimization
+    display_name_zh: 晶胞优化
     description: "Simultaneous optimization of atomic positions and unit cell parameters (volume, shape)."
+    description_zh: "同时优化原子位置与晶胞参数（体积、形状）。"
     domain: computational-chemistry
 
   # ---------------------------------------------------------------------------
@@ -30,30 +42,42 @@ types:
   # ---------------------------------------------------------------------------
   quantum-meanfield-prep:
     display_name: "Mean-Field Preparation [quantum]"
+    display_name_zh: 平均场制备 [量子]
     description: "Hartree-Fock or DFT mean-field calculation via PySCF, producing the reference wavefunction for quantum embedding."
+    description_zh: "通过 PySCF 进行 Hartree-Fock 或 DFT 平均场计算，生成量子嵌入的参考波函数。"
     domain: quantum
 
   quantum-ewf-embedding:
     display_name: "EWF Embedding [quantum]"
+    display_name_zh: EWF 嵌入 [量子]
     description: "Embedded wavefunction (EWF) construction using Vayesta: active-space embedding from a mean-field reference, yielding cluster Hamiltonians."
+    description_zh: "使用 Vayesta 构建嵌入波函数（EWF）：从平均场参考进行活性空间嵌入，生成簇哈密顿量。"
     domain: quantum
 
   quantum-qsci-preparation:
     display_name: "QSCI State Preparation [quantum]"
+    display_name_zh: QSCI 态制备 [量子]
     description: "Convert cluster Hamiltonian to qubit Hamiltonian via OpenFermion, synthesize quantum circuit (QASM 3), and submit to hardware/emulator for measurement counts."
+    description_zh: "通过 OpenFermion 将簇哈密顿量转换为量子比特哈密顿量，合成量子电路（QASM 3）并提交到硬件/模拟器测量。"
     domain: quantum
 
   quantum-hardware-sampling:
     display_name: "Hardware Sampling [quantum]"
+    display_name_zh: 硬件采样 [量子]
     description: "Execute QASM 3 circuits on quantum hardware or emulator (Amazon Braket), returning measurement outcome counts."
+    description_zh: "在量子硬件或模拟器（Amazon Braket）上执行 QASM 3 电路，返回测量结果计数。"
     domain: quantum
 
   quantum-qsci-energy:
     display_name: "QSCI Energy [quantum]"
+    display_name_zh: QSCI 能量 [量子]
     description: "Post-process measurement counts using quantum subspace expansion / QSCI methodology to estimate the ground-state energy."
+    description_zh: "使用量子子空间展开 / QSCI 方法后处理测量计数，估计基态能量。"
     domain: quantum
 
   quantum-cas-truncation:
     display_name: "CAS Truncation [quantum]"
+    display_name_zh: CAS 截断 [量子]
     description: "PySCF CASCI active-space truncation: reduces full molecular Hamiltonian to a configurable active space, outputting effective 1-body Hamiltonian (heff) and core energy (ecore) for quantum computing."
+    description_zh: "PySCF CASCI 活性空间截断：将完整分子哈密顿量约化到可配置的活性空间，输出等效单体哈密顿量（heff）与芯能量（ecore）供量子计算使用。"
     domain: quantum

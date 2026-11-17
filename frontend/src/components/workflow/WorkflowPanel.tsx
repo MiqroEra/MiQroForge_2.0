@@ -6,6 +6,7 @@ import { useSavedWorkflowsStore } from '../../stores/saved-workflows-store'
 import { workflowsApi } from '../../api/workflows-api'
 import { useRunOverlayStore } from '../../stores/run-overlay-store'
 import { useUIStore } from '../../stores/ui-store'
+import { useT } from '../../lib/i18n'
 import type { IssueSeverity, ValidationIssue } from '../../types/workflow'
 
 // ─── Issue row ────────────────────────────────────────────────────────────────
@@ -38,6 +39,7 @@ type Stage = 'idle' | 'validating' | 'validated' | 'submitting' | 'submitted' | 
 // ─── WorkflowPanel ────────────────────────────────────────────────────────────
 
 export function WorkflowPanel() {
+  const { t } = useT()
   const { validate, getYaml } = useWorkflowValidation()
   const { nodes, edges, meta, validationResult } = useWorkflowStore()
   const { saveRunSnapshot } = useSavedWorkflowsStore()
@@ -93,9 +95,9 @@ export function WorkflowPanel() {
   }
 
   const buttonLabel =
-    stage === 'validating' ? 'Validating…' :
-    stage === 'submitting' ? 'Submitting…' :
-    '▶ Run Workflow'
+    stage === 'validating' ? t('workflow.validating') :
+    stage === 'submitting' ? t('workflow.submitting') :
+    t('workflow.runWorkflow')
 
   const buttonDisabled =
     nodes.length === 0 ||
@@ -106,7 +108,7 @@ export function WorkflowPanel() {
     <div className="w-72 mf-panel border-l border-r-0 flex-shrink-0">
       <div className="px-3 py-2 border-b border-mf-border">
         <span className="text-xs font-semibold text-mf-text-secondary uppercase tracking-wide">
-          Run Workflow
+          {t('workflow.runWorkflow')}
         </span>
       </div>
 
@@ -122,12 +124,12 @@ export function WorkflowPanel() {
             {(stage === 'validating' || stage === 'submitting') && (
               <span className="inline-block w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
             )}
-            {buttonLabel}
+            <span>▶ {buttonLabel}</span>
           </button>
 
           {nodes.length === 0 && (
             <p className="text-[11px] text-mf-text-muted text-center">
-              Add nodes to the canvas before running.
+              {t('workflow.addNodesBeforeRun')}
             </p>
           )}
 
@@ -138,8 +140,11 @@ export function WorkflowPanel() {
                 validationResult.valid ? 'text-green-400' : 'text-red-400'
               }`}>
                 {validationResult.valid
-                  ? <><CheckCircle size={13} /> Valid</>
-                  : <><AlertCircle size={13} /> {validationResult.errors.length} error{validationResult.errors.length !== 1 ? 's' : ''}</>
+                  ? <><CheckCircle size={13} /> {t('workflow.valid')}</>
+                  : <><AlertCircle size={13} /> {validationResult.errors.length === 1
+                    ? t('workflow.errorUnit', { count: validationResult.errors.length })
+                    : t('workflow.errorUnits', { count: validationResult.errors.length })}
+                  </>
                 }
                 <span className="text-mf-text-muted font-normal ml-auto">
                   {validationResult.errors.length}E · {validationResult.warnings.length}W · {validationResult.infos.length}I
@@ -160,7 +165,7 @@ export function WorkflowPanel() {
           {submitResult && (
             <div className="flex items-center gap-1.5 text-xs text-green-400 bg-green-500/10 border border-green-500/20 rounded px-2 py-1.5">
               <CheckCircle size={12} />
-              <span>Submitted: <span className="font-mono">{submitResult.name}</span></span>
+              <span>{t('workflow.submitted')} <span className="font-mono">{submitResult.name}</span></span>
             </div>
           )}
 

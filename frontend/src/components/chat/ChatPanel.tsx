@@ -18,6 +18,7 @@ import { nodesApi } from '../../api/nodes-api'
 import { semanticWorkflowToCanvasState, SEMANTIC_EDGE_TYPE } from '../../lib/semantic-to-canvas'
 import { buildNodeData } from '../../lib/node-utils'
 import { buildResolvedEdges } from '../../lib/yaml-to-edges'
+import { useT } from '../../lib/i18n'
 import { ChatMessageBubble } from './ChatMessage'
 import { AgentThinking } from './AgentThinking'
 import type { SemanticWorkflow } from '../../types/semantic'
@@ -34,6 +35,7 @@ export const ChatPanel = memo(() => {
 
   const { loadFromNodes, nodes, edges, updateNodeWithHistory } = useWorkflowStore()
   const { showNotification } = useUIStore()
+  const { t } = useT()
 
   const [input, setInput] = useState('')
   const [isSaving, setIsSaving] = useState(false)
@@ -64,12 +66,12 @@ export const ChatPanel = memo(() => {
               yaml_result: m.yaml_result ?? undefined,
             })),
         })
-        showNotification('info', '已中止，对话已自动保存')
+        showNotification('info', t('chat.stoppedSaved'))
       } catch {
         // 保存失败不影响主流程
       }
     }
-  }, [setAgentStatus, showNotification])
+  }, [setAgentStatus, showNotification, t])
 
   // 自动滚动到最新消息
   useEffect(() => {
@@ -104,24 +106,24 @@ export const ChatPanel = memo(() => {
       })
 
       if (showFeedback) {
-        showNotification('success', `会话已保存 → ${resp.path}`)
+        showNotification('success', t('chat.sessionSaved', { path: resp.path }))
       }
     } catch (err) {
       if (showFeedback) {
-        showNotification('error', `保存失败: ${err instanceof Error ? err.message : String(err)}`)
+        showNotification('error', t('chat.saveFailed', { error: err instanceof Error ? err.message : String(err) }))
       }
     } finally {
       setIsSaving(false)
     }
-  }, [showNotification])
+  }, [showNotification, t])
 
   // ── Clear（先保存再清空）────────────────────────────────────────────────
   const handleClearAndSave = useCallback(async () => {
     if (messages.length === 0) return
     await handleSaveSession(false)    // 静默保存
     clearMessages()
-    showNotification('success', '会话已保存并清空')
-  }, [messages.length, handleSaveSession, clearMessages, showNotification])
+    showNotification('success', t('chat.savedAndCleared'))
+  }, [messages.length, handleSaveSession, clearMessages, showNotification, t])
 
   // ── 显示到画布 ────────────────────────────────────────────────────────────
   const handleShowOnCanvas = useCallback((workflow: SemanticWorkflow) => {
@@ -133,9 +135,9 @@ export const ChatPanel = memo(() => {
     )
 
     loadFromNodes([...nodes, ...newNodes], [...edges, ...newEdges])
-    showNotification('success', `已添加 ${newNodes.length} 个语义节点到画布`)
+    showNotification('success', t('chat.addedNodes', { count: newNodes.length }))
     setSemanticWorkflow(workflow)
-  }, [nodes, edges, loadFromNodes, showNotification, setSemanticWorkflow])
+  }, [nodes, edges, loadFromNodes, showNotification, setSemanticWorkflow, t])
 
   // ── 自动解析（触发 YAML Coder）────────────────────────────────────────────
   const handleAutoResolve = useCallback(async (
@@ -217,14 +219,14 @@ export const ChatPanel = memo(() => {
       }
 
       const resolveNote = resolvedCount > 0
-        ? `（已自动替换画布上 ${resolvedCount} 个待定节点）`
+        ? t('chat.autoReplacedNote', { count: resolvedCount })
         : ''
 
       updateMessage(loadingId, {
         loading: false,
         content: result.validation_report.valid
-          ? `✓ MF YAML 已生成并通过校验。${resolveNote}`
-          : `⚠ MF YAML 已生成，但存在校验问题：${result.validation_report.errors.join('; ')}${resolveNote}`,
+          ? t('chat.yamlValidMsg', { note: resolveNote })
+          : t('chat.yamlInvalidMsg', { errors: result.validation_report.errors.join('; '), note: resolveNote }),
         yaml_result: result,
       })
 
@@ -232,25 +234,25 @@ export const ChatPanel = memo(() => {
 
       if (result.validation_report.valid) {
         showNotification('success', resolvedCount > 0
-          ? `MF YAML 生成成功，已替换 ${resolvedCount} 个节点`
-          : 'MF YAML 生成成功',
+          ? t('chat.yamlGenReplaced', { count: resolvedCount })
+          : t('chat.yamlGenSuccess'),
         )
       }
     } catch (err) {
       if (err instanceof DOMException && err.name === 'AbortError') {
-        updateMessage(loadingId, { loading: false, role: 'system', content: '⏹ 已取消' })
+        updateMessage(loadingId, { loading: false, role: 'system', content: t('chat.cancelled') })
         return
       }
       updateMessage(loadingId, {
         loading: false,
         role: 'error',
-        content: `YAML Coder 失败: ${err instanceof Error ? err.message : String(err)}`,
+        content: t('chat.yamlCoderFailed', { error: err instanceof Error ? err.message : String(err) }),
       })
     } finally {
       abortCtrlRef.current = null
       setAgentStatus('idle')
     }
-  }, [addMessage, updateMessage, setAgentStatus, setYamlResult, showNotification, updateNodeWithHistory, sessionId])
+  }, [addMessage, updateMessage, setAgentStatus, setYamlResult, showNotification, updateNodeWithHistory, sessionId, t])
 
   // ── 发送消息 ──────────────────────────────────────────────────────────────
   const handleSend = async () => {
@@ -277,7 +279,7 @@ export const ChatPanel = memo(() => {
         updateMessage(loadingId, {
           loading: false,
           role: 'error',
-          content: `Planner 失败: ${result.error}`,
+          content: t('chat.plannerFailed', { error: result.error }),
         })
         return
       }
@@ -290,7 +292,7 @@ export const ChatPanel = memo(() => {
 
       updateMessage(loadingId, {
         loading: false,
-        content: `已生成 ${stepCount} 步语义工作流（${implCount}/${stepCount} 步找到实现）。`,
+        content: t('chat.planGenerated', { stepCount, implCount }),
         semantic_workflow: workflow,
       })
 
@@ -298,13 +300,13 @@ export const ChatPanel = memo(() => {
 
     } catch (err) {
       if (err instanceof DOMException && err.name === 'AbortError') {
-        updateMessage(loadingId, { loading: false, role: 'system', content: '⏹ 已取消' })
+        updateMessage(loadingId, { loading: false, role: 'system', content: t('chat.cancelled') })
         return
       }
       updateMessage(loadingId, {
         loading: false,
         role: 'error',
-        content: `Planner Agent 错误: ${err instanceof Error ? err.message : String(err)}`,
+        content: t('chat.plannerError', { error: err instanceof Error ? err.message : String(err) }),
       })
     } finally {
       abortCtrlRef.current = null
@@ -329,7 +331,7 @@ export const ChatPanel = memo(() => {
       <div className="flex items-center justify-between px-3 h-10 border-b border-mf-border flex-shrink-0">
         <div className="flex items-center gap-1.5">
           <span className="text-base">🤖</span>
-          <span className="text-sm font-semibold text-mf-text-primary">AI Assistant</span>
+          <span className="text-sm font-semibold text-mf-text-primary">{t('chat.title')}</span>
           {agentStatus !== 'idle' && (
             <Loader2 size={12} className="animate-spin text-blue-400" />
           )}
@@ -340,7 +342,7 @@ export const ChatPanel = memo(() => {
             onClick={() => handleSaveSession(true)}
             disabled={messages.length === 0 || isSaving || isRunning}
             className="p-1 text-mf-text-muted hover:text-mf-text-primary hover:bg-mf-hover rounded disabled:opacity-30 disabled:cursor-not-allowed"
-            title={`保存当前会话 (ID: ${sessionId})`}
+            title={t('chat.saveTitle', { id: sessionId })}
           >
             {isSaving
               ? <Loader2 size={12} className="animate-spin" />
@@ -352,14 +354,14 @@ export const ChatPanel = memo(() => {
             onClick={handleClearAndSave}
             disabled={messages.length === 0 || isRunning}
             className="p-1 text-mf-text-muted hover:text-mf-text-primary hover:bg-mf-hover rounded disabled:opacity-30 disabled:cursor-not-allowed"
-            title="保存并清空对话"
+            title={t('chat.clearTitle')}
           >
             <Trash2 size={12} />
           </button>
           <button
             onClick={closeChat}
             className="p-1 text-mf-text-muted hover:text-mf-text-primary hover:bg-mf-hover rounded"
-            title="Close chat"
+            title={t('chat.close')}
           >
             <X size={12} />
           </button>
@@ -369,7 +371,7 @@ export const ChatPanel = memo(() => {
       {/* Session ID 提示条 */}
       <div className="px-3 py-0.5 bg-mf-hover/30 border-b border-mf-border/50 flex-shrink-0">
         <span className="text-[9px] text-mf-text-muted/60 font-mono">
-          session: {sessionId}
+          {t('chat.sessionLabel', { id: sessionId })}
         </span>
       </div>
 
@@ -378,12 +380,12 @@ export const ChatPanel = memo(() => {
         {messages.length === 0 && (
           <div className="text-center text-mf-text-muted text-xs py-8">
             <div className="text-2xl mb-2">🔬</div>
-            <div className="font-medium text-mf-text-secondary mb-1">MiQroForge AI Assistant</div>
+            <div className="font-medium text-mf-text-secondary mb-1">{t('chat.emptyTitle')}</div>
             <div className="text-mf-text-muted">
-              Describe your computational chemistry goal and I'll design a workflow for you.
+              {t('chat.emptyHint')}
             </div>
             <div className="mt-3 text-[10px] text-mf-text-muted/70">
-              Example: "Calculate thermodynamic properties of H₂O"
+              {t('chat.emptyExample')}
             </div>
           </div>
         )}
@@ -422,7 +424,7 @@ export const ChatPanel = memo(() => {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             disabled={isRunning}
-            placeholder="Describe your computation goal… (Enter to send)"
+            placeholder={t('chat.inputPlaceholder')}
             rows={2}
             className="flex-1 text-xs bg-mf-input border border-mf-border rounded px-2 py-1.5 text-mf-text-primary placeholder-mf-text-muted focus:outline-none focus:border-blue-500 resize-none disabled:opacity-50"
           />
@@ -430,7 +432,7 @@ export const ChatPanel = memo(() => {
             <button
               onClick={handleStop}
               className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded bg-red-600 hover:bg-red-500 transition-colors"
-              title="Stop (cancel current request)"
+              title={t('chat.stopTitle')}
             >
               <Square size={11} className="text-white fill-white" />
             </button>
@@ -439,14 +441,14 @@ export const ChatPanel = memo(() => {
               onClick={handleSend}
               disabled={!input.trim()}
               className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              title="Send (Enter)"
+              title={t('chat.sendTitle')}
             >
               <Send size={13} className="text-white" />
             </button>
           )}
         </div>
         <div className="text-[9px] text-mf-text-muted mt-1">
-          Enter = send · Shift+Enter = newline{isRunning ? ' · ⏹ click red button to stop' : ''}
+          {t('chat.inputHint')}{isRunning ? t('chat.inputHintRunning') : ''}
         </div>
       </div>
     </div>

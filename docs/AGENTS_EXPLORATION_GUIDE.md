@@ -565,7 +565,7 @@ class NodeGenState(TypedDict, total=False):
 
 **Key Helper Functions**:
 - `_parse_generated_output(text)` — Extract marked sections (formal mode)
-- `_extract_script(text)` — Extract Python script from LLM text response (ephemeral fallback)
+- `extract_script(text)` — Extract Python script from LLM text response (ephemeral fallback, in `shared/parsing.py`)
 - `_load_ephemeral_settings()` — Load runtime config from `userdata/settings.yaml`
 - `load_reference_nodes()` — Find similar nodes (few-shot examples)
 - `load_available_images()` — From registry
@@ -983,6 +983,12 @@ Configuration in `userdata/settings.yaml`:
 ephemeral:
   max_outer_rounds: 2    # outer generate→evaluate loop
   max_inner_rounds: 3    # inner ReAct sandbox executions
+
+prefab:
+  max_outer_rounds: 2        # runtime outer generate→evaluate loop
+  max_inner_rounds: 3        # inner ReAct sandbox tests per round
+  mf_test: false
+  design_repair_rounds: 1    # design-time (/node) static-check repair rounds
 ```
 
 ---

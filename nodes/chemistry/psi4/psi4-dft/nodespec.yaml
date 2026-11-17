@@ -11,6 +11,7 @@ metadata:
   description: >
     Density functional theory single-point energy calculation using Psi4.
     Supports various exchange-correlation functionals and dispersion corrections.
+  description_zh: 使用 Psi4 进行密度泛函理论（DFT）单点能计算。支持多种交换关联泛函和色散校正。
   node_type: compute
   category: chemistry
   author: MiQroForge Team
@@ -33,6 +34,7 @@ metadata:
       - functional
       - open-source
 
+  display_name_zh: Psi4 DFT 单点能
 stream_inputs:
   - name: xyz_geometry
     display_name: Input Geometry (XYZ)
@@ -42,7 +44,9 @@ stream_inputs:
       shape: array
     required: true
     description: Molecular geometry in standard XYZ format (Angstrom).
+    description_zh: 标准 XYZ 格式（埃）的分子几何结构。
 
+    display_name_zh: 输入几何 (XYZ)
 stream_outputs:
   - name: total_energy
     display_name: Total Energy
@@ -50,7 +54,9 @@ stream_outputs:
       category: physical_quantity
       unit: Ha
     description: Total DFT electronic energy.
+    description_zh: 总的 DFT 电子能量。
 
+    display_name_zh: 最终能量
   - name: wavefunction_data
     display_name: Wavefunction Data
     io_type:
@@ -58,19 +64,27 @@ stream_outputs:
       ecosystem: psi4
       data_type: wavefunction
     description: Psi4 wavefunction data (JSON serialized).
+    description_zh: Psi4 波函数数据（JSON 序列化）。
 
+    display_name_zh: 波函数数据
 onboard_inputs:
   - name: charge
     display_name: Molecular Charge
     kind: integer
     default: 0
 
+    display_name_zh: 体系电荷
+    description: Total charge of the system.
+    description_zh: 分子或晶胞的总电荷。
   - name: multiplicity
     display_name: Spin Multiplicity
     kind: integer
     default: 1
     min_value: 1
 
+    display_name_zh: 自旋多重度
+    description: Spin multiplicity (2S+1) of the system.
+    description_zh: 体系的自旋多重度（2S+1）。
   - name: functional
     default: B3LYP
     _shared_param: functionals
@@ -92,6 +106,9 @@ onboard_inputs:
       - uhf
       - rohf
 
+    display_name_zh: SCF 参考
+    description: 'SCF reference: RHF / UHF / ROHF.'
+    description_zh: SCF 参考态：RHF / UHF / ROHF。
   - name: scf_type
     display_name: SCF Algorithm
     kind: enum
@@ -101,16 +118,25 @@ onboard_inputs:
       - direct
       - df
 
+    display_name_zh: SCF 算法
+    description: SCF iteration algorithm (e.g. DIIS).
+    description_zh: SCF 迭代算法（如 DIIS）。
 onboard_outputs:
   - name: scf_energy
     display_name: SCF Energy (Ha)
     kind: float
     unit: Ha
 
+    display_name_zh: 最终能量 (Ha)
+    description: Total energy after SCF convergence (Hartree).
+    description_zh: SCF 收敛后的总能量（Hartree）。
   - name: scf_iterations
     display_name: SCF Iterations
     kind: integer
 
+    display_name_zh: SCF 迭代次数
+    description: Number of SCF iterations.
+    description_zh: SCF 实际迭代次数。
   - name: scf_converged
     display_name: SCF Converged
     kind: boolean
@@ -118,6 +144,10 @@ onboard_outputs:
     gate_default: must_pass
     gate_description: "SCF must converge for the energy to be meaningful."
 
+    display_name_zh: SCF 已收敛
+    description: Whether SCF converged.
+    description_zh: SCF 是否已收敛。
+    gate_description_zh: SCF 必须收敛。
 resources:
   cpu_cores: 4
   mem_gb: 4.0

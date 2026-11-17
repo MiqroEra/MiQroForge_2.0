@@ -13,6 +13,10 @@ metadata:
     Reads a molecular geometry file from the workspace (.xyz format) and outputs
     it as a stream. Entry point for workflows consuming geometry from files.
     Supports both workspace file path and inline XYZ coordinates as fallback.
+  description_zh: >
+    从工作区读取分子几何结构文件（.xyz 格式）并以流输出。
+    是工作流中从文件获取几何结构的入口。
+    支持工作区文件路径，并以内联 XYZ 坐标作为备选。
   node_type: lightweight
   category: chemistry
   author: MiQroForge Team
@@ -30,6 +34,7 @@ metadata:
       - input
       - file
 
+  display_name_zh: 几何文件输入
 stream_outputs:
   - name: xyz_geometry
     display_name: Molecular Geometry (XYZ)
@@ -38,7 +43,9 @@ stream_outputs:
       unit: Ang
       shape: array
     description: Molecular geometry in standard XYZ format (Angstrom).
+    description_zh: "标准 XYZ 格式的分子几何结构（单位为埃）。"
 
+    display_name_zh: 输入几何 (XYZ)
 onboard_inputs:
   - name: geometry_file
     display_name: Geometry File
@@ -48,7 +55,11 @@ onboard_inputs:
     description: >
       Filename in workspace (e.g. "h2o.xyz"). Must exist and be standard XYZ format.
       Leave blank if using inline_geometry.
+    description_zh: >
+      工作区中的文件名（例如 "h2o.xyz"）。文件必须存在且为标准 XYZ 格式。
+      若使用 inline_geometry 则留空。
 
+    display_name_zh: 几何文件
   - name: inline_geometry
     display_name: Inline Geometry (fallback)
     kind: textarea
@@ -56,7 +67,11 @@ onboard_inputs:
     description: >
       Fallback: paste XYZ coordinates directly if no workspace file is available.
       Accepts standard XYZ format or atom-coordinate lines only.
+    description_zh: >
+      备选方案：当工作区无可用文件时，直接粘贴 XYZ 坐标。
+      仅接受标准 XYZ 格式或纯原子坐标行。
 
+    display_name_zh: 内联几何 (兜底)
 resources:
   cpu_cores: 1
   memory_gb: 0.5

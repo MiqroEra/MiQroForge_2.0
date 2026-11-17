@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import type { DictKey } from '../lib/i18n'
 
 // ─── Shortcut IDs ─────────────────────────────────────────────────────────────
 
@@ -15,52 +16,52 @@ export type ShortcutId =
 
 interface ShortcutMeta {
   id: ShortcutId
-  label: string
-  description: string
+  labelKey: DictKey
+  descKey: DictKey
   defaultKey: string
 }
 
 export const SHORTCUT_DEFS: Record<ShortcutId, ShortcutMeta> = {
   togglePalette: {
     id: 'togglePalette',
-    label: 'Toggle Nodes panel',
-    description: 'Show / hide the node palette',
+    labelKey: 'shortcuts.togglePaletteLabel',
+    descKey: 'shortcuts.togglePaletteDesc',
     defaultKey: 'n',
   },
   toggleRuns: {
     id: 'toggleRuns',
-    label: 'Toggle History panel',
-    description: 'Show / hide the History panel',
+    labelKey: 'shortcuts.toggleRunsLabel',
+    descKey: 'shortcuts.toggleRunsDesc',
     defaultKey: 'r',
   },
   toggleFiles: {
     id: 'toggleFiles',
-    label: 'Toggle Files panel',
-    description: 'Show / hide the Files panel',
+    labelKey: 'shortcuts.toggleFilesLabel',
+    descKey: 'shortcuts.toggleFilesDesc',
     defaultKey: 'f',
   },
   runWorkflow: {
     id: 'runWorkflow',
-    label: 'Run Workflow',
-    description: 'Validate and submit the current workflow',
+    labelKey: 'shortcuts.runWorkflowLabel',
+    descKey: 'shortcuts.runWorkflowDesc',
     defaultKey: 'ctrl+enter',
   },
   fitView: {
     id: 'fitView',
-    label: 'Fit Canvas',
-    description: 'Zoom and pan to fit all nodes in view',
+    labelKey: 'shortcuts.fitViewLabel',
+    descKey: 'shortcuts.fitViewDesc',
     defaultKey: 'space',
   },
   nodeUndo: {
     id: 'nodeUndo',
-    label: 'Node — Go back',
-    description: 'Undo implementation for the selected node on canvas',
+    labelKey: 'shortcuts.nodeUndoLabel',
+    descKey: 'shortcuts.nodeUndoDesc',
     defaultKey: 'a',
   },
   nodeRedo: {
     id: 'nodeRedo',
-    label: 'Node — Go forward',
-    description: 'Redo implementation for the selected node on canvas',
+    labelKey: 'shortcuts.nodeRedoLabel',
+    descKey: 'shortcuts.nodeRedoDesc',
     defaultKey: 'd',
   },
 }

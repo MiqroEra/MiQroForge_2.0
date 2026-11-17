@@ -24,6 +24,10 @@ metadata:
     qubit Hamiltonian.  Uses Slater-Condon rules to build the subspace
     matrix element-by-element from Pauli terms — no dense 2^n matrix is
     allocated.  Assembles the total energy as e_mf + (E_qsci - e_core_baseline).
+  description_zh: >
+    基于测量计数与量子比特哈密顿量执行稀疏 QSCI 子空间对角化。利用
+    Slater-Condon 规则从 Pauli 项逐元素构建子空间矩阵——不分配稠密的 2^n
+    矩阵。总能量按 e_mf + (E_qsci - e_core_baseline) 组装。
   node_type: compute
   category: quantum
   author: MiQroForge Quantum Team
@@ -48,6 +52,7 @@ metadata:
       - embedding
       - measurement-counts
 
+  display_name_zh: QSCI 子空间组装
 stream_inputs:
   - name: measurement_counts
     display_name: Measurement Outcome Counts
@@ -60,7 +65,11 @@ stream_inputs:
       JSON mapping computational-basis bitstrings (as strings, qubit 0 = MSB
       at leftmost character) to integer shot counts, e.g.
       {"counts": {"1100": 450, "1010": 320}}.
+    description_zh: >
+      将计算基下的比特串（字符串形式，量子比特 0 = 最左字符即最高有效位）
+      映射到整数 shot 计数的 JSON，例如 {"counts": {"1100": 450, "1010": 320}}。
 
+    display_name_zh: 测量计数
   - name: qubit_hamiltonian
     display_name: Qubit Hamiltonian (JSON)
     io_type:
@@ -72,7 +81,11 @@ stream_inputs:
       JSON serialization of an OpenFermion QubitOperator with keys
       n_qubits (int) and terms (list of {"ops": [[q, "X"/"Y"/"Z"/"I"], ...],
       "coeff": float}).
+    description_zh: >
+      OpenFermion QubitOperator 的 JSON 序列化，含键 n_qubits（int）与 terms
+      （{"ops": [[q, "X"/"Y"/"Z"/"I"], ...], "coeff": float} 列表）。
 
+    display_name_zh: 量子比特 Hamiltonian (JSON)
   - name: e_mf
     display_name: Mean-Field Energy
     io_type:
@@ -83,7 +96,11 @@ stream_inputs:
     description: >
       Total mean-field (HF/DFT) energy of the full system in Hartree.
       Used as the baseline in the embedded-energy assembly formula.
+    description_zh: >
+      整个体系的平均场（HF/DFT）总能量，单位为 Hartree。作为嵌入能量组装
+      公式中的基线。
 
+    display_name_zh: 平均场能量
 stream_outputs:
   - name: total_energy
     display_name: Total QSCI Energy
@@ -95,7 +112,11 @@ stream_outputs:
       Assembled total energy: e_mf + (E_qsci - e_core_baseline), where
       E_qsci is the lowest eigenvalue of the QSCI subspace Hamiltonian and
       e_core_baseline is ⟨HF|H_qubit|HF⟩.
+    description_zh: >
+      组装后的总能量：e_mf + (E_qsci - e_core_baseline)，其中 E_qsci 是 QSCI
+      子空间哈密顿量的最低本征值，e_core_baseline 为 ⟨HF|H_qubit|HF⟩。
 
+    display_name_zh: 最终能量
   - name: qsci_state
     display_name: QSCI Subspace State (HDF5)
     io_type:
@@ -106,7 +127,11 @@ stream_outputs:
       HDF5 file containing the full QSCI subspace state: eigenvalues,
       eigenvectors, selected configuration integers, HF index, and
       energy-budget metadata.
+    description_zh: >
+      包含完整 QSCI 子空间量子态的 HDF5 文件：本征值、本征矢量、选中的组态
+      整数、HF 索引与能量预算元数据。
 
+    display_name_zh: QSCI 子空间态 (HDF5)
   - name: qsci_report
     display_name: QSCI Report
     io_type:
@@ -122,7 +147,11 @@ stream_outputs:
       cluster QSCI energy, mean-field baseline, core baseline, subspace
       dimension, molecule metadata, top configuration integers, and
       all subspace eigenvalues.
+    description_zh: >
+      汇总 QSCI 结果的 JSON 报告：组装后的总能量、簇 QSCI 能量、平均场基线、
+      核基线、子空间维度、分子元数据、最高计数组态整数以及全部子空间本征值。
 
+    display_name_zh: QSCI 报告
 onboard_inputs:
   - name: K
     display_name: Subspace Size (K)
@@ -133,7 +162,11 @@ onboard_inputs:
       Number of top-measurement-count configurations to retain in the QSCI
       subspace.  Larger K improves accuracy at the cost of O(K²) Hamiltonian
       build and O(K³) diagonalisation.
+    description_zh: >
+      QSCI 子空间中保留的测量计数最高的组态数量。增大 K 可提高精度，代价是
+      O(K²) 的哈密顿量构建与 O(K³) 的对角化开销。
 
+    display_name_zh: 子空间维度 (K)
 onboard_outputs:
   - name: e_total
     display_name: Total QSCI Energy
@@ -144,6 +177,11 @@ onboard_outputs:
       E_qsci is the lowest eigenvalue of the QSCI subspace Hamiltonian;
       e_core_baseline is ⟨HF|H_qubit|HF⟩ (avoids double-counting the cluster
       core energy embedded in e_mf).
+    description_zh: >
+      组装后的总能量（Hartree）：E_total = e_mf + (E_qsci - e_core_baseline)。
+      E_qsci 是 QSCI 子空间哈密顿量的最低本征值；e_core_baseline 为
+      ⟨HF|H_qubit|HF⟩（避免对已包含在 e_mf 中的簇核能量重复计数）。
+    display_name_zh: 总 QSCI 能量
   - name: qsci_succeeded
     display_name: QSCI Success
     kind: boolean
@@ -151,10 +189,15 @@ onboard_outputs:
       True when subspace diagonalisation completed successfully:
       subspace built, HF config present, and a finite ground-state
       eigenvalue was obtained.  False otherwise.
+    description_zh: >
+      当子空间对角化成功完成时为 True：子空间已构建、HF 组态存在、且得到了
+      有限的基态本征值。否则为 False。
     quality_gate: true
     gate_default: warn
     gate_description: "QSCI subspace diagonalisation did not produce a valid result."
 
+    display_name_zh: QSCI 成功
+    gate_description_zh: QSCI 子空间对角化未得到有效结果。
 resources:
   cpu_cores: 2
   mem_gb: 4.0

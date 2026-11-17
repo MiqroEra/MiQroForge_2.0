@@ -1,7 +1,9 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, type ReactElement } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Plus, Package, BookOpen, Ruler, ExternalLink, Settings, Trash2, Brain, X, FolderOpen, LogOut, User, Shield } from 'lucide-react'
 import { getStoredUser, clearToken } from '../lib/auth'
+import { useT, translate, type DictKey } from '../lib/i18n'
+import { useSettingsStore } from '../stores/settings-store'
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, rectSortingStrategy, arrayMove } from '@dnd-kit/sortable'
 import { ProjectCard } from '../components/gallery/ProjectCard'
@@ -36,8 +38,8 @@ async function tryMigrateOldData(): Promise<boolean> {
 
   // Create a migrated project
   const meta = await projectsApi.create({
-    name: 'Migrated Workflow',
-    description: 'Auto-migrated from local storage',
+    name: translate(useSettingsStore.getState().language, 'gallery.migratedName'),
+    description: translate(useSettingsStore.getState().language, 'gallery.migratedDescription'),
   })
 
   // Upload canvas data
@@ -57,7 +59,7 @@ async function tryMigrateOldData(): Promise<boolean> {
     try {
       const agentData = JSON.parse(agentRaw)
       if (agentData.messages?.length > 0) {
-        const conv = await projectsApi.createConversation(meta.id, 'Migrated Chat')
+        const conv = await projectsApi.createConversation(meta.id, translate(useSettingsStore.getState().language, 'gallery.migratedChat'))
         await fetch(`/api/v1/projects/${meta.id}/conversations/${conv.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
@@ -72,12 +74,13 @@ async function tryMigrateOldData(): Promise<boolean> {
 
 // ─── Ref dropdown ────────────────────────────────────────────────────────────
 
-const REF_PAGES = [
-  { path: '/ref/shared-params', icon: <BookOpen size={13} />, label: 'Shared Params' },
-  { path: '/ref/units', icon: <Ruler size={13} />, label: 'Units Reference' },
+const REF_PAGES: { path: string; icon: ReactElement; labelKey: DictKey }[] = [
+  { path: '/ref/shared-params', icon: <BookOpen size={13} />, labelKey: 'gallery.refSharedParams' },
+  { path: '/ref/units', icon: <Ruler size={13} />, labelKey: 'gallery.refUnits' },
 ]
 
 function RefDropdown() {
+  const { t } = useT()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
@@ -100,7 +103,7 @@ function RefDropdown() {
             : 'text-mf-text-secondary hover:text-mf-text-primary hover:bg-mf-hover'
         }`}
       >
-        <BookOpen size={14} /> Refs
+        <BookOpen size={14} /> {t('gallery.refs')}
       </button>
       {open && (
         <div className="absolute right-0 top-full mt-1 w-48 bg-mf-panel border border-mf-border rounded-md shadow-lg z-50 py-1">
@@ -114,7 +117,7 @@ function RefDropdown() {
               className="flex items-center gap-2 px-3 py-1.5 text-xs text-mf-text-secondary hover:text-mf-text-primary hover:bg-mf-hover transition-colors"
             >
               {page.icon}
-              {page.label}
+              {t(page.labelKey)}
               <ExternalLink size={10} className="ml-auto text-mf-text-muted" />
             </a>
           ))}
@@ -126,12 +129,13 @@ function RefDropdown() {
 
 // ─── Node Repository dropdown ─────────────────────────────────────────────────
 
-const NODE_REPO_PAGES = [
-  { path: '/node-repository/preference', icon: <Settings size={13} />, label: 'Preferences' },
-  { path: '/node-repository/nodefiles', icon: <FolderOpen size={13} />, label: 'Node Files' },
+const NODE_REPO_PAGES: { path: string; icon: ReactElement; labelKey: DictKey }[] = [
+  { path: '/node-repository/preference', icon: <Settings size={13} />, labelKey: 'gallery.repoPreferences' },
+  { path: '/node-repository/nodefiles', icon: <FolderOpen size={13} />, labelKey: 'gallery.repoNodeFiles' },
 ]
 
 function NodeRepoDropdown() {
+  const { t } = useT()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
@@ -154,7 +158,7 @@ function NodeRepoDropdown() {
             : 'text-mf-text-secondary hover:text-mf-text-primary hover:bg-mf-hover'
         }`}
       >
-        <Package size={14} /> Node Repository
+        <Package size={14} /> {t('gallery.nodeRepository')}
       </button>
       {open && (
         <div className="absolute right-0 top-full mt-1 w-48 bg-mf-panel border border-mf-border rounded-md shadow-lg z-50 py-1">
@@ -166,7 +170,7 @@ function NodeRepoDropdown() {
               className="flex items-center gap-2 px-3 py-1.5 text-xs text-mf-text-secondary hover:text-mf-text-primary hover:bg-mf-hover transition-colors"
             >
               {page.icon}
-              {page.label}
+              {t(page.labelKey)}
             </a>
           ))}
         </div>
@@ -178,6 +182,7 @@ function NodeRepoDropdown() {
 // ─── Gallery page ─────────────────────────────────────────────────────────────
 
 export function ProjectGallery() {
+  const { t } = useT()
   const navigate = useNavigate()
   const [projects, setProjects] = useState<ProjectMeta[]>([])
   const [loading, setLoading] = useState(true)
@@ -214,13 +219,13 @@ export function ProjectGallery() {
 
   const handleCreate = async () => {
     try {
-      const meta = await projectsApi.create({ name: 'Untitled Project' })
+      const meta = await projectsApi.create({ name: t('gallery.untitledProject') })
       navigate(`/project/${meta.id}`)
     } catch { /* ignore */ }
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Delete this project? This cannot be undone.')) return
+    if (!confirm(t('gallery.confirmDelete'))) return
     try {
       await projectsApi.delete(id)
       setProjects((prev) => prev.filter((p) => p.id !== id))
@@ -280,7 +285,7 @@ export function ProjectGallery() {
 
   const handleBatchDelete = async () => {
     if (selectedIds.size === 0) return
-    if (!confirm(`Delete ${selectedIds.size} project(s)? This cannot be undone.`)) return
+    if (!confirm(t('gallery.confirmBatchDelete', { count: selectedIds.size }))) return
     const ids = Array.from(selectedIds)
     try {
       await projectsApi.batchDelete(ids)
@@ -303,15 +308,15 @@ export function ProjectGallery() {
           {/* User */}
           <span className="flex items-center gap-1 text-[11px] text-mf-text-muted">
             <User size={12} />
-            {storedUser?.username ?? '用户'}
+            {storedUser?.username ?? t('gallery.defaultUser')}
           </span>
           <button
-            title="登出"
+            title={t('gallery.logoutTitle')}
             onClick={() => { clearToken(); navigate('/login') }}
             className="flex items-center gap-1 px-2 py-1 text-[11px] text-mf-text-muted
                        hover:text-red-400 hover:bg-mf-hover rounded transition-colors border border-transparent hover:border-red-800/40"
           >
-            <LogOut size={11} /> Logout
+            <LogOut size={11} /> {t('gallery.logout')}
           </button>
           <div className="w-px h-4 bg-mf-border" />
           <RefDropdown />
@@ -319,14 +324,14 @@ export function ProjectGallery() {
           href="/memory"
           className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-purple-400 hover:text-purple-300 border border-purple-800/40 rounded-md hover:bg-purple-900/20 transition-colors"
         >
-          <Brain size={14} /> Memory
+          <Brain size={14} /> {t('gallery.memory')}
         </a>
         {storedUser?.role === 'admin' && (
           <a
             href="/admin/usage"
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-yellow-400 hover:text-yellow-300 border border-yellow-600/40 rounded-md hover:bg-yellow-900/20 transition-colors"
           >
-            <Shield size={14} /> Admin
+            <Shield size={14} /> {t('gallery.admin')}
           </a>
         )}
         <NodeRepoDropdown />
@@ -334,7 +339,7 @@ export function ProjectGallery() {
           onClick={() => setSettingsOpen(true)}
           className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-mf-text-secondary hover:text-mf-text-primary border border-mf-border rounded-md hover:bg-mf-hover transition-colors"
         >
-          <Settings size={14} /> Settings
+          <Settings size={14} /> {t('gallery.settings')}
         </button>
         <button
           onClick={() => { setEditMode(!editMode); setSelectedIds(new Set()) }}
@@ -344,13 +349,13 @@ export function ProjectGallery() {
               : 'text-mf-text-secondary hover:text-mf-text-primary border-mf-border hover:bg-mf-hover'
           }`}
         >
-          {editMode ? 'Done' : 'Edit'}
+          {editMode ? t('gallery.done') : t('gallery.edit')}
         </button>
         <button
           onClick={handleCreate}
           className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 rounded-md transition-colors"
         >
-          <Plus size={14} /> New Project
+          <Plus size={14} /> {t('gallery.newProject')}
         </button>
         </div>
       </div>
@@ -358,7 +363,7 @@ export function ProjectGallery() {
       {/* Migration banner */}
       {migrated && (
         <div className="mx-6 mt-4 px-4 py-2.5 bg-blue-900/30 border border-blue-500/30 rounded-md text-xs text-blue-300">
-          Your previous workflow has been migrated to a project called "Migrated Workflow".
+          {t('gallery.migrationBanner', { name: t('gallery.migratedName') })}
         </div>
       )}
 
@@ -366,19 +371,19 @@ export function ProjectGallery() {
       <div className="flex-1 p-6">
         {loading ? (
           <div className="flex items-center justify-center h-64 text-mf-text-muted text-sm">
-            Loading projects...
+            {t('gallery.loadingProjects')}
           </div>
         ) : projects.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64 gap-3">
             <div className="w-16 h-16 rounded-full bg-mf-panel border border-mf-border flex items-center justify-center">
               <Plus size={24} className="text-mf-text-muted" />
             </div>
-            <p className="text-sm text-mf-text-muted">No projects yet</p>
+            <p className="text-sm text-mf-text-muted">{t('gallery.noProjects')}</p>
             <button
               onClick={handleCreate}
               className="text-sm text-blue-400 hover:text-blue-300 font-medium"
             >
-              Create your first project
+              {t('gallery.createFirst')}
             </button>
           </div>
         ) : (
@@ -408,13 +413,13 @@ export function ProjectGallery() {
         {editMode && selectedIds.size > 0 && (
           <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-mf-card border border-mf-border rounded-lg shadow-xl px-4 py-2.5 flex items-center gap-3 z-50">
             <span className="text-xs text-mf-text-secondary">
-              {selectedIds.size} selected
+              {t('gallery.selectedCount', { count: selectedIds.size })}
             </span>
             <button
               onClick={handleBatchDelete}
               className="flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-red-400 hover:text-red-300 bg-red-900/30 hover:bg-red-900/50 border border-red-700/50 rounded transition-colors"
             >
-              <Trash2 size={12} /> Delete Selected
+              <Trash2 size={12} /> {t('gallery.deleteSelected')}
             </button>
           </div>
         )}
@@ -427,7 +432,7 @@ export function ProjectGallery() {
           <div className="relative bg-mf-panel border border-mf-border rounded-lg shadow-2xl w-80 max-h-[80vh] flex flex-col">
             <div className="flex items-center justify-between px-4 py-3 border-b border-mf-border flex-shrink-0">
               <span className="text-xs font-semibold text-mf-text-secondary uppercase tracking-wide">
-                Settings
+                {t('gallery.settings')}
               </span>
               <button
                 onClick={() => setSettingsOpen(false)}

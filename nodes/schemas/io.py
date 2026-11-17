@@ -179,6 +179,10 @@ class StreamInputPort(BaseModel):
         default=None,
         description="人类可读的显示名称。留空时自动从 name 生成。",
     )
+    display_name_zh: Optional[str] = Field(
+        default=None,
+        description="中文显示名称。为空时前端回退到 display_name。",
+    )
     io_type: StreamIOType
     required: bool = Field(
         default=True,
@@ -187,6 +191,10 @@ class StreamInputPort(BaseModel):
     description: str = Field(
         default="",
         description="端口用途说明。",
+    )
+    description_zh: str = Field(
+        default="",
+        description="中文描述。",
     )
 
     @model_validator(mode="after")
@@ -207,10 +215,18 @@ class StreamOutputPort(BaseModel):
         default=None,
         description="人类可读的显示名称。留空时自动从 name 生成。",
     )
+    display_name_zh: Optional[str] = Field(
+        default=None,
+        description="中文显示名称。为空时前端回退到 display_name。",
+    )
     io_type: StreamIOType
     description: str = Field(
         default="",
         description="端口用途说明。",
+    )
+    description_zh: str = Field(
+        default="",
+        description="中文描述。",
     )
 
     @model_validator(mode="after")
@@ -302,6 +318,10 @@ class OnBoardInput(BaseModel):
         default=None,
         description="人类可读的显示名称。留空时自动从 name 生成（下划线→空格，首字母大写）。",
     )
+    display_name_zh: Optional[str] = Field(
+        default=None,
+        description="中文显示名称。为空时前端回退到 display_name。",
+    )
     kind: Optional[OnBoardInputKind] = Field(
         default=None,
         description=(
@@ -344,6 +364,10 @@ class OnBoardInput(BaseModel):
             "参数用途说明，在 UI 中作为帮助文字显示。"
             "建议说明：取值含义、对计算的影响、与其他参数的联动关系。"
         ),
+    )
+    description_zh: str = Field(
+        default="",
+        description="中文描述。",
     )
     multiple_input: bool = Field(
         default=False,
@@ -395,6 +419,12 @@ class OnBoardInput(BaseModel):
             self.kind = OnBoardInputKind(meta.kind)
         if self.description == "" and meta.description:
             self.description = meta.description
+        if self.description_zh == "" and meta.description_zh:
+            self.description_zh = meta.description_zh
+        if self.display_name is None and meta.display_name:
+            self.display_name = meta.display_name
+        if self.display_name_zh is None and meta.display_name_zh:
+            self.display_name_zh = meta.display_name_zh
         # enum 类型自动填充 allowed_values（所有 canonical name）
         if self.kind == OnBoardInputKind.ENUM and not self.allowed_values:
             self.allowed_values = sp.available_canonical_names(self.shared_param)
@@ -427,6 +457,10 @@ class OnBoardOutput(BaseModel):
         default=None,
         description="人类可读的显示名称。留空时自动从 name 生成。",
     )
+    display_name_zh: Optional[str] = Field(
+        default=None,
+        description="中文显示名称。为空时前端回退到 display_name。",
+    )
     kind: OnBoardInputKind
     unit: Optional[str] = Field(
         default=None,
@@ -435,6 +469,10 @@ class OnBoardOutput(BaseModel):
     description: str = Field(
         default="",
         description="输出用途说明。",
+    )
+    description_zh: str = Field(
+        default="",
+        description="中文描述。",
     )
 
     # ── Quality Gate 字段 ──────────────────────────────────────────────────
@@ -455,6 +493,10 @@ class OnBoardOutput(BaseModel):
     gate_description: str = Field(
         default="",
         description="Gate 的质量控制描述，如 '检查几何优化是否收敛'。",
+    )
+    gate_description_zh: str = Field(
+        default="",
+        description="Gate 质量描述的中文。",
     )
 
     @model_validator(mode="after")

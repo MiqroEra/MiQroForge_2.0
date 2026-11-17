@@ -12,6 +12,9 @@ metadata:
     Performs a geometry optimization using Gaussian 16 to find the
     minimum-energy molecular structure. Produces optimized geometry
     and formatted checkpoint file.
+  description_zh: >
+    使用 Gaussian 16 进行几何优化，寻找能量最低的分子结构。
+    输出优化后的几何结构与格式化检查点文件。
   node_type: compute
   category: chemistry
   author: MiQroForge Team
@@ -33,6 +36,7 @@ metadata:
       - optimization
       - geometry
 
+  display_name_zh: Gaussian 几何优化
 stream_inputs:
   - name: xyz_geometry
     display_name: Input Geometry (XYZ)
@@ -43,7 +47,10 @@ stream_inputs:
     required: true
     description: >
       Molecular geometry in standard XYZ format (Angstrom).
+    description_zh: >
+      标准 XYZ 格式（埃）的分子几何结构。
 
+    display_name_zh: 输入几何 (XYZ)
 stream_outputs:
   - name: optimized_xyz
     display_name: Optimized Geometry (XYZ)
@@ -52,7 +59,9 @@ stream_outputs:
       unit: Ang
       shape: array
     description: Optimized molecular geometry in XYZ format.
+    description_zh: 优化后的分子几何结构（XYZ 格式）。
 
+    display_name_zh: 优化后几何
   - name: fchk_file
     display_name: Formatted Checkpoint File
     io_type:
@@ -60,38 +69,52 @@ stream_outputs:
       ecosystem: gaussian
       data_type: formatted-checkpoint
     description: Formatted checkpoint file at the optimized geometry.
+    description_zh: 优化几何结构下的格式化检查点文件。
 
+    display_name_zh: Formatted Checkpoint 文件
   - name: total_energy
     display_name: Final Energy
     io_type:
       category: physical_quantity
       unit: Ha
     description: Total electronic energy at the optimized geometry.
+    description_zh: 优化几何结构下的总电子能量。
 
+    display_name_zh: 最终能量
 onboard_inputs:
   - name: charge
     display_name: Molecular Charge
     kind: integer
     default: 0
 
+    display_name_zh: 体系电荷
+    description: Total charge of the system.
+    description_zh: 分子或晶胞的总电荷。
   - name: multiplicity
     display_name: Spin Multiplicity
     kind: integer
     default: 1
     min_value: 1
 
+    display_name_zh: 自旋多重度
+    description: Spin multiplicity (2S+1) of the system.
+    description_zh: 体系的自旋多重度（2S+1）。
   - name: method
     display_name: Method
     kind: string
     default: B3LYP
     description: "Gaussian method keyword: B3LYP, PBE0, HF, MP2, etc."
+    description_zh: "Gaussian 方法关键字：B3LYP、PBE0、HF、MP2 等。"
 
+    display_name_zh: 方法
   - name: basis_set
     display_name: Basis Set
     kind: string
     default: "6-31G*"
     description: "Basis set: 6-31G*, def2-SVP, cc-pVTZ, etc."
+    description_zh: "基组：6-31G*、def2-SVP、cc-pVTZ 等。"
 
+    display_name_zh: 基组
   - name: population
     display_name: Population Analysis
     kind: enum
@@ -101,6 +124,9 @@ onboard_inputs:
       - None
       - Minimal
 
+    display_name_zh: 布居分析
+    description: Population analysis type (Mulliken / NPA).
+    description_zh: 电荷布居分析类型（Mulliken / NPA 等）。
   - name: max_iter
     display_name: Max Optimization Steps
     kind: integer
@@ -108,26 +134,36 @@ onboard_inputs:
     min_value: 10
     max_value: 1000
 
+    display_name_zh: 最大优化步数
+    description: Maximum geometry optimization iterations.
+    description_zh: 几何优化最大迭代步数。
 onboard_outputs:
   - name: final_energy
     display_name: Final Energy (Ha)
     kind: float
     unit: Ha
     description: Energy at the optimized geometry.
+    description_zh: 优化几何结构下的能量。
 
+    display_name_zh: 最终能量 (Ha)
   - name: opt_cycles
     display_name: Optimization Cycles
     kind: integer
     description: Number of optimization steps taken.
+    description_zh: 优化步数。
 
+    display_name_zh: 优化循环数
   - name: opt_converged
     display_name: Optimization Converged
     kind: boolean
     description: Whether the geometry optimization converged.
+    description_zh: 几何优化是否收敛。
     quality_gate: true
     gate_default: must_pass
     gate_description: "Geometry optimization must converge."
 
+    display_name_zh: 优化已收敛
+    gate_description_zh: 晶胞优化必须收敛。
 resources:
   cpu_cores: 4
   mem_gb: 8.0

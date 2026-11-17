@@ -5,13 +5,14 @@ import { useWorkflowStore, type MFNodeData } from '../../stores/workflow-store'
 import { useUIStore } from '../../stores/ui-store'
 import { useRunOverlayStore } from '../../stores/run-overlay-store'
 import type { NodeRunStatus } from '../../stores/run-overlay-store'
-import { PORT_COLORS, portCategoryLabel } from '../../lib/port-type-utils'
+import { PORT_COLORS, portCategoryLabel, resolveLabel } from '../../lib/port-type-utils'
 import type { OnBoardOutput, OnBoardParam, StreamPort, ResourceSpec, PortCategory } from '../../types/nodespec'
 import { phaseEmoji, phaseBadgeClass, formatElapsed } from '../../lib/phase-utils'
 import { X, Cpu, MemoryStick, Clock, Settings, ChevronDown, ChevronRight, Eye, EyeOff, Sparkles } from 'lucide-react'
 import { filesApi, projectFilesApi } from '../../api/files-api'
 import { agentsApi } from '../../api/agents-api'
 import { getNodePrefs, saveNodePrefs, classifyParams, onGlobalPrefsChange, type NodePreference, type ParamVisibility } from '../../lib/node-preferences'
+import { useT } from '../../lib/i18n'
 
 // ─── Parameter form ───────────────────────────────────────────────────────────
 
@@ -38,6 +39,8 @@ function updateNodespecDefault(nodespecYaml: string, paramName: string, newValue
 }
 
 function OnBoardParamForm({ nodeId }: { nodeId: string }) {
+  const { t, language } = useT()
+  const zh = language === 'zh'
   const node = useWorkflowStore((s) => s.nodes.find((n) => n.id === nodeId))
   const updateNodeParams = useWorkflowStore((s) => s.updateNodeParams)
   const updateNodeData = useWorkflowStore((s) => s.updateNodeData)
@@ -143,7 +146,7 @@ function OnBoardParamForm({ nodeId }: { nodeId: string }) {
   })
 
   if (inputs.length === 0) {
-    return <p className="text-xs text-mf-text-muted px-3 py-2">No parameters</p>
+    return <p className="text-xs text-mf-text-muted px-3 py-2">{t('inspector.noParameters')}</p>
   }
 
   const onSubmit = (data: Record<string, unknown>) => {
@@ -189,7 +192,7 @@ function OnBoardParamForm({ nodeId }: { nodeId: string }) {
   const renderParam = (param: typeof inputs[number]) => (
     <div key={param.name}>
       <label className="block text-[11px] text-mf-text-secondary mb-0.5">
-        {param.display_name}
+        {zh && param.display_name_zh ? param.display_name_zh : param.display_name}
         {param.default == null && <span className="text-red-500 ml-0.5">*</span>}
         {param.unit && <span className="text-mf-text-muted ml-1">({param.unit})</span>}
         {param.multiple_input && (
@@ -197,15 +200,15 @@ function OnBoardParamForm({ nodeId }: { nodeId: string }) {
             type="button"
             onClick={() => toggleMultiMode(param.name)}
             title={multiMode[param.name]
-              ? 'Switch back to single value mode'
-              : 'Enable parallel sweep — enter multiple values (one per line) to fan-out execution'}
+              ? t('inspector.sweepSwitchSingleTitle')
+              : t('inspector.sweepSwitchMultiTitle')}
             className={`text-[10px] ml-2 px-1.5 py-0.5 rounded border transition-colors ${
               multiMode[param.name]
                 ? 'border-purple-500/60 bg-purple-900/40 text-purple-300 hover:bg-purple-900/60'
                 : 'border-purple-700/30 bg-purple-950/30 text-purple-500 hover:border-purple-500/50 hover:text-purple-400'
             }`}
           >
-            {multiMode[param.name] ? '\u21A9 Single' : '\u26A1 Sweep'}
+            {multiMode[param.name] ? t('inspector.sweepModeSingle') : t('inspector.sweepModeMulti')}
           </button>
         )}
       </label>
@@ -215,7 +218,7 @@ function OnBoardParamForm({ nodeId }: { nodeId: string }) {
         <div className="space-y-1.5">
           {/* Values textarea */}
           <div>
-            <label className="block text-[10px] text-purple-400/80 mb-0.5">Values</label>
+            <label className="block text-[10px] text-purple-400/80 mb-0.5">{t('inspector.sweepValuesLabel')}</label>
             <textarea
               rows={3}
               {...register(`${param.name}__sweep_values`)}
@@ -230,12 +233,12 @@ function OnBoardParamForm({ nodeId }: { nodeId: string }) {
               className="w-full px-2 py-1 bg-mf-input border border-purple-700/40 rounded text-xs text-mf-text-primary focus:outline-none focus:border-purple-500 font-mono resize-y"
             />
             <p className="text-[10px] text-mf-text-muted mt-0.5">
-              One value per line or comma-separated.
+              {t('inspector.sweepValuesHint')}
             </p>
           </div>
           {/* Pattern input */}
           <div>
-            <label className="block text-[10px] text-purple-400/80 mb-0.5">Pattern</label>
+            <label className="block text-[10px] text-purple-400/80 mb-0.5">{t('inspector.sweepPatternLabel')}</label>
             <input
               type="text"
               {...register(param.name)}
@@ -248,12 +251,12 @@ function OnBoardParamForm({ nodeId }: { nodeId: string }) {
               className="w-full px-2 py-1 bg-mf-input border border-purple-700/40 rounded text-xs text-mf-text-primary focus:outline-none focus:border-purple-500 font-mono"
             />
             <p className="text-[10px] text-mf-text-muted mt-0.5">
-              Expression with {'{{item}}'}, replaced per sweep value.
+              {t('inspector.sweepPatternHint')}
             </p>
           </div>
           {(hasSweep || hasSweepValues) && (
             <p className="text-[10px] text-purple-400/70">
-              Sweep: {(node?.data.sweep_values ?? node?.data.parallel_sweep?.values ?? []).length} values configured
+              {t('inspector.sweepConfiguredCount', { count: (node?.data.sweep_values ?? node?.data.parallel_sweep?.values ?? []).length })}
             </p>
           )}
         </div>
@@ -295,14 +298,14 @@ function OnBoardParamForm({ nodeId }: { nodeId: string }) {
                   {param.enum_values.map((v) => (
                     <option key={v} value={v}>{v}</option>
                   ))}
-                  <option value="__custom__">Custom...</option>
+                  <option value="__custom__">{t('inspector.customOption')}</option>
                 </select>
                 {isCustom && (
                   <input
                     type="text"
                     value={customMode[param.name] ? ((storedParams[param.name] as string) ?? '') : curVal}
                     onChange={(e) => setValue(param.name, e.target.value)}
-                    placeholder="Type custom value..."
+                    placeholder={t('inspector.customValuePlaceholder')}
                     className="w-full px-2 py-1 bg-mf-input border border-purple-500/50 rounded text-xs text-mf-text-primary focus:outline-none focus:border-purple-400 font-mono"
                   />
                 )}
@@ -344,8 +347,10 @@ function OnBoardParamForm({ nodeId }: { nodeId: string }) {
         />
       )}
 
-      {param.description && (
-        <p className="text-[10px] text-mf-text-muted mt-0.5">{param.description}</p>
+      {(param.description || param.description_zh) && (
+        <p className="text-[10px] text-mf-text-muted mt-0.5">
+          {zh && param.description_zh ? param.description_zh : param.description}
+        </p>
       )}
     </div>
   )
@@ -362,7 +367,7 @@ function OnBoardParamForm({ nodeId }: { nodeId: string }) {
         <button
           type="button"
           onClick={() => setShowPrefPanel(!showPrefPanel)}
-          title="Parameter display preferences"
+          title={t('inspector.paramPrefsTitle')}
           className="text-mf-text-muted hover:text-mf-text-primary transition-colors p-0.5"
         >
           <Settings size={12} />
@@ -372,17 +377,17 @@ function OnBoardParamForm({ nodeId }: { nodeId: string }) {
       {/* Preference panel */}
       {showPrefPanel && (
         <div className="mx-3 mb-2 p-2 bg-mf-surface border border-mf-border rounded text-[10px] space-y-1">
-          <div className="text-mf-text-secondary font-medium mb-1">Parameter visibility</div>
+          <div className="text-mf-text-secondary font-medium mb-1">{t('inspector.paramVisibility')}</div>
           {inputs.map((param) => {
             const vis = visibility[param.name]
             return (
               <div key={param.name} className="flex items-center gap-1">
-                <span className="text-mf-text-secondary flex-1 truncate">{param.display_name}</span>
+                <span className="text-mf-text-secondary flex-1 truncate">{zh && param.display_name_zh ? param.display_name_zh : param.display_name}</span>
                 <button
                   type="button"
                   onClick={() => updatePref(param.name, 'visible')}
                   className={`px-1 py-0.5 rounded ${vis === 'visible' ? 'bg-blue-900/40 text-blue-300' : 'text-mf-text-muted hover:text-mf-text-secondary'}`}
-                  title="Show"
+                  title={t('inspector.prefShow')}
                 >
                   <Eye size={10} />
                 </button>
@@ -390,7 +395,7 @@ function OnBoardParamForm({ nodeId }: { nodeId: string }) {
                   type="button"
                   onClick={() => updatePref(param.name, 'collapsed')}
                   className={`px-1 py-0.5 rounded ${vis === 'collapsed' ? 'bg-amber-900/40 text-amber-300' : 'text-mf-text-muted hover:text-mf-text-secondary'}`}
-                  title="Collapse"
+                  title={t('inspector.prefCollapse')}
                 >
                   <ChevronDown size={10} />
                 </button>
@@ -398,7 +403,7 @@ function OnBoardParamForm({ nodeId }: { nodeId: string }) {
                   type="button"
                   onClick={() => updatePref(param.name, 'hidden')}
                   className={`px-1 py-0.5 rounded ${vis === 'hidden' ? 'bg-red-900/40 text-red-300' : 'text-mf-text-muted hover:text-mf-text-secondary'}`}
-                  title="Hide"
+                  title={t('inspector.prefHide')}
                 >
                   <EyeOff size={10} />
                 </button>
@@ -422,7 +427,7 @@ function OnBoardParamForm({ nodeId }: { nodeId: string }) {
                 className="text-[10px] text-mf-text-muted hover:text-mf-text-secondary flex items-center gap-0.5 mb-1 px-2"
               >
                 <ChevronRight size={10} />
-                Collapse {collapsedParams.length} advanced params
+                {t('inspector.collapseAdvancedParams', { count: collapsedParams.length })}
               </button>
               {collapsedParams.map(renderParam)}
             </div>
@@ -434,7 +439,9 @@ function OnBoardParamForm({ nodeId }: { nodeId: string }) {
                 className="text-[10px] text-mf-text-muted hover:text-mf-text-secondary flex items-center gap-0.5 px-2"
               >
                 <ChevronDown size={10} />
-                {collapsedParams.length} advanced param{collapsedParams.length > 1 ? 's' : ''}
+                {collapsedParams.length > 1
+                  ? t('inspector.advancedParams', { count: collapsedParams.length })
+                  : t('inspector.advancedParam', { count: collapsedParams.length })}
               </button>
             </div>
           )
@@ -443,7 +450,9 @@ function OnBoardParamForm({ nodeId }: { nodeId: string }) {
         {/* Hidden count indicator */}
         {hiddenParams.length > 0 && (
           <p className="text-[10px] text-mf-text-muted/50 italic">
-            {hiddenParams.length} hidden param{hiddenParams.length > 1 ? 's' : ''} (click gear to show)
+            {hiddenParams.length > 1
+              ? t('inspector.hiddenParams', { count: hiddenParams.length })
+              : t('inspector.hiddenParam', { count: hiddenParams.length })}
           </p>
         )}
       </form>
@@ -454,6 +463,7 @@ function OnBoardParamForm({ nodeId }: { nodeId: string }) {
 // ─── Ephemeral description editor (as onboard param) ─────────────────────────
 
 function EphemeralDescriptionEditor({ nodeId }: { nodeId: string }) {
+  const { t } = useT()
   const node = useWorkflowStore((s) => s.nodes.find((n) => n.id === nodeId))
   const updateNodeParams = useWorkflowStore((s) => s.updateNodeParams)
 
@@ -465,17 +475,17 @@ function EphemeralDescriptionEditor({ nodeId }: { nodeId: string }) {
   return (
     <div className="px-3 py-2">
       <label className="block text-[11px] text-mf-text-secondary mb-0.5">
-        Description <span className="text-mf-text-muted">(ephemeral node script intent)</span>
+        {t('inspector.descriptionLabel')} <span className="text-mf-text-muted">{t('inspector.ephemeralDescSuffix')}</span>
       </label>
       <textarea
         rows={3}
         value={desc}
         onChange={(e) => updateNodeParams(nodeId, { description: e.target.value })}
-        placeholder="Describe what this ephemeral node should do..."
+        placeholder={t('inspector.ephemeralDescPlaceholder')}
         className="w-full px-2 py-1 bg-mf-input border border-mf-border rounded text-xs text-mf-text-primary focus:outline-none focus:border-gray-400 font-mono resize-y"
       />
       <p className="text-[10px] text-mf-text-muted mt-0.5">
-        Script will be generated when you compile. Edit this before compiling.
+        {t('inspector.ephemeralDescHint')}
       </p>
     </div>
   )
@@ -484,6 +494,7 @@ function EphemeralDescriptionEditor({ nodeId }: { nodeId: string }) {
 // ─── Ephemeral I/O port count editor ─────────────────────────────────────────
 
 function EphemeralPortEditor({ nodeId }: { nodeId: string }) {
+  const { t } = useT()
   const node = useWorkflowStore((s) => s.nodes.find((n) => n.id === nodeId))
   const updateNodeData = useWorkflowStore((s) => s.updateNodeWithHistory)
 
@@ -513,7 +524,7 @@ function EphemeralPortEditor({ nodeId }: { nodeId: string }) {
   return (
     <div className="px-3 py-2 space-y-2">
       <div className="flex items-center justify-between">
-        <label className="text-[11px] text-mf-text-secondary">Inputs</label>
+        <label className="text-[11px] text-mf-text-secondary">{t('inspector.inputsLabel')}</label>
         <div className="flex items-center gap-1.5">
           <button
             onClick={() => updatePorts('inputs', inputCount - 1)}
@@ -529,7 +540,7 @@ function EphemeralPortEditor({ nodeId }: { nodeId: string }) {
         </div>
       </div>
       <div className="flex items-center justify-between">
-        <label className="text-[11px] text-mf-text-secondary">Outputs</label>
+        <label className="text-[11px] text-mf-text-secondary">{t('inspector.outputsLabel')}</label>
         <div className="flex items-center gap-1.5">
           <button
             onClick={() => updatePorts('outputs', outputCount - 1)}
@@ -545,7 +556,7 @@ function EphemeralPortEditor({ nodeId }: { nodeId: string }) {
         </div>
       </div>
       <p className="text-[10px] text-mf-text-muted">
-        Ephemeral ports connect to any type. At least 1 total port required.
+        {t('inspector.ephemeralPortsHint')}
       </p>
     </div>
   )
@@ -555,7 +566,6 @@ function EphemeralPortEditor({ nodeId }: { nodeId: string }) {
 
 const SOFTWARE_OPTIONS = ['', 'gaussian', 'orca', 'psi4', 'cp2k'] as const
 const SOFTWARE_LABELS: Record<string, string> = {
-  '': 'Any (auto-detect)',
   gaussian: 'Gaussian', orca: 'ORCA', psi4: 'Psi4', cp2k: 'CP2K',
 }
 
@@ -696,6 +706,7 @@ function applyNodespecToNode(nodespecYaml: string, existingParams: Record<string
 }
 
 function NodeGeneratorEditor({ nodeId }: { nodeId: string }) {
+  const { t } = useT()
   const node = useWorkflowStore((s) => s.nodes.find((n) => n.id === nodeId))
   const updateNodeData = useWorkflowStore((s) => s.updateNodeWithHistory)
   const _projectId = useWorkflowStore((s) => s._projectId)
@@ -775,7 +786,7 @@ function NodeGeneratorEditor({ nodeId }: { nodeId: string }) {
     <div className="px-3 py-2 space-y-2">
       {/* Software selector */}
       <div>
-        <label className="block text-[11px] text-mf-text-secondary mb-0.5">Software</label>
+        <label className="block text-[11px] text-mf-text-secondary mb-0.5">{t('inspector.softwareLabel')}</label>
         <select
           value={software}
           onChange={(e) => {
@@ -789,17 +800,17 @@ function NodeGeneratorEditor({ nodeId }: { nodeId: string }) {
           className="w-full px-2 py-1 bg-mf-input border border-mf-border rounded text-xs text-mf-text-primary focus:outline-none focus:border-gray-400"
         >
           {SOFTWARE_OPTIONS.map((sw) => (
-            <option key={sw} value={sw}>{SOFTWARE_LABELS[sw] ?? sw}</option>
+            <option key={sw} value={sw}>{sw === '' ? t('inspector.softwareAny') : SOFTWARE_LABELS[sw] ?? sw}</option>
           ))}
         </select>
       </div>
 
       {/* I/O Ports (like ephemeral) */}
       <div>
-        <label className="block text-[11px] text-mf-text-secondary mb-1">I/O Ports</label>
+        <label className="block text-[11px] text-mf-text-secondary mb-1">{t('inspector.ioPortsSection')}</label>
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] text-mf-text-secondary">Inputs</span>
+            <span className="text-[11px] text-mf-text-secondary">{t('inspector.inputsLabel')}</span>
             <div className="flex items-center gap-1.5">
               <button onClick={() => updatePorts('inputs', inputCount - 1)}
                 disabled={inputCount <= 0 || (inputCount === 1 && outputCount === 0)}
@@ -811,7 +822,7 @@ function NodeGeneratorEditor({ nodeId }: { nodeId: string }) {
             </div>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-[11px] text-mf-text-secondary">Outputs</span>
+            <span className="text-[11px] text-mf-text-secondary">{t('inspector.outputsLabel')}</span>
             <div className="flex items-center gap-1.5">
               <button onClick={() => updatePorts('outputs', outputCount - 1)}
                 disabled={outputCount <= 0 || (outputCount === 1 && inputCount === 0)}
@@ -823,14 +834,14 @@ function NodeGeneratorEditor({ nodeId }: { nodeId: string }) {
             </div>
           </div>
           <p className="text-[10px] text-mf-text-muted">
-            Ports connect at runtime. At least 1 total required.
+            {t('inspector.genPortsHint')}
           </p>
         </div>
       </div>
 
       {/* Description */}
       <div>
-        <label className="block text-[11px] text-mf-text-secondary mb-0.5">Description</label>
+        <label className="block text-[11px] text-mf-text-secondary mb-0.5">{t('inspector.descriptionLabel')}</label>
         <textarea
           rows={3}
           value={description}
@@ -843,7 +854,7 @@ function NodeGeneratorEditor({ nodeId }: { nodeId: string }) {
             } as MFNodeData)
           }}
           disabled={gen.generating}
-          placeholder="Describe the node's purpose and behavior..."
+          placeholder={t('inspector.genDescriptionPlaceholder')}
           className="w-full px-2 py-1 bg-mf-input border border-mf-border rounded text-xs text-mf-text-primary focus:outline-none focus:border-gray-400 font-mono resize-y"
         />
       </div>
@@ -857,12 +868,12 @@ function NodeGeneratorEditor({ nodeId }: { nodeId: string }) {
         {gen.generating ? (
           <>
             <span className="animate-spin inline-block w-3 h-3 border border-white/40 border-t-white rounded-full" />
-            Generating...
+            {t('inspector.generating')}
           </>
         ) : (
           <>
             <Sparkles size={12} />
-            Generate
+            {t('inspector.generate')}
           </>
         )}
       </button>
@@ -873,6 +884,7 @@ function NodeGeneratorEditor({ nodeId }: { nodeId: string }) {
 // ─── Workspace image display ──────────────────────────────────────────────────
 
 function WorkspaceImage({ filename, nodeId, projectId }: { filename: string; nodeId: string; projectId?: string | null }) {
+  const { t } = useT()
   const [imageUrl, setImageUrl] = React.useState<string | null>(null)
   const [error, setError] = React.useState<string | null>(null)
   const [expanded, setExpanded] = React.useState(false)
@@ -913,7 +925,7 @@ function WorkspaceImage({ filename, nodeId, projectId }: { filename: string; nod
 
   return (
     <div className="px-3 py-2">
-      <div className="text-[11px] text-mf-text-secondary mb-1">Workspace Output</div>
+      <div className="text-[11px] text-mf-text-secondary mb-1">{t('inspector.workspaceOutput')}</div>
       <img
         src={imageUrl}
         alt={filename}
@@ -935,6 +947,8 @@ function WorkspaceImage({ filename, nodeId, projectId }: { filename: string; nod
 // ─── Port list ────────────────────────────────────────────────────────────────
 
 function PortList({ nodeId, direction }: { nodeId: string; direction: 'input' | 'output' }) {
+  const { t, language } = useT()
+  const zh = language === 'zh'
   const node = useWorkflowStore((s) => s.nodes.find((n) => n.id === nodeId))
   // For formal nodes: stream_inputs/stream_outputs from nodespec
   // For ephemeral nodes: derive from ports field (simpler {name, type} shape)
@@ -952,23 +966,31 @@ function PortList({ nodeId, direction }: { nodeId: string; direction: 'input' | 
     }
   }
 
-  if (ports.length === 0) return <p className="text-xs text-mf-text-muted px-3 py-1">None</p>
+  if (ports.length === 0) return <p className="text-xs text-mf-text-muted px-3 py-1">{t('inspector.portsNone')}</p>
 
   return (
     <div className="px-3 space-y-1">
-      {ports.map((p) => (
-        <div key={p.name} className="flex items-center gap-2 text-xs">
-          <span
-            className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-            style={{ backgroundColor: PORT_COLORS[p.category] ?? '#6b7280' }}
-          />
-          <span className="text-mf-text-secondary truncate">{p.display_name}</span>
-          <span className="text-mf-text-muted font-mono text-[10px] ml-auto">{portCategoryLabel(p.category)}</span>
-          {p.required && direction === 'input' && (
-            <span className="text-red-500 text-[10px]">req</span>
-          )}
-        </div>
-      ))}
+      {ports.map((p) => {
+        const portDesc = zh && p.description_zh ? p.description_zh : p.description
+        return (
+          <div key={p.name}>
+            <div className="flex items-center gap-2 text-xs">
+              <span
+                className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                style={{ backgroundColor: PORT_COLORS[p.category] ?? '#6b7280' }}
+              />
+              <span className="text-mf-text-secondary truncate">{zh && p.display_name_zh ? p.display_name_zh : p.display_name}</span>
+              <span className="text-mf-text-muted font-mono text-[10px] ml-auto">{resolveLabel(portCategoryLabel(p.category), t)}</span>
+              {p.required && direction === 'input' && (
+                <span className="text-red-500 text-[10px]">{t('inspector.requiredShort')}</span>
+              )}
+            </div>
+            {portDesc && (
+              <p className="text-[10px] text-mf-text-muted mt-0.5 leading-normal">{portDesc}</p>
+            )}
+          </div>
+        )
+      })}
     </div>
   )
 }
@@ -982,8 +1004,11 @@ function OnboardOutputList({
   outputs: OnBoardOutput[]
   runStatus?: NodeRunStatus
 }) {
+  const { t, language } = useT()
+  const zh = language === 'zh'
+
   if (outputs.length === 0) {
-    return <p className="text-xs text-mf-text-muted px-3 py-2">No outputs defined</p>
+    return <p className="text-xs text-mf-text-muted px-3 py-2">{t('inspector.noOutputsDefined')}</p>
   }
 
   return (
@@ -1001,7 +1026,7 @@ function OnboardOutputList({
             {/* Label row + run value */}
             <div className="flex items-start justify-between gap-2">
               <div className="flex items-center gap-1.5 flex-wrap min-w-0">
-                <span className="text-xs text-mf-text-secondary font-medium">{o.display_name}</span>
+                <span className="text-xs text-mf-text-secondary font-medium">{zh && o.display_name_zh ? o.display_name_zh : o.display_name}</span>
                 {o.unit && (
                   <span className="text-[10px] text-mf-text-muted">({o.unit})</span>
                 )}
@@ -1013,7 +1038,7 @@ function OnboardOutputList({
                       ? 'border-amber-500/40 bg-amber-500/10 text-amber-400'
                       : 'border-mf-border text-mf-text-muted'
                   }`}>
-                    {o.gate_default === 'must_pass' ? '● must pass' : o.gate_default === 'warn' ? '◐ warn' : '○ ignore'}
+                    {o.gate_default === 'must_pass' ? t('inspector.gateMustPass') : o.gate_default === 'warn' ? t('inspector.gateWarn') : t('inspector.gateIgnore')}
                   </span>
                 )}
               </div>
@@ -1029,16 +1054,18 @@ function OnboardOutputList({
               )}
             </div>
             {/* Descriptions */}
-            {o.description && (
-              <p className="text-[10px] text-mf-text-muted mt-0.5 leading-normal">{o.description}</p>
+            {(o.description || o.description_zh) && (
+              <p className="text-[10px] text-mf-text-muted mt-0.5 leading-normal">
+                {zh && o.description_zh ? o.description_zh : o.description}
+              </p>
             )}
-            {o.gate_description && (
+            {(o.gate_description || o.gate_description_zh) && (
               <p className={`text-[10px] mt-0.5 leading-normal ${
                 o.gate_default === 'must_pass' ? 'text-red-500/60' :
                 o.gate_default === 'warn'      ? 'text-amber-400/70' :
                 'text-mf-text-muted'
               }`}>
-                Gate: {o.gate_description}
+                {t('inspector.gateDetail', { description: zh && o.gate_description_zh ? o.gate_description_zh : o.gate_description })}
               </p>
             )}
           </div>
@@ -1059,6 +1086,7 @@ function RunSummarySection({
   nodeId?: string
   onRotate?: (canvasId: string) => void
 }) {
+  const { t } = useT()
   const elapsed = formatElapsed(runStatus.startedAt, runStatus.finishedAt)
   const multi = runStatus.instances.length > 1
   return (
@@ -1071,7 +1099,7 @@ function RunSummarySection({
         <button
           className="ml-auto text-[11px] text-purple-300 hover:text-purple-200 font-mono cursor-pointer select-none"
           onClick={() => onRotate(nodeId)}
-          title="Click to switch instance"
+          title={t('inspector.switchInstanceTitle')}
         >
           &lsaquo; {runStatus.currentIndex + 1}/{runStatus.instances.length} &rsaquo;
         </button>
@@ -1100,6 +1128,8 @@ function ResourceParamsEditor({
   nodeId: string
   resources: NonNullable<MFNodeData['resources']>
 }) {
+  const { t, language } = useT()
+  const zh = language === 'zh'
   const node = useWorkflowStore((s) => s.nodes.find((n) => n.id === nodeId))
   const updateNodeParams = useWorkflowStore((s) => s.updateNodeParams)
   const updateNodeData = useWorkflowStore((s) => s.updateNodeData)
@@ -1145,12 +1175,12 @@ function ResourceParamsEditor({
               className="text-[10px] text-mf-text-muted hover:text-mf-text-secondary flex items-center gap-0.5 mb-1"
             >
               <ChevronRight size={10} />
-              Hide resource params
+              {t('inspector.hideResourceParams')}
             </button>
             {/* Pod memory breakdown */}
             {resources.mem_overhead > 0 && (
               <div className="text-[10px] text-mf-text-muted pb-1 border-b border-mf-border/20">
-                Pod memory: {effectiveMem} + {resources.mem_overhead} overhead = {effectivePodMem} GiB
+                {t('inspector.podMemory', { mem: effectiveMem, overhead: resources.mem_overhead, total: effectivePodMem })}
               </div>
             )}
 
@@ -1159,8 +1189,8 @@ function ResourceParamsEditor({
               const current = storedParams[param.name] ?? param.default ?? ''
               return (
                 <div key={param.name} className="flex items-center gap-2">
-                  <label className="text-[11px] text-mf-text-secondary w-20 flex-shrink-0 truncate" title={param.display_name}>
-                    {param.display_name}
+                  <label className="text-[11px] text-mf-text-secondary w-20 flex-shrink-0 truncate" title={zh && param.display_name_zh ? param.display_name_zh : param.display_name}>
+                    {zh && param.display_name_zh ? param.display_name_zh : param.display_name}
                   </label>
                   <input
                     type="number"
@@ -1209,7 +1239,9 @@ function ResourceParamsEditor({
               className="text-[10px] text-mf-text-muted hover:text-mf-text-secondary flex items-center gap-0.5"
             >
               <ChevronDown size={10} />
-              {resourceInputs.length} resource param{resourceInputs.length !== 1 ? 's' : ''}
+              {resourceInputs.length !== 1
+                ? t('inspector.resourceParams', { count: resourceInputs.length })
+                : t('inspector.resourceParam', { count: resourceInputs.length })}
             </button>
           </div>
         )
@@ -1221,6 +1253,8 @@ function ResourceParamsEditor({
 // ─── NodeInspector ────────────────────────────────────────────────────────────
 
 export function NodeInspector() {
+  const { t, language } = useT()
+  const zh = language === 'zh'
   const selectedNodeId = useUIStore((s) => s.selectedNodeId)
   const { selectNode } = useUIStore()
   const removeNode = useWorkflowStore((s) => s.removeNode)
@@ -1238,10 +1272,10 @@ export function NodeInspector() {
     return (
       <div className="w-72 mf-panel border-l border-r-0">
         <div className="flex items-center justify-between px-3 py-2 border-b border-mf-border">
-          <span className="text-xs font-semibold text-mf-text-secondary uppercase tracking-wide">Inspector</span>
+          <span className="text-xs font-semibold text-mf-text-secondary uppercase tracking-wide">{t('inspector.inspectorTitle')}</span>
         </div>
         <div className="px-3 py-6 text-xs text-mf-text-muted text-center">
-          Select a node to inspect
+          {t('inspector.selectNodeHint')}
         </div>
       </div>
     )
@@ -1260,7 +1294,7 @@ export function NodeInspector() {
     <div className="w-72 mf-panel border-l border-r-0 flex-shrink-0">
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-mf-border">
-        <span className="text-xs font-semibold text-mf-text-secondary uppercase tracking-wide">Inspector</span>
+        <span className="text-xs font-semibold text-mf-text-secondary uppercase tracking-wide">{t('inspector.inspectorTitle')}</span>
         <button
           onClick={() => selectNode(null)}
           className="text-mf-text-muted hover:text-mf-text-primary"
@@ -1272,18 +1306,20 @@ export function NodeInspector() {
       <div className="flex-1 overflow-y-auto mf-scroll">
         {/* Node header */}
         <div className="px-3 py-2 border-b border-mf-border">
-          <div className="text-sm font-semibold text-mf-text-primary">{d.display_name}</div>
+          <div className="text-sm font-semibold text-mf-text-primary">{zh && d.display_name_zh ? d.display_name_zh : d.display_name}</div>
           {(!isEphemeral && !isNodeGen) || hasNodeGenResult ? (
             <>
               <div className="text-[11px] text-mf-text-muted font-mono mt-0.5">{d.name} v{d.version}</div>
-              <div className="text-xs text-mf-text-secondary mt-1 leading-relaxed">{d.description}</div>
+              <div className="text-xs text-mf-text-secondary mt-1 leading-relaxed">
+                {zh && d.description_zh ? d.description_zh : d.description}
+              </div>
             </>
           ) : null}
         </div>
 
         {/* Node Generator editor — pre-generation form only */}
         {isNodeGen && !hasNodeGenResult && (
-          <Section title="Node Generator">
+          <Section title={t('inspector.nodeGeneratorSection')}>
             <NodeGeneratorEditor nodeId={node.id} />
           </Section>
         )}
@@ -1291,28 +1327,28 @@ export function NodeInspector() {
 
         {/* Ephemeral description editor */}
         {isEphemeral && (
-          <Section title="Script Description">
+          <Section title={t('inspector.scriptDescriptionSection')}>
             <EphemeralDescriptionEditor nodeId={node.id} />
           </Section>
         )}
 
         {/* Ephemeral I/O port editor */}
         {isEphemeral && (
-          <Section title="I/O Ports">
+          <Section title={t('inspector.ioPortsSection')}>
             <EphemeralPortEditor nodeId={node.id} />
           </Section>
         )}
 
         {/* Run status (when available) */}
         {runStatus && (
-          <Section title="Run Status">
+          <Section title={t('inspector.runStatusSection')}>
             <RunSummarySection runStatus={runStatus} nodeId={node.id} onRotate={rotateInstance} />
           </Section>
         )}
 
         {/* Resources */}
         {res && (
-          <Section title="Resources">
+          <Section title={t('inspector.resourcesSection')}>
             <ResourceParamsEditor
               nodeId={node.id}
               resources={res}
@@ -1322,7 +1358,7 @@ export function NodeInspector() {
 
         {/* Inputs (hidden for pre-generation node generator) */}
         {(!isNodeGen || hasNodeGenResult) && (
-          <Section title="Stream Inputs">
+          <Section title={t('inspector.streamInputsSection')}>
             <div className="py-1">
               <PortList nodeId={node.id} direction="input" />
             </div>
@@ -1331,7 +1367,7 @@ export function NodeInspector() {
 
         {/* Outputs (hidden for pre-generation node generator) */}
         {(!isNodeGen || hasNodeGenResult) && (
-          <Section title="Stream Outputs">
+          <Section title={t('inspector.streamOutputsSection')}>
             <div className="py-1">
               <PortList nodeId={node.id} direction="output" />
             </div>
@@ -1347,11 +1383,11 @@ export function NodeInspector() {
         {(!isNodeGen || hasNodeGenResult) && (hasRunData ? (
           <>
             {onboardOutputs.length > 0 && (
-              <Section title="Outputs">
+              <Section title={t('inspector.outputsSection')}>
                 <OnboardOutputList outputs={onboardOutputs} runStatus={runStatus} />
               </Section>
             )}
-            <Section title="Parameters">
+            <Section title={t('inspector.parametersSection')}>
               <OnBoardParamForm key={node.id} nodeId={node.id} />
             </Section>
             {/* Ephemeral image display — driven by _mf_images output param */}
@@ -1361,11 +1397,11 @@ export function NodeInspector() {
           </>
         ) : (
           <>
-            <Section title="Parameters">
+            <Section title={t('inspector.parametersSection')}>
               <OnBoardParamForm key={node.id} nodeId={node.id} />
             </Section>
             {onboardOutputs.length > 0 && (
-              <Section title="Outputs">
+              <Section title={t('inspector.outputsSection')}>
                 <OnboardOutputList outputs={onboardOutputs} />
               </Section>
             )}
@@ -1379,7 +1415,7 @@ export function NodeInspector() {
           onClick={() => { removeNode(node.id); selectNode(null) }}
           className="w-full py-1 bg-red-900/30 border border-red-700/50 text-red-500 text-xs rounded hover:bg-red-900/50 transition-colors"
         >
-          Remove Node
+          {t('inspector.removeNode')}
         </button>
       </div>
     </div>

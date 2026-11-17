@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, Save, X, RefreshCw, ChevronDown, ChevronRight } from 'lucide-react'
+import { useT } from '../lib/i18n'
 import { nodeFilesApi } from '../api/nodes-api'
 import type { DirectoryEntry } from '../api/files-api'
 
@@ -102,7 +103,10 @@ function TreeRow({
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
+type SaveStatus = { state: 'saved' } | { state: 'failed'; message: string } | null
+
 export function NodeFilesPage() {
+  const { t } = useT()
   const qc = useQueryClient()
 
   const { data, isLoading, isError } = useQuery({
@@ -113,11 +117,11 @@ export function NodeFilesPage() {
   const [editingPath, setEditingPath] = useState<string | null>(null)
   const [editContent, setEditContent] = useState('')
   const [saving, setSaving] = useState(false)
-  const [saveMsg, setSaveMsg] = useState<string | null>(null)
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>(null)
 
   useEffect(() => {
-    document.title = 'Node Files — MiQroForge'
-  }, [])
+    document.title = t('docs.nodeFilesTitle', { app: 'MiQroForge' })
+  }, [t])
 
   const handleEdit = useCallback(async (node: TreeNode) => {
     if (node.isDir) return
@@ -125,22 +129,22 @@ export function NodeFilesPage() {
       const text = await nodeFilesApi.read(node.path)
       setEditingPath(node.path)
       setEditContent(text)
-      setSaveMsg(null)
+      setSaveStatus(null)
     } catch {
       setEditingPath(node.path)
-      setEditContent('[Failed to read file]')
+      setEditContent(t('docs.readFailed'))
     }
-  }, [])
+  }, [t])
 
   const handleSave = useCallback(async () => {
     if (!editingPath) return
     setSaving(true)
     try {
       await nodeFilesApi.write(editingPath, editContent)
-      setSaveMsg('Saved')
+      setSaveStatus({ state: 'saved' })
       qc.invalidateQueries({ queryKey: ['node-files'] })
     } catch (err) {
-      setSaveMsg(`Save failed: ${err instanceof Error ? err.message : String(err)}`)
+      setSaveStatus({ state: 'failed', message: err instanceof Error ? err.message : String(err) })
     } finally {
       setSaving(false)
     }
@@ -154,21 +158,21 @@ export function NodeFilesPage() {
       <header className="sticky top-0 z-10 bg-mf-panel border-b border-mf-border flex-shrink-0">
         <div className="max-w-5xl mx-auto px-6 py-3 flex items-center gap-4">
           <a href="/" className="flex items-center gap-1.5 text-xs text-mf-text-muted hover:text-mf-text-primary transition-colors">
-            <ArrowLeft size={14} /> Gallery
+            <ArrowLeft size={14} /> {t('docs.backToGallery')}
           </a>
           <div className="w-px h-5 bg-mf-border" />
           <a href="/node-repository/preference" className="flex items-center gap-1.5 text-xs text-mf-text-muted hover:text-mf-text-primary transition-colors">
-            Preferences
+            {t('docs.preferences')}
           </a>
           <div className="w-px h-5 bg-mf-border" />
           <div className="flex items-center gap-2">
             <img src="/logo.png" alt="MiQroForge" className="h-5 w-auto" />
-            <h1 className="text-sm font-semibold tracking-tight">Node Files</h1>
+            <h1 className="text-sm font-semibold tracking-tight">{t('docs.nodeFiles')}</h1>
           </div>
           <span className="text-[10px] text-mf-text-muted">userdata/nodes/</span>
           <div className="flex-1" />
           <button onClick={() => qc.invalidateQueries({ queryKey: ['node-files'] })}
-            className="flex items-center gap-1 px-2 py-1 text-xs text-mf-text-muted hover:text-mf-text-primary hover:bg-mf-hover rounded transition-colors" title="Refresh">
+            className="flex items-center gap-1 px-2 py-1 text-xs text-mf-text-muted hover:text-mf-text-primary hover:bg-mf-hover rounded transition-colors" title={t('docs.refresh')}>
             <RefreshCw size={12} />
           </button>
         </div>
@@ -177,13 +181,13 @@ export function NodeFilesPage() {
       <main className="flex-1 overflow-hidden flex">
         {/* File tree */}
         <div className="w-80 flex-shrink-0 border-r border-mf-border overflow-y-auto mf-scroll">
-          {isLoading && <p className="text-xs text-mf-text-muted px-4 py-4 text-center">Loading...</p>}
-          {isError && <p className="text-xs text-red-500 px-4 py-4 text-center">Failed to load files</p>}
+          {isLoading && <p className="text-xs text-mf-text-muted px-4 py-4 text-center">{t('docs.loading')}</p>}
+          {isError && <p className="text-xs text-red-500 px-4 py-4 text-center">{t('docs.filesLoadFailed')}</p>}
           {tree.map((node) => (
             <TreeRow key={node.path} node={node} depth={0} editingPath={editingPath} onEdit={handleEdit} />
           ))}
           {tree.length === 0 && !isLoading && (
-            <p className="text-xs text-mf-text-muted px-4 py-4 text-center">No files. Add nodes to userdata/nodes/ first.</p>
+            <p className="text-xs text-mf-text-muted px-4 py-4 text-center">{t('docs.noFiles')}</p>
           )}
         </div>
 
@@ -194,24 +198,26 @@ export function NodeFilesPage() {
               <div className="flex items-center justify-between px-4 py-2 border-b border-mf-border bg-mf-panel flex-shrink-0">
                 <span className="text-xs font-mono text-mf-text-secondary truncate">{editingPath}</span>
                 <div className="flex items-center gap-2">
-                  {saveMsg && (
-                    <span className={`text-[10px] ${saveMsg === 'Saved' ? 'text-green-400' : 'text-red-400'}`}>{saveMsg}</span>
+                  {saveStatus && (
+                    <span className={`text-[10px] ${saveStatus.state === 'saved' ? 'text-green-400' : 'text-red-400'}`}>
+                      {saveStatus.state === 'saved' ? t('docs.saved') : t('docs.saveFailed', { error: saveStatus.message })}
+                    </span>
                   )}
                   <button onClick={handleSave} disabled={saving}
                     className="flex items-center gap-1 px-3 py-1 text-xs text-white bg-blue-600 hover:bg-blue-500 rounded transition-colors disabled:opacity-50">
-                    <Save size={12} /> {saving ? 'Saving...' : 'Save'}
+                    <Save size={12} /> {saving ? t('docs.saving') : t('docs.save')}
                   </button>
-                  <button onClick={() => { setEditingPath(null); setEditContent(''); setSaveMsg(null) }}
+                  <button onClick={() => { setEditingPath(null); setEditContent(''); setSaveStatus(null) }}
                     className="text-mf-text-muted hover:text-mf-text-primary">
                     <X size={14} />
                   </button>
                 </div>
               </div>
-              <textarea value={editContent} onChange={(e) => { setEditContent(e.target.value); setSaveMsg(null) }}
+              <textarea value={editContent} onChange={(e) => { setEditContent(e.target.value); setSaveStatus(null) }}
                 className="flex-1 bg-mf-base text-mf-text-primary font-mono text-xs p-4 resize-none focus:outline-none" spellCheck={false} />
             </>
           ) : (
-            <div className="flex-1 flex items-center justify-center text-xs text-mf-text-muted">Select a file to edit</div>
+            <div className="flex-1 flex items-center justify-center text-xs text-mf-text-muted">{t('docs.selectFile')}</div>
           )}
         </div>
       </main>

@@ -55,9 +55,14 @@ function mergePorts(
       category: p.category,
       detail: p.detail,
     }
-    // 索引里的端口摘要没有 required/description —— 沿用旧快照上的这两个字段
+    // 端口摘要已带 description/description_zh；required 仅旧快照有 —— 缺省时沿用旧快照
+    if (p.display_name_zh !== undefined) port.display_name_zh = p.display_name_zh
+    else if (prev?.display_name_zh !== undefined) port.display_name_zh = prev.display_name_zh
+    if (p.description !== undefined) port.description = p.description
+    else if (prev?.description !== undefined) port.description = prev.description
+    if (p.description_zh !== undefined) port.description_zh = p.description_zh
+    else if (prev?.description_zh !== undefined) port.description_zh = prev.description_zh
     if (prev?.required !== undefined) port.required = prev.required
-    if (prev?.description !== undefined) port.description = prev.description
     return port
   })
 }
@@ -76,9 +81,11 @@ export function mergeLatestSpec(
   const newInputs: OnBoardParam[] = detail.onboard_inputs.map((p) => ({
     name: p.name,
     display_name: p.display_name,
+    display_name_zh: p.display_name_zh,
     type: p.kind,
     default: p.default,
     description: p.description,
+    description_zh: p.description_zh,
     enum_values: p.allowed_values,
     min: p.min_value,
     max: p.max_value,
@@ -91,12 +98,15 @@ export function mergeLatestSpec(
   const newOutputs: OnBoardOutput[] = detail.onboard_outputs.map((o) => ({
     name: o.name,
     display_name: o.display_name,
+    display_name_zh: o.display_name_zh,
     kind: o.kind,
     unit: o.unit,
     description: o.description,
+    description_zh: o.description_zh,
     quality_gate: o.quality_gate,
     gate_default: o.gate_default,
     gate_description: o.gate_description,
+    gate_description_zh: o.gate_description_zh,
   }))
 
   // 只保留新 spec 中仍存在的参数值（spec 是唯一事实源）
@@ -118,7 +128,9 @@ export function mergeLatestSpec(
   const merged: Partial<MFNodeData> = {
     version: detail.version,
     display_name: detail.display_name,
+    display_name_zh: detail.display_name_zh,
     description: detail.description,
+    description_zh: detail.description_zh,
     node_type: detail.node_type,
     category: detail.category,
     nodespec_path: detail.nodespec_path,

@@ -17,23 +17,7 @@ from agents.schemas import EvaluationResult
 from agents.common.prompt_loader import load_prompt
 from agents.common.session_logger import get_session
 from agents.node_generator.ephemeral.state import EphemeralGenState
-
-
-def _extract_json(text: str) -> str:
-    """从 LLM 响应中提取 JSON 字符串。"""
-    if "```json" in text:
-        start = text.index("```json") + 7
-        end = text.index("```", start)
-        return text[start:end].strip()
-    if "```" in text:
-        start = text.index("```") + 3
-        end = text.index("```", start)
-        return text[start:end].strip()
-    start = text.find("{")
-    end = text.rfind("}")
-    if start != -1 and end != -1:
-        return text[start:end + 1].strip()
-    return text.strip()
+from agents.node_generator.shared.parsing import extract_json
 
 
 def _programmatic_check_ephemeral(state: EphemeralGenState) -> list[str]:
@@ -229,8 +213,17 @@ def evaluate_node_vision(state: EphemeralGenState) -> dict[str, Any]:
                 image_count=len(images_b64),
             )
 
-        raw_json = _extract_json(response.content)
-        data = json.loads(raw_json)
+        try:
+            raw_json = extract_json(response.content)
+            data = json.loads(raw_json)
+        except (json.JSONDecodeError, ValueError):
+            eval_messages.append(HumanMessage(
+                content="Your previous response was not valid JSON. "
+                        "Output ONLY the JSON object (no prose, no markdown)."
+            ))
+            response = llm.invoke(eval_messages)
+            raw_json = extract_json(response.content)
+            data = json.loads(raw_json)
 
         result = EvaluationResult(
             passed=data.get("passed", False),

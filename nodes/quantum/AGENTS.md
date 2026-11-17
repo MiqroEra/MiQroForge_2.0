@@ -96,7 +96,7 @@ python3 /mf/profile/main.py
   ConfigMap 中（路径 `/mf/profile/mf2_init.sh`），因此 `run.sh` 顶部直接写
   `source /mf/profile/mf2_init.sh` 即可（当前所有量子节点都这样做）。
   - 编译器也支持把单独一行 `# MF2 init` 自动替换为该 source 命令（见 compiler 的
-    `_process_run_sh`，未命中则原样保留）；两种写法均可，直接写 source 更直观。
+    `process_run_sh`，未命中则原样保留）；两种写法均可，直接写 source 更直观。
   - `mf2_init.sh` 提供：`INPUT_DIR=/mf/input`、`OUTPUT_DIR=/mf/output`、
     `WORKDIR=/mf/workdir`、`WORKSPACE_DIR=/mf/workspace`，以及 helper 函数
     `mf_param`、`mf_banner`、`mf_write_xyz`。

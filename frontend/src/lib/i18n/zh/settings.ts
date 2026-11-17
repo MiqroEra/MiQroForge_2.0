@@ -1,0 +1,26 @@
+import { settingsEn } from '../en/settings'
+
+export const settingsZh: Record<keyof typeof settingsEn, string> = {
+  themeSection: '主题',
+  themeWarm: '暖色',
+  themeDark: '暗色',
+  themeForest: '森林',
+  themeOcean: '海洋',
+  themeSunset: '日落',
+  themeMidnight: '午夜',
+  activeBadge: '● 使用中',
+  fontSizeSection: '字体大小',
+  fontSmall: '小',
+  fontMedium: '中',
+  fontLarge: '大',
+  fontSizeHint: '按比例缩放所有文本与间距。',
+  languageSection: '语言',
+  shortcutsSection: '快捷键',
+  resetAll: '全部重置',
+  resetAllTitle: '将所有快捷键重置为默认值',
+  rebindTitle: '点击后按下新键以重新绑定',
+  recordingHint: '按键…',
+  resetBindingTitle: '重置为默认值',
+  shortcutsHint: '点击按键徽章，然后按下新的快捷键。',
+  savedAutomatically: '设置会自动保存。',
+}
