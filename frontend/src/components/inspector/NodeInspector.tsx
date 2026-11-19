@@ -1042,6 +1042,7 @@ function OnboardOutputList({
         const runValue = runStatus?.outputs[runKey]
         const hasValue = runValue !== undefined
         const isBool = runValue === 'true' || runValue === 'false'
+        const gateDesc = zh && o.gate_description_zh ? o.gate_description_zh : o.gate_description
 
         return (
           <div key={o.name}>
@@ -1081,13 +1082,13 @@ function OnboardOutputList({
                 {zh && o.description_zh ? o.description_zh : o.description}
               </p>
             )}
-            {(o.gate_description || o.gate_description_zh) && (
+            {gateDesc && (
               <p className={`text-[10px] mt-0.5 leading-normal ${
                 o.gate_default === 'must_pass' ? 'text-red-500/60' :
                 o.gate_default === 'warn'      ? 'text-amber-400/70' :
                 'text-mf-text-muted'
               }`}>
-                {t('inspector.gateDetail', { description: zh && o.gate_description_zh ? o.gate_description_zh : o.gate_description })}
+                {t('inspector.gateDetail', { description: gateDesc })}
               </p>
             )}
           </div>
