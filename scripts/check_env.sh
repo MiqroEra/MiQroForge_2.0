@@ -15,7 +15,7 @@ BLUE='\033[0;34m'; BOLD='\033[1m'; NC='\033[0m'
 PASS="${GREEN}✔${NC}"; FAIL="${RED}✘${NC}"; WARN="${YELLOW}⚠${NC}"
 
 # ── 收集缺失项（key 供 setup 脚本判断，value 供显示） ──────────────────────
-declare -A MF_MISSING   # key → 缺失原因描述
+declare -Ag MF_MISSING   # key → 缺失原因描述
 
 _ok()   { echo -e "  ${PASS} ${1}"; }
 _fail() { echo -e "  ${FAIL} ${1}"; MF_MISSING["$2"]="${3:-$1}"; }
