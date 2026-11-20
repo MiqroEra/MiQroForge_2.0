@@ -161,7 +161,9 @@ cmd_ui() {
     cd "${SCRIPT_DIR}/.."
     local pids=()
 
-    uvicorn api.main:app --host 0.0.0.0 --port "$api_port" --reload &
+    # --reload-dir 只监听代码目录：userdata/ 下运行时产生的文件（节点生成产物等）
+    # 若被监听会触发 reload，导致正在执行的 agent 任务被挂起/中断
+    uvicorn api.main:app --host 0.0.0.0 --port "$api_port" --reload --reload-dir api --reload-dir agents &
     pids+=($!)
 
     if [[ $prod_mode -eq 0 ]]; then
