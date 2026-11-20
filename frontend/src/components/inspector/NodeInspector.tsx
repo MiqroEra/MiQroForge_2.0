@@ -7,12 +7,13 @@ import { useRunOverlayStore } from '../../stores/run-overlay-store'
 import type { NodeRunStatus } from '../../stores/run-overlay-store'
 import { PORT_COLORS, portCategoryLabel, resolveLabel } from '../../lib/port-type-utils'
 import type { OnBoardOutput, OnBoardParam, StreamPort, ResourceSpec, PortCategory } from '../../types/nodespec'
-import { phaseEmoji, phaseBadgeClass, formatElapsed } from '../../lib/phase-utils'
+import { phaseEmoji, phaseBadgeClass, phaseLabel, formatElapsed } from '../../lib/phase-utils'
 import { X, Cpu, MemoryStick, Clock, Settings, ChevronDown, ChevronRight, Eye, EyeOff, Sparkles } from 'lucide-react'
 import { filesApi, projectFilesApi } from '../../api/files-api'
 import { agentsApi } from '../../api/agents-api'
 import { getNodePrefs, saveNodePrefs, classifyParams, onGlobalPrefsChange, type NodePreference, type ParamVisibility } from '../../lib/node-preferences'
-import { useT } from '../../lib/i18n'
+import { useT, translate, pickLocalized } from '../../lib/i18n'
+import type { DictKey } from '../../lib/i18n'
 
 // ─── Parameter form ───────────────────────────────────────────────────────────
 
@@ -192,7 +193,7 @@ function OnBoardParamForm({ nodeId }: { nodeId: string }) {
   const renderParam = (param: typeof inputs[number]) => (
     <div key={param.name}>
       <label className="block text-[11px] text-mf-text-secondary mb-0.5">
-        {zh && param.display_name_zh ? param.display_name_zh : param.display_name}
+        {pickLocalized(zh, param.display_name_zh, param.display_name)}
         {param.default == null && <span className="text-red-500 ml-0.5">*</span>}
         {param.unit && <span className="text-mf-text-muted ml-1">({param.unit})</span>}
         {param.multiple_input && (
@@ -349,7 +350,7 @@ function OnBoardParamForm({ nodeId }: { nodeId: string }) {
 
       {(param.description || param.description_zh) && (
         <p className="text-[10px] text-mf-text-muted mt-0.5">
-          {zh && param.description_zh ? param.description_zh : param.description}
+          {pickLocalized(zh, param.description_zh, param.description)}
         </p>
       )}
     </div>
@@ -382,7 +383,7 @@ function OnBoardParamForm({ nodeId }: { nodeId: string }) {
             const vis = visibility[param.name]
             return (
               <div key={param.name} className="flex items-center gap-1">
-                <span className="text-mf-text-secondary flex-1 truncate">{zh && param.display_name_zh ? param.display_name_zh : param.display_name}</span>
+                <span className="text-mf-text-secondary flex-1 truncate">{pickLocalized(zh, param.display_name_zh, param.display_name)}</span>
                 <button
                   type="button"
                   onClick={() => updatePref(param.name, 'visible')}
@@ -624,14 +625,14 @@ function applyNodespecToNode(nodespecYaml: string, existingParams: Record<string
 
     // ── Resource parametrize: mark auto-generated resource param inputs ──
     // Maps resource field names → OnBoardInput param names (from resource_defaults.yaml)
-    const PARAMETRIZE_MAP: Record<string, { paramName: string; displayName: string; kind: string; min?: number; max?: number; unit?: string }> = {
-      cpu_cores:               { paramName: 'n_cores',       displayName: 'CPU Cores',        kind: 'integer', min: 1,    max: 128 },
-      mem_gb:                  { paramName: 'mem_gb',        displayName: 'App Memory (GB)',  kind: 'float',   min: 2,    max: 512,   unit: 'GB' },
-      estimated_walltime_hours:{ paramName: 'walltime_hours',displayName: 'Walltime (hours)',  kind: 'float',   min: 0.01, max: 720,   unit: 'hours' },
-      mem_overhead:            { paramName: 'mem_overhead',  displayName: 'Memory Overhead (GB)', kind: 'float', min: 0, max: 256, unit: 'GB' },
-      gpu_count:               { paramName: 'gpu_count',     displayName: 'GPU Count',        kind: 'integer', min: 0,    max: 8 },
-      scratch_disk_gb:         { paramName: 'scratch_disk_gb',displayName: 'Scratch Disk (GB)', kind: 'float', min: 0, max: 1000, unit: 'GB' },
-      parallel_tasks:          { paramName: 'n_cores',       displayName: 'CPU Cores',        kind: 'integer', min: 1,    max: 128 },  // shares n_cores with cpu_cores
+    const PARAMETRIZE_MAP: Record<string, { paramName: string; displayKey: DictKey; kind: string; min?: number; max?: number; unit?: string }> = {
+      cpu_cores:               { paramName: 'n_cores',       displayKey: 'inspector.paramCpuCores',    kind: 'integer', min: 1,    max: 128 },
+      mem_gb:                  { paramName: 'mem_gb',        displayKey: 'inspector.paramAppMemory',   kind: 'float',   min: 2,    max: 512,   unit: 'GB' },
+      estimated_walltime_hours:{ paramName: 'walltime_hours',displayKey: 'inspector.paramWalltime',    kind: 'float',   min: 0.01, max: 720,   unit: 'h' },
+      mem_overhead:            { paramName: 'mem_overhead',  displayKey: 'inspector.paramMemOverhead', kind: 'float', min: 0, max: 256, unit: 'GB' },
+      gpu_count:               { paramName: 'gpu_count',     displayKey: 'inspector.paramGpuCount',    kind: 'integer', min: 0,    max: 8 },
+      scratch_disk_gb:         { paramName: 'scratch_disk_gb',displayKey: 'inspector.paramScratchDisk', kind: 'float', min: 0, max: 1000, unit: 'GB' },
+      parallel_tasks:          { paramName: 'n_cores',       displayKey: 'inspector.paramCpuCores',    kind: 'integer', min: 1,    max: 128 },  // shares n_cores with cpu_cores
     }
 
     const parametrize = spec.resources && typeof spec.resources === 'object'
@@ -651,7 +652,8 @@ function applyNodespecToNode(nodespecYaml: string, existingParams: Record<string
           const resourceValue = (res as Record<string, unknown>)[String(fieldName)]
           onboardInputs.push({
             name: mapping.paramName,
-            display_name: mapping.displayName,
+            display_name: translate('en', mapping.displayKey),
+            display_name_zh: translate('zh', mapping.displayKey),
             type: mapping.kind as OnBoardParam['type'],
             default: resourceValue ?? null,
             min: mapping.min,
@@ -993,7 +995,7 @@ function PortList({ nodeId, direction }: { nodeId: string; direction: 'input' | 
   return (
     <div className="px-3 space-y-1">
       {ports.map((p) => {
-        const portDesc = zh && p.description_zh ? p.description_zh : p.description
+        const portDesc = pickLocalized(zh, p.description_zh, p.description)
         return (
           <div key={p.name}>
             <div className="flex items-center gap-2 text-xs">
@@ -1001,7 +1003,7 @@ function PortList({ nodeId, direction }: { nodeId: string; direction: 'input' | 
                 className="w-2.5 h-2.5 rounded-full flex-shrink-0"
                 style={{ backgroundColor: PORT_COLORS[p.category] ?? '#6b7280' }}
               />
-              <span className="text-mf-text-secondary truncate">{zh && p.display_name_zh ? p.display_name_zh : p.display_name}</span>
+              <span className="text-mf-text-secondary truncate">{pickLocalized(zh, p.display_name_zh, p.display_name)}</span>
               <span className="text-mf-text-muted font-mono text-[10px] ml-auto">{resolveLabel(portCategoryLabel(p.category), t)}</span>
               {p.required && direction === 'input' && (
                 <span className="text-red-500 text-[10px]">{t('inspector.requiredShort')}</span>
@@ -1042,14 +1044,14 @@ function OnboardOutputList({
         const runValue = runStatus?.outputs[runKey]
         const hasValue = runValue !== undefined
         const isBool = runValue === 'true' || runValue === 'false'
-        const gateDesc = zh && o.gate_description_zh ? o.gate_description_zh : o.gate_description
+        const gateDesc = pickLocalized(zh, o.gate_description_zh, o.gate_description)
 
         return (
           <div key={o.name}>
             {/* Label row + run value */}
             <div className="flex items-start justify-between gap-2">
               <div className="flex items-center gap-1.5 flex-wrap min-w-0">
-                <span className="text-xs text-mf-text-secondary font-medium">{zh && o.display_name_zh ? o.display_name_zh : o.display_name}</span>
+                <span className="text-xs text-mf-text-secondary font-medium">{pickLocalized(zh, o.display_name_zh, o.display_name)}</span>
                 {o.unit && (
                   <span className="text-[10px] text-mf-text-muted">({o.unit})</span>
                 )}
@@ -1079,7 +1081,7 @@ function OnboardOutputList({
             {/* Descriptions */}
             {(o.description || o.description_zh) && (
               <p className="text-[10px] text-mf-text-muted mt-0.5 leading-normal">
-                {zh && o.description_zh ? o.description_zh : o.description}
+                {pickLocalized(zh, o.description_zh, o.description)}
               </p>
             )}
             {gateDesc && (
@@ -1115,7 +1117,7 @@ function RunSummarySection({
   return (
     <div className="px-3 py-2 flex items-center gap-2">
       <span className={`${phaseBadgeClass(runStatus.phase)} text-xs`}>
-        {phaseEmoji(runStatus.phase)} {runStatus.phase}
+        {phaseEmoji(runStatus.phase)} {phaseLabel(runStatus.phase, t)}
       </span>
       {elapsed && <span className="text-[11px] text-mf-text-muted">{elapsed}</span>}
       {multi && nodeId && onRotate && (
@@ -1212,8 +1214,8 @@ function ResourceParamsEditor({
               const current = storedParams[param.name] ?? param.default ?? ''
               return (
                 <div key={param.name} className="flex items-center gap-2">
-                  <label className="text-[11px] text-mf-text-secondary w-20 flex-shrink-0 truncate" title={zh && param.display_name_zh ? param.display_name_zh : param.display_name}>
-                    {zh && param.display_name_zh ? param.display_name_zh : param.display_name}
+                  <label className="text-[11px] text-mf-text-secondary w-20 flex-shrink-0 truncate" title={pickLocalized(zh, param.display_name_zh, param.display_name)}>
+                    {pickLocalized(zh, param.display_name_zh, param.display_name)}
                   </label>
                   <input
                     type="number"
@@ -1329,12 +1331,12 @@ export function NodeInspector() {
       <div className="flex-1 overflow-y-auto mf-scroll">
         {/* Node header */}
         <div className="px-3 py-2 border-b border-mf-border">
-          <div className="text-sm font-semibold text-mf-text-primary">{zh && d.display_name_zh ? d.display_name_zh : d.display_name}</div>
+          <div className="text-sm font-semibold text-mf-text-primary">{pickLocalized(zh, d.display_name_zh, d.display_name)}</div>
           {(!isEphemeral && !isNodeGen) || hasNodeGenResult ? (
             <>
               <div className="text-[11px] text-mf-text-muted font-mono mt-0.5">{d.name} v{d.version}</div>
               <div className="text-xs text-mf-text-secondary mt-1 leading-relaxed">
-                {zh && d.description_zh ? d.description_zh : d.description}
+                {pickLocalized(zh, d.description_zh, d.description)}
               </div>
             </>
           ) : null}

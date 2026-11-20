@@ -15,4 +15,6 @@ export const paletteZh: Record<keyof typeof paletteEn, string> = {
   implUnits: '{count} 个实现',
   ephemeralHint: '临时节点 · 拖拽创建',
   nodeGenHint: 'AI 辅助 · 拖拽创建',
+  ephemeralTitle: '临时节点',
+  nodeGenTitle: '生成节点',
 }

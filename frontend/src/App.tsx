@@ -35,6 +35,8 @@ import { loadGlobalPrefs, setPreferenceProjectId } from './lib/node-preferences'
 import { demoNodeDescription, demoWorkflowMeta } from './lib/demo-localize'
 import { useRunOverlayPolling } from './hooks/useRunOverlayPolling'
 import { useGlobalShortcuts } from './hooks/useGlobalShortcuts'
+import { usePageTitle } from './hooks/usePageTitle'
+import { useT } from './lib/i18n'
 
 // Import settings store to trigger initial theme/font-size application
 import './stores/settings-store'
@@ -52,6 +54,8 @@ const queryClient = new QueryClient({
 
 function CanvasLayout() {
   const { projectId } = useParams<{ projectId: string }>()
+  const { t } = useT()
+  usePageTitle(t('topbar.canvasTitle', { app: 'MiQroForge' }))
   const rightPanel      = useUIStore((s) => s.rightPanel)
   const paletteCollapsed = useUIStore((s) => s.paletteCollapsed)
   const filesOpen       = useUIStore((s) => s.filesOpen)

@@ -1,4 +1,5 @@
 import type { RunPhase } from '../types/index-types'
+import type { DictKey } from './i18n'
 
 // ─── Phase configuration map ──────────────────────────────────────────────────
 
@@ -47,6 +48,26 @@ export function phaseTextClass(phase: RunPhase): string {
 
 export function phaseBadgeClass(phase: RunPhase): string {
   return phaseConfig(phase).badgeClass
+}
+
+// ─── Phase label localization ─────────────────────────────────────────────────
+
+const PHASE_LABEL_KEYS: Record<string, DictKey> = {
+  Running:        'runs.phaseRunning',
+  Succeeded:      'runs.phaseSucceeded',
+  Failed:         'runs.phaseFailed',
+  Error:          'runs.phaseError',
+  Pending:        'runs.phasePending',
+  Unknown:        'runs.phaseUnknown',
+  Omitted:        'runs.phaseOmitted',
+  PartialSuccess: 'runs.phasePartialSuccess',
+}
+
+/** Localized phase text; unknown values (e.g. Argo's Skipped/Terminated) pass through unchanged. */
+export function phaseLabel(phase: string | undefined, t: (key: DictKey) => string): string {
+  if (!phase) return ''
+  const key = PHASE_LABEL_KEYS[phase]
+  return key ? t(key) : phase
 }
 
 // ─── Duration formatting ──────────────────────────────────────────────────────

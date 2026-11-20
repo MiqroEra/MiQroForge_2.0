@@ -4,6 +4,7 @@ import { useWorkflowStore } from '../stores/workflow-store'
 import { useUIStore } from '../stores/ui-store'
 import { useProjectStore } from '../stores/project-store'
 import { rfStateToWorkflowDoc, workflowDocToYaml } from '../lib/workflow-serializer'
+import { useT } from '../lib/i18n'
 import type { ValidationResult } from '../types/workflow'
 
 export function useWorkflowValidation() {
@@ -12,6 +13,7 @@ export function useWorkflowValidation() {
     setValidationResult, setIsValidating,
   } = useWorkflowStore()
   const { showNotification } = useUIStore()
+  const { t } = useT()
 
   const getYaml = useCallback((): string => {
     const doc = rfStateToWorkflowDoc(nodes, edges, meta)
@@ -20,7 +22,7 @@ export function useWorkflowValidation() {
 
   const validate = useCallback(async (): Promise<ValidationResult | null> => {
     if (nodes.length === 0) {
-      showNotification('error', 'Canvas is empty. Add nodes before validating.')
+      showNotification('error', t('workflow.validationEmpty'))
       return null
     }
 
@@ -52,20 +54,20 @@ export function useWorkflowValidation() {
       setValidationResult(result)
 
       if (result.valid) {
-        showNotification('success', `Validation passed (${result.warnings.length} warnings)`)
+        showNotification('success', t('workflow.validationPassed', { count: result.warnings.length }))
       } else {
-        showNotification('error', `Validation failed: ${result.errors.length} error(s)`)
+        showNotification('error', t('workflow.validationFailed', { count: result.errors.length }))
       }
 
       return result
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
-      showNotification('error', `Validation error: ${msg}`)
+      showNotification('error', t('workflow.validationError', { msg }))
       return null
     } finally {
       setIsValidating(false)
     }
-  }, [nodes, edges, getYaml, setIsValidating, setValidationResult, showNotification])
+  }, [nodes, edges, getYaml, t, setIsValidating, setValidationResult, showNotification])
 
   return { validate, getYaml }
 }

@@ -13,4 +13,9 @@ export const workflowEn = {
   errorUnit: '{count} error',
   errorUnits: '{count} errors',
   submitted: 'Submitted:',
+  untitled: 'Untitled Workflow',
+  validationEmpty: 'Canvas is empty. Add nodes before validating.',
+  validationPassed: 'Validation passed ({count} warnings)',
+  validationFailed: 'Validation failed: {count} error(s)',
+  validationError: 'Validation error: {msg}',
 } as const

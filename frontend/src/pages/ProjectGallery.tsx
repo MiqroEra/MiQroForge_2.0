@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Plus, Package, BookOpen, Ruler, ExternalLink, Settings, Trash2, Brain, X, FolderOpen, LogOut, User, Shield } from 'lucide-react'
 import { getStoredUser, clearToken } from '../lib/auth'
 import { useT, translate, type DictKey } from '../lib/i18n'
+import { usePageTitle } from '../hooks/usePageTitle'
 import { useSettingsStore } from '../stores/settings-store'
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, rectSortingStrategy, arrayMove } from '@dnd-kit/sortable'
@@ -184,6 +185,7 @@ function NodeRepoDropdown() {
 
 export function ProjectGallery() {
   const { t } = useT()
+  usePageTitle(t('gallery.pageTitle', { app: 'MiQroForge' }))
   const navigate = useNavigate()
   const [projects, setProjects] = useState<ProjectMeta[]>([])
   const [loading, setLoading] = useState(true)

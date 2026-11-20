@@ -8,7 +8,7 @@ import { useUIStore } from '../../stores/ui-store'
 import { useRunOverlayStore } from '../../stores/run-overlay-store'
 import type { RunSummaryResponse, RunPhase, RunDetailResponse } from '../../types/index-types'
 import { RefreshCw, ChevronRight, Terminal, RotateCcw, Trash2, AlertTriangle, Info, Square } from 'lucide-react'
-import { phaseBadgeClass, formatDurationSeconds } from '../../lib/phase-utils'
+import { phaseBadgeClass, phaseLabel, formatDurationSeconds } from '../../lib/phase-utils'
 import { formatDateTime } from '../../lib/date-utils'
 import { useT } from '../../lib/i18n'
 
@@ -188,7 +188,8 @@ function getStatusMessage(detail: RunDetailResponse): string | undefined {
 }
 
 function PhaseBadge({ phase }: { phase: RunPhase }) {
-  return <span className={phaseBadgeClass(phase)}>{phase}</span>
+  const { t } = useT()
+  return <span className={phaseBadgeClass(phase)}>{phaseLabel(phase, t)}</span>
 }
 
 function formatDuration(secs?: number): string {

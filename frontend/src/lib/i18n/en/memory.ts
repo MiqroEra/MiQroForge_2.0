@@ -25,4 +25,7 @@ export const memoryEn = {
   // Result badge (API returns "success" | "failure")
   resultSuccess: 'success',
   resultFailed: 'failure',
+
+  // Page title
+  pageTitle: 'Memory Manager — {app}',
 } as const

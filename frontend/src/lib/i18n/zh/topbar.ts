@@ -30,4 +30,10 @@ export const topbarZh: Record<keyof typeof topbarEn, string> = {
   valid: '✓ 校验通过',
   errors: '✗ {count} 个错误',
   clearRunOverlay: '清除运行覆盖层',
+
+  // 页面标题
+  canvasTitle: '工作流画布 — {app}',
+
+  // 语言切换
+  switchLanguage: '切换语言',
 }

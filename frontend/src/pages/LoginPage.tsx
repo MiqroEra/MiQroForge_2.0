@@ -4,6 +4,7 @@ import { Eye, EyeOff } from 'lucide-react'
 import { setToken, setStoredUser } from '../lib/auth'
 import { postJSON, ApiError } from '../api/client'
 import { useT, type DictKey } from '../lib/i18n'
+import { usePageTitle } from '../hooks/usePageTitle'
 
 // ─── Chemistry quotes ──────────────────────────────────────────────────────────
 
@@ -29,6 +30,7 @@ function useRandomQuote() {
 
 export function LoginPage() {
   const { t } = useT()
+  usePageTitle(t('login.pageTitle', { app: 'MiQroForge' }))
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)

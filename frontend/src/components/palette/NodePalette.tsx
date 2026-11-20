@@ -3,7 +3,7 @@ import { Search, RefreshCw, ChevronLeft, ChevronRight, ChevronDown, Zap, Sparkle
 import { useNodeCatalog } from '../../hooks/useNodeCatalog'
 import { useNodeCatalogStore, buildSemanticGroups, type SubGroup } from '../../stores/node-catalog-store'
 import { useUIStore } from '../../stores/ui-store'
-import { useT } from '../../lib/i18n'
+import { useT, pickLocalized } from '../../lib/i18n'
 import { semanticIcon } from '../../lib/semantic-labels'
 import type { PickerOption } from '../../lib/semantic-labels'
 import type { NodeSummaryResponse } from '../../types/index-types'
@@ -28,7 +28,7 @@ function EphemeralTypeCard() {
           <Zap size={14} className="text-orange-400 mt-0.5 flex-shrink-0" />
           <div className="min-w-0">
             <div className="text-xs font-semibold text-orange-200 truncate leading-tight">
-              Ephemeral Node
+              {t('palette.ephemeralTitle')}
             </div>
             <div className="text-[10px] text-orange-500/80">
               {t('palette.ephemeralHint')}
@@ -60,7 +60,7 @@ function NodeGeneratorTypeCard() {
           <Sparkles size={14} className="text-purple-400 mt-0.5 flex-shrink-0" />
           <div className="min-w-0">
             <div className="text-xs font-semibold text-purple-200 truncate leading-tight">
-              Generate Node
+              {t('palette.nodeGenTitle')}
             </div>
             <div className="text-[10px] text-purple-500/80">
               {t('palette.nodeGenHint')}
@@ -94,7 +94,7 @@ function SoftwareRow({ node }: { node: NodeSummaryResponse }) {
       title={t('palette.dragToPlace', { name: node.name })}
     >
       <span className="text-xs font-medium text-blue-400 group-hover:text-blue-300 truncate">
-        {node.software ?? (zh && node.display_name_zh ? node.display_name_zh : node.display_name)}
+        {node.software ?? pickLocalized(zh, node.display_name_zh, node.display_name)}
       </span>
       <span className="text-[10px] text-mf-text-muted font-mono ml-2 shrink-0">
         {node.name}
@@ -175,7 +175,7 @@ function SemanticTypeCard({ semanticType, label, nodes, subGroups, expanded, onT
       const options: PickerOption[] = nodes.map((n) => ({
         nodeName: n.name,
         software: n.software ?? null,
-        label: zh && n.display_name_zh ? n.display_name_zh : n.display_name,
+        label: pickLocalized(zh, n.display_name_zh, n.display_name),
         methods: n.methods,
       }))
       e.dataTransfer.setData('application/mf-semantic-type', semanticType)

@@ -9,6 +9,8 @@ import { create } from 'zustand'
 import { projectsApi } from '../api/projects-api'
 import type { ProjectMeta, ConversationMeta, CanvasState } from '../api/projects-api'
 import { localizeDemoCanvas } from '../lib/demo-localize'
+import { translate } from '../lib/i18n'
+import { useSettingsStore } from './settings-store'
 
 interface ProjectState {
   // 当前项目
@@ -80,7 +82,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
 
   createProject: async (name, description) => {
     const meta = await projectsApi.create({
-      name: name || 'Untitled Project',
+      name: name || translate(useSettingsStore.getState().language, 'gallery.untitledProject'),
       description: description || '',
     })
     return meta

@@ -88,4 +88,12 @@ export const inspectorZh: Record<keyof typeof inspectorEn, string> = {
   podMemory: 'Pod 内存: {mem} + {overhead} 开销 = {total} GiB',
   resourceParam: '{count} 个资源参数',
   resourceParams: '{count} 个资源参数',
+
+  // 自动生成的资源参数名（resources.parametrize）
+  paramCpuCores: 'CPU 核数',
+  paramAppMemory: '应用内存 (GB)',
+  paramWalltime: '墙钟时间 (小时)',
+  paramMemOverhead: '内存开销 (GB)',
+  paramGpuCount: 'GPU 数量',
+  paramScratchDisk: '暂存磁盘 (GB)',
 }

@@ -8,6 +8,7 @@ import { useEffect, useState } from 'react'
 import { getStoredUser } from '../lib/auth'
 import { fetchJSON } from '../api/client'
 import { useT } from '../lib/i18n'
+import { usePageTitle } from '../hooks/usePageTitle'
 import {
   Shield, Users, Cpu, Coins, Zap, ArrowLeft, Loader2,
 } from 'lucide-react'
@@ -55,6 +56,7 @@ interface AdminUserUsage {
 
 export function AdminUsagePage() {
   const { t } = useT()
+  usePageTitle(t('admin.pageTitle', { app: 'MiQroForge' }))
   const storedUser = getStoredUser()
   const [days, setDays] = useState(30)
   const [data, setData] = useState<AdminUsageSummary | null>(null)

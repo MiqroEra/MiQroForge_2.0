@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { ArrowLeft } from 'lucide-react'
-import { useT } from '../../lib/i18n'
+import { useT, pickLocalized } from '../../lib/i18n'
 import type { DictKey } from '../../lib/i18n'
+import { usePageTitle } from '../../hooks/usePageTitle'
 
 import '../../stores/settings-store'
 
@@ -40,9 +41,7 @@ export function SharedParamsPage() {
   const [data, setData] = useState<SharedParamsData | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    document.title = t('docs.sharedParamsTitle', { app: 'MiQroForge' })
-  }, [t])
+  usePageTitle(t('docs.sharedParamsTitle', { app: 'MiQroForge' }))
 
   useEffect(() => {
     fetch('/api/v1/nodes/shared-params')
@@ -161,7 +160,7 @@ function ParamTable({
               className={`hover:bg-mf-hover/30 ${i < sorted.length - 1 ? 'border-b border-mf-border/40' : ''}`}
             >
               <td className="px-4 py-1.5 font-mono text-mf-text-primary font-medium">{canonical}</td>
-              <td className="px-4 py-1.5 text-mf-text-muted">{zh && entry.display_name_zh ? entry.display_name_zh : entry.display_name}</td>
+              <td className="px-4 py-1.5 text-mf-text-muted">{pickLocalized(zh, entry.display_name_zh, entry.display_name)}</td>
               <td className="text-center px-4 py-1.5 font-mono">
                 <CellValue value={entry.gaussian} />
               </td>

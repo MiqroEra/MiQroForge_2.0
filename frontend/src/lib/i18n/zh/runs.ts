@@ -23,4 +23,14 @@ export const runsZh: Record<keyof typeof runsEn, string> = {
   historyCount: '运行历史 ({count})',
   refresh: '刷新',
   error: '错误',
+
+  // 运行阶段
+  phaseRunning: '运行中',
+  phaseSucceeded: '成功',
+  phaseFailed: '失败',
+  phaseError: '错误',
+  phasePending: '等待中',
+  phaseUnknown: '未知',
+  phaseOmitted: '已跳过',
+  phasePartialSuccess: '部分成功',
 }

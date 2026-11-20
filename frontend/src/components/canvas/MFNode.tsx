@@ -8,8 +8,8 @@ import { PORT_COLORS, nodeTypeEmoji } from '../../lib/port-type-utils'
 import type { PickerOption } from '../../lib/semantic-labels'
 import { useRunOverlayStore } from '../../stores/run-overlay-store'
 import type { NodeRunStatus } from '../../stores/run-overlay-store'
-import { phaseBorderClass, phaseBadgeClass, formatElapsed } from '../../lib/phase-utils'
-import { useT } from '../../lib/i18n'
+import { phaseBorderClass, phaseBadgeClass, phaseLabel, formatElapsed } from '../../lib/phase-utils'
+import { useT, pickLocalized } from '../../lib/i18n'
 
 // ─── Type alias for our custom node ──────────────────────────────────────────
 
@@ -87,8 +87,8 @@ function GateBadge({ gate, runValue }: GateBadgeProps) {
 
   const hasResult = runValue !== undefined
   const passed    = runValue === 'true'
-  const gateName = zh && gate.display_name_zh ? gate.display_name_zh : gate.display_name
-  const gateDesc = zh && gate.gate_description_zh ? gate.gate_description_zh : gate.gate_description
+  const gateName = pickLocalized(zh, gate.display_name_zh, gate.display_name)
+  const gateDesc = pickLocalized(zh, gate.gate_description_zh, gate.gate_description)
 
   return (
     <span
@@ -301,7 +301,7 @@ const PendingNodeCard = memo(({ data, selected }: { data: MFNodeData; selected: 
         <span className="text-base leading-none mt-0.5">❓</span>
         <div className="min-w-0 flex-1">
           <div className="text-xs font-semibold text-amber-200 truncate leading-tight">
-            {zh && data.display_name_zh ? data.display_name_zh : data.display_name}
+            {pickLocalized(zh, data.display_name_zh, data.display_name)}
           </div>
           <div className="text-[10px] text-amber-600 font-mono truncate">
             {semanticType ?? t('canvas.selectImplementation')}
@@ -512,7 +512,7 @@ export const MFNode = memo(({ id, data, selected }: NodeProps<MFNodeType>) => {
               <span className="text-base leading-none mt-0.5">{emoji}</span>
               <div className="min-w-0 flex-1">
                 <div className="text-xs font-semibold text-mf-text-primary truncate leading-tight">
-                  {zh && data.display_name_zh ? data.display_name_zh : data.display_name}
+                  {pickLocalized(zh, data.display_name_zh, data.display_name)}
                 </div>
                 {data.prefab ? (
                   <div className="text-[10px] text-purple-400 font-mono">{t('canvas.prefabBadge')}</div>
@@ -533,7 +533,7 @@ export const MFNode = memo(({ id, data, selected }: NodeProps<MFNodeType>) => {
               {/* Phase badge */}
               {runStatus && !isCompiling && (
                 <span className={`${phaseBadgeClass(runStatus.phase)} flex-shrink-0`}>
-                  {runStatus.phase}
+                  {phaseLabel(runStatus.phase, t)}
                 </span>
               )}
               {/* Compiling indicator */}
@@ -555,7 +555,7 @@ export const MFNode = memo(({ id, data, selected }: NodeProps<MFNodeType>) => {
                     <PortRow
                       key={port.name}
                       name={port.name}
-                      displayName={zh && port.display_name_zh ? port.display_name_zh : port.display_name}
+                      displayName={pickLocalized(zh, port.display_name_zh, port.display_name)}
                       category={port.category}
                       required={port.required}
                       direction="input"
@@ -570,7 +570,7 @@ export const MFNode = memo(({ id, data, selected }: NodeProps<MFNodeType>) => {
                     <PortRow
                       key={port.name}
                       name={port.name}
-                      displayName={zh && port.display_name_zh ? port.display_name_zh : port.display_name}
+                      displayName={pickLocalized(zh, port.display_name_zh, port.display_name)}
                       category={port.category}
                       direction="output"
                       ephemeral={!!(data.ephemeral || data.prefab)}
@@ -639,10 +639,10 @@ export const MFNode = memo(({ id, data, selected }: NodeProps<MFNodeType>) => {
                 <span className="text-base leading-none mt-0.5">❌</span>
                 <div className="min-w-0 flex-1">
                   <div className="text-xs font-semibold text-red-400 truncate leading-tight">
-                    {zh && data.display_name_zh ? data.display_name_zh : data.display_name}
+                    {pickLocalized(zh, data.display_name_zh, data.display_name)}
                   </div>
                   <div className="text-[10px] text-red-500/60 font-mono">
-                    {runStatus?.phase}
+                    {phaseLabel(runStatus?.phase, t)}
                   </div>
                 </div>
               </div>

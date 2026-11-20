@@ -56,4 +56,7 @@ export const galleryZh: Record<keyof typeof galleryEn, string> = {
   addNote: '添加备注...',
   updated: '更新于 {time}',
   open: '打开',
+
+  // 页面标题
+  pageTitle: '项目 — {app}',
 }

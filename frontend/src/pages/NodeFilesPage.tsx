@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useCallback } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, Save, X, RefreshCw, ChevronDown, ChevronRight } from 'lucide-react'
 import { useT } from '../lib/i18n'
+import { usePageTitle } from '../hooks/usePageTitle'
 import { nodeFilesApi } from '../api/nodes-api'
 import type { DirectoryEntry } from '../api/files-api'
 
@@ -119,9 +120,7 @@ export function NodeFilesPage() {
   const [saving, setSaving] = useState(false)
   const [saveStatus, setSaveStatus] = useState<SaveStatus>(null)
 
-  useEffect(() => {
-    document.title = t('docs.nodeFilesTitle', { app: 'MiQroForge' })
-  }, [t])
+  usePageTitle(t('docs.nodeFilesTitle', { app: 'MiQroForge' }))
 
   const handleEdit = useCallback(async (node: TreeNode) => {
     if (node.isDir) return

@@ -86,4 +86,12 @@ export const inspectorEn = {
   podMemory: 'Pod memory: {mem} + {overhead} overhead = {total} GiB',
   resourceParam: '{count} resource param',
   resourceParams: '{count} resource params',
+
+  // Auto-generated resource param names (resources.parametrize)
+  paramCpuCores: 'CPU Cores',
+  paramAppMemory: 'App Memory (GB)',
+  paramWalltime: 'Walltime (hours)',
+  paramMemOverhead: 'Memory Overhead (GB)',
+  paramGpuCount: 'GPU Count',
+  paramScratchDisk: 'Scratch Disk (GB)',
 } as const

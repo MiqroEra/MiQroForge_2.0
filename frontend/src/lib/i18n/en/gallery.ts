@@ -54,4 +54,7 @@ export const galleryEn = {
   addNote: 'Add a note...',
   updated: 'Updated {time}',
   open: 'Open',
+
+  // Page title
+  pageTitle: 'Projects — {app}',
 } as const

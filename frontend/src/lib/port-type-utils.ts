@@ -1,5 +1,4 @@
 import type { PortCategory } from '../types/nodespec'
-import { resolveLabelEn } from './semantic-labels'
 import type { LabelsKey } from './semantic-labels'
 
 // Re-export the label resolver so importers of this module can wire `t()`.
@@ -41,8 +40,9 @@ export const PORT_HANDLE_CLASS: Record<PortCategory, string> = {
 
 // ─── Category label helpers ───────────────────────────────────────────────────
 
-export function portCategoryLabel(cat: PortCategory): string {
-  return resolveLabelEn(PORT_LABELS[cat])
+/** Returns the i18n dict key; resolve through `resolveLabel(..., t)` at call sites. */
+export function portCategoryLabel(cat: PortCategory): LabelsKey {
+  return PORT_LABELS[cat]
 }
 
 export function portColor(cat: PortCategory): string {

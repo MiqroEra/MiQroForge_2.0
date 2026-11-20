@@ -11,6 +11,8 @@ import type {
 import type { StreamPort, OnBoardParam, OnBoardOutput, ResourceSpec } from '../types/nodespec'
 import type { WorkflowMeta, ValidationResult } from '../types/workflow'
 import { fetchNodeDetailCached, mergeLatestSpec } from '../lib/node-spec-refresh'
+import { translate } from '../lib/i18n'
+import { useSettingsStore } from './settings-store'
 
 // ─── MFNode data shape ────────────────────────────────────────────────────────
 
@@ -202,7 +204,7 @@ let _storageName = 'mf-canvas-v1'
 export const useWorkflowStore = create<WorkflowState>()(
   persist(
     (set, _get) => ({
-      meta: { name: 'Untitled Workflow', description: '', version: '1.0.0' },
+      meta: { name: translate(useSettingsStore.getState().language, 'workflow.untitled'), description: '', version: '1.0.0' },
       nodes: [],
       edges: [],
       nodeHistory: {},
@@ -429,7 +431,7 @@ export const useWorkflowStore = create<WorkflowState>()(
           nodes: [],
           edges: [],
           nodeHistory: {},
-          meta: { name: 'Untitled Workflow', description: '', version: '1.0.0' },
+          meta: { name: translate(useSettingsStore.getState().language, 'workflow.untitled'), description: '', version: '1.0.0' },
           validationResult: null,
         })
       },

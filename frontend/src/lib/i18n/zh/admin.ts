@@ -38,4 +38,7 @@ export const adminZh: Record<keyof typeof adminEn, string> = {
 
   // 页脚
   footnote: '最近 {days} 天 · 费用（{currency}）基于 models.yaml 与 compute_pricing.yaml',
+
+  // 页面标题
+  pageTitle: '用量总览 — {app}',
 }

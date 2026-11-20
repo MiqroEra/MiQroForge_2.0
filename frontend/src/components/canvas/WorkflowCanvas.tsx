@@ -25,7 +25,7 @@ import { agentsApi } from '../../api/agents-api'
 import { buildNodeData } from '../../lib/node-utils'
 import { semanticLabel, resolveLabel } from '../../lib/semantic-labels'
 import type { PickerOption } from '../../lib/semantic-labels'
-import { useT } from '../../lib/i18n'
+import { useT, translate } from '../../lib/i18n'
 import { useSettingsStore, getColorMode, getMinimapMaskColor } from '../../stores/settings-store'
 import { useShortcutsStore, keyMatch, displayKey } from '../../stores/shortcuts-store'
 
@@ -266,7 +266,8 @@ export function WorkflowCanvas() {
           data: {
             name: 'ephemeral-node',
             version: '\u2014',
-            display_name: 'Ephemeral Node',
+            display_name: translate('en', 'palette.ephemeralTitle'),
+            display_name_zh: translate('zh', 'palette.ephemeralTitle'),
             description: '',
             node_type: 'lightweight',
             category: 'ephemeral',
@@ -299,7 +300,8 @@ export function WorkflowCanvas() {
           data: {
             name: 'node-generator',
             version: '\u2014',
-            display_name: 'Generate Node',
+            display_name: translate('en', 'palette.nodeGenTitle'),
+            display_name_zh: translate('zh', 'palette.nodeGenTitle'),
             description: '',
             node_type: 'lightweight',
             category: 'node_generator',
@@ -446,6 +448,14 @@ export function WorkflowCanvas() {
         panOnDrag={[1, 2]}
         panActivationKeyCode={null}
         colorMode={getColorMode(theme)}
+        ariaLabelConfig={{
+          'controls.ariaLabel': t('canvas.controlsAria'),
+          'controls.zoomIn.ariaLabel': t('canvas.zoomInAria'),
+          'controls.zoomOut.ariaLabel': t('canvas.zoomOutAria'),
+          'controls.fitView.ariaLabel': t('canvas.fitViewAria'),
+          'controls.interactive.ariaLabel': t('canvas.interactiveAria'),
+          'minimap.ariaLabel': t('canvas.minimapAria'),
+        }}
       >
         <Background
           variant={BackgroundVariant.Dots}

@@ -5,7 +5,7 @@ import { useUIStore } from '../../stores/ui-store'
 import { useRunOverlayStore } from '../../stores/run-overlay-store'
 import { useT } from '../../lib/i18n'
 import type { RunPhase } from '../../types/index-types'
-import { phaseEmoji } from '../../lib/phase-utils'
+import { phaseEmoji, phaseLabel } from '../../lib/phase-utils'
 
 // ─── StatusBar ────────────────────────────────────────────────────────────────
 
@@ -45,7 +45,7 @@ export function StatusBar() {
             'text-blue-400'
           }>
             {runPhaseEmoji} {activeRunName}
-            {workflowPhase && ` (${workflowPhase})`}
+            {workflowPhase && ` (${phaseLabel(workflowPhase, t)})`}
           </span>
           <button
             onClick={clearOverlay}

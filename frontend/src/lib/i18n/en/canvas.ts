@@ -34,4 +34,11 @@ export const canvasEn = {
   savedAs: 'Saved as {name}',
   savedToLibrary: 'Saved {name} to library',
   saveFailed: 'Save failed',
+  // ── React Flow aria labels ──
+  controlsAria: 'Canvas controls',
+  zoomInAria: 'Zoom in',
+  zoomOutAria: 'Zoom out',
+  fitViewAria: 'Fit view',
+  interactiveAria: 'Toggle interactivity',
+  minimapAria: 'Minimap',
 } as const

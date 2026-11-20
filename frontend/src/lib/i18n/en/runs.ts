@@ -21,4 +21,14 @@ export const runsEn = {
   historyCount: 'History ({count})',
   refresh: 'Refresh',
   error: 'Error',
+
+  // Run phases
+  phaseRunning: 'Running',
+  phaseSucceeded: 'Succeeded',
+  phaseFailed: 'Failed',
+  phaseError: 'Error',
+  phasePending: 'Pending',
+  phaseUnknown: 'Unknown',
+  phaseOmitted: 'Omitted',
+  phasePartialSuccess: 'Partial Success',
 } as const

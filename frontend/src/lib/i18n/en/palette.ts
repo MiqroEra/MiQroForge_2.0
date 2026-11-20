@@ -13,4 +13,6 @@ export const paletteEn = {
   implUnits: '{count} impls',
   ephemeralHint: 'temporary · drag to create',
   nodeGenHint: 'AI-assisted · drag to create',
+  ephemeralTitle: 'Ephemeral Node',
+  nodeGenTitle: 'Generate Node',
 } as const

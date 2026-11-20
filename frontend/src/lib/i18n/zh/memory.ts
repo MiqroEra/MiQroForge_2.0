@@ -27,4 +27,7 @@ export const memoryZh: Record<keyof typeof memoryEn, string> = {
   // 结果徽标（API 返回 "success" | "failure"）
   resultSuccess: '成功',
   resultFailed: '失败',
+
+  // 页面标题
+  pageTitle: '记忆管理 — {app}',
 }

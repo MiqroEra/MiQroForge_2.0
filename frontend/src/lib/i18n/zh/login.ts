@@ -33,4 +33,7 @@ export const loginZh: Record<keyof typeof loginEn, string> = {
   quote9Author: 'E. Bright Wilson',
   quote10Text: '每次计算都是对自然的一次对话。',
   quote10Author: '量子化学格言',
+
+  // 页面标题
+  pageTitle: '登录 — {app}',
 }

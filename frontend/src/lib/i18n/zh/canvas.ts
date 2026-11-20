@@ -36,4 +36,11 @@ export const canvasZh: Record<keyof typeof canvasEn, string> = {
   savedAs: '已保存为 {name}',
   savedToLibrary: '已将 {name} 保存到节点库',
   saveFailed: '保存失败',
+  // ── React Flow aria 标签 ──
+  controlsAria: '画布控制',
+  zoomInAria: '放大',
+  zoomOutAria: '缩小',
+  fitViewAria: '适应画布',
+  interactiveAria: '切换交互模式',
+  minimapAria: '小地图',
 }

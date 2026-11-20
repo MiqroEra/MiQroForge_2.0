@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Trash2, AlertTriangle, Brain, Loader2 } from 'lucide-react'
 import { getToken } from '../lib/auth'
 import { useT } from '../lib/i18n'
+import { usePageTitle } from '../hooks/usePageTitle'
 
 const API_BASE = '/api/v1/memory'
 
@@ -57,6 +58,7 @@ async function deleteMemory(params: {
 
 export function MemoryManager() {
   const { t } = useT()
+  usePageTitle(t('memory.pageTitle', { app: 'MiQroForge' }))
   const navigate = useNavigate()
   const [software, setSoftware] = useState('gaussian')
   const [entries, setEntries] = useState<MemoryEntry[]>([])

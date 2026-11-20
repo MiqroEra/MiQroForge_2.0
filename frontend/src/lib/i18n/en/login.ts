@@ -31,4 +31,7 @@ export const loginEn = {
   quote9Author: 'E. Bright Wilson',
   quote10Text: 'Every computation is a conversation with nature.',
   quote10Author: 'Quantum Chemistry Proverb',
+
+  // Page title
+  pageTitle: 'Login — {app}',
 } as const

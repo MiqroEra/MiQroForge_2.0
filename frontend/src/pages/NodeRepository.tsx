@@ -2,8 +2,9 @@ import { useState, useEffect, useCallback } from 'react'
 import { ArrowLeft, Eye, EyeOff, ChevronDown, ChevronRight, Save, FolderOpen } from 'lucide-react'
 import { useNodeCatalog } from '../hooks/useNodeCatalog'
 import { buildSemanticGroups, useNodeCatalogStore } from '../stores/node-catalog-store'
-import { resolveLabel, semanticIcon, semanticLabel } from '../lib/semantic-labels'
-import { useT } from '../lib/i18n'
+import { semanticIcon, semanticLabel, semanticLabelZh } from '../lib/semantic-labels'
+import { useT, pickLocalized } from '../lib/i18n'
+import { usePageTitle } from '../hooks/usePageTitle'
 import {
   getNodePrefs,
   saveGlobalPrefs,
@@ -159,8 +160,7 @@ function NodeRow({ node }: { node: NodeSummaryResponse }) {
     await saveGlobalPrefs(all)
   }
 
-  const description =
-    language === 'zh' && node.description_zh ? node.description_zh : node.description
+  const description = pickLocalized(language === 'zh', node.description_zh, node.description)
 
   return (
     <div className="border-b border-mf-border/30 last:border-b-0">
@@ -171,7 +171,7 @@ function NodeRow({ node }: { node: NodeSummaryResponse }) {
       >
         <div className="min-w-0 flex items-center gap-2">
           <span className="text-xs font-medium text-mf-text-primary truncate">
-            {language === 'zh' && node.display_name_zh ? node.display_name_zh : node.display_name}
+            {pickLocalized(language === 'zh', node.display_name_zh, node.display_name)}
           </span>
           {node.deprecated && (
             <span className="text-[9px] px-1 py-0.5 rounded bg-yellow-900/40 text-yellow-400 border border-yellow-700/40">
@@ -213,13 +213,14 @@ function GroupCard({
   icon: string
   nodes: NodeSummaryResponse[]
 }) {
-  const { t } = useT()
+  const { t, language } = useT()
+  const zh = language === 'zh'
   const [expanded, setExpanded] = useState(false)
 
   const label =
     semanticType === '__other__'
       ? t('labels.other')
-      : resolveLabel(semanticLabel(semanticType), t)
+      : zh ? semanticLabelZh(semanticType) : semanticLabel(semanticType)
 
   return (
     <div className="rounded-lg border border-mf-border bg-mf-panel overflow-hidden">
@@ -259,9 +260,7 @@ export function NodeRepository() {
   const [showDeprecated, setShowDeprecatedState] = useState(() => getShowDeprecated())
   const nodes = useNodeCatalogStore((s) => s.filteredNodes)
 
-  useEffect(() => {
-    document.title = t('repository.docTitle', { app: 'MiQroForge' })
-  }, [t])
+  usePageTitle(t('repository.docTitle', { app: 'MiQroForge' }))
 
   // Sync with global prefs when they load
   useEffect(() => {

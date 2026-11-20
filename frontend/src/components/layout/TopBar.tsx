@@ -11,9 +11,10 @@ import { workflowsApi } from '../../api/workflows-api'
 import { projectsApi } from '../../api/projects-api'
 import { getStoredUser } from '../../lib/auth'
 import { useT } from '../../lib/i18n'
+import { useSettingsStore } from '../../stores/settings-store'
 import {
   Trash2, Save, FolderOpen, PlayCircle, Clock,
-  MessageSquare, User,
+  MessageSquare, User, Languages,
 } from 'lucide-react'
 import type { RightPanel } from '../../stores/ui-store'
 import type { RunPhase } from '../../types/index-types'
@@ -34,7 +35,8 @@ export function TopBar() {
   const { isOpen: chatOpen, toggleChat } = useAgentStore()
   const currentProjectMeta = useProjectStore((s) => s.currentProjectMeta)
   const currentProjectId = useProjectStore((s) => s.currentProjectId)
-  const { t } = useT()
+  const { t, language } = useT()
+  const setLanguage = useSettingsStore((s) => s.setLanguage)
 
   const [editingName, setEditingName] = useState(false)
   const [nameVal, setNameVal] = useState(meta.name)
@@ -125,7 +127,10 @@ export function TopBar() {
       showNotification('error', t('topbar.submitFailed', { error: errMsg }))
 
       // Persist the failure as a local-only run snapshot
-      const syntheticName = `compile-error-${new Date().toLocaleTimeString('en-GB').replace(/:/g, '')}`
+      // 语言无关的 HHmmss 时间戳（避免 en-GB 等 locale 硬编码）
+      const d = new Date()
+      const hhmmss = `${String(d.getHours()).padStart(2, '0')}${String(d.getMinutes()).padStart(2, '0')}${String(d.getSeconds()).padStart(2, '0')}`
+      const syntheticName = `compile-error-${hhmmss}`
       saveRunSnapshot(
         syntheticName,
         meta, nodes, edges,
@@ -228,7 +233,14 @@ export function TopBar() {
         <MessageSquare size={14} /> {t('topbar.chat')}
       </button>
 
-      {/* Language switch lives in Settings panel */}
+      {/* Language switch */}
+      <button
+        onClick={() => setLanguage(language === 'zh' ? 'en' : 'zh')}
+        className="flex items-center gap-1 px-2 py-1 text-xs text-mf-text-muted hover:text-mf-text-primary hover:bg-mf-hover rounded transition-colors"
+        title={t('topbar.switchLanguage')}
+      >
+        <Languages size={13} /> {language === 'zh' ? 'EN' : '中文'}
+      </button>
 
       <div className="w-px h-5 bg-mf-border" />
 

@@ -36,4 +36,7 @@ export const adminEn = {
 
   // Footer
   footnote: 'Last {days} days · Costs ({currency}) based on models.yaml & compute_pricing.yaml',
+
+  // Page title
+  pageTitle: 'Usage Summary — {app}',
 } as const

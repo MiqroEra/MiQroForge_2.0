@@ -46,7 +46,8 @@ function loadInitial(): { theme: Theme; fontSize: FontSize; language: Language }
       return {
         theme: parsed.theme ?? 'dark',
         fontSize: parsed.fontSize ?? 'medium',
-        language: parsed.language ?? defaultLanguage(),
+        // 校验持久化值：非法 language 会导致 dictionaries[language] 为 undefined，t() 崩溃
+        language: parsed.language === 'zh' || parsed.language === 'en' ? parsed.language : defaultLanguage(),
       }
     }
   } catch {

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { ArrowLeft } from 'lucide-react'
 import { useT } from '../../lib/i18n'
 import type { DictKey } from '../../lib/i18n'
+import { usePageTitle } from '../../hooks/usePageTitle'
 
 // Import settings store so theme is applied on this page too
 import '../../stores/settings-store'
@@ -33,9 +34,7 @@ export function UnitsPage() {
   const [data, setData] = useState<UnitsData | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    document.title = t('docs.unitsTitle', { app: 'MiQroForge' })
-  }, [t])
+  usePageTitle(t('docs.unitsTitle', { app: 'MiQroForge' }))
 
   useEffect(() => {
     fetch('/api/v1/nodes/units')

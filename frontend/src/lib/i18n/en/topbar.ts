@@ -28,4 +28,10 @@ export const topbarEn = {
   valid: '✓ Valid',
   errors: '✗ {count} error(s)',
   clearRunOverlay: 'Clear run overlay',
+
+  // Page title
+  canvasTitle: 'Workflow Canvas — {app}',
+
+  // Language switch
+  switchLanguage: 'Switch language',
 } as const
