@@ -26,7 +26,7 @@
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: __MF_NAMESPACE__-workspace-pv
+  name: miqroforge-main-workspace-pv
   labels:
     miqroforge.io/role: workspace
 spec:
@@ -36,19 +36,19 @@ spec:
   persistentVolumeReclaimPolicy: Retain
   storageClassName: ""
   hostPath:
-    path: __MF_PROJECT_ROOT__/userdata/workspace
+    path: /home/mainuser/app/MiQroForge_2.0/userdata/workspace
     type: DirectoryOrCreate
 ---
 # PVC — 绑定到上述 PV
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: __MF_NAMESPACE__
-  namespace: __MF_NAMESPACE__
+  name: miqroforge-main
+  namespace: miqroforge-main
 spec:
   accessModes: [ReadWriteMany]
   storageClassName: ""
-  volumeName: __MF_NAMESPACE__-workspace-pv
+  volumeName: miqroforge-main_-workspace-pv
   resources:
     requests:
       storage: 50Gi

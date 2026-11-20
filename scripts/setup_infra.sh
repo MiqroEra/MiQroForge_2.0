@@ -115,7 +115,7 @@ bash "${SCRIPT_DIR}/install/install_argo.sh" --server-only
 
 # ── 5. Workspace PVC + RBAC ───────────────────────────────────────────────────
 # 从 .env 已自动加载 ARGO_NAMESPACE，若未配置则使用默认值
-ARGO_NAMESPACE="${ARGO_NAMESPACE:-miqroforge-v2}"
+ARGO_NAMESPACE="${ARGO_NAMESPACE:-miqroforge-main}"
 
 section "5 / 5  Workspace Namespace + RBAC + PVC（${ARGO_NAMESPACE}）"
 

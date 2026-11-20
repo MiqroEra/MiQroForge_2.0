@@ -14,7 +14,7 @@ set -euo pipefail
 
 ARGO_VERSION="${ARGO_VERSION:-v3.6.2}"
 ARGO_NAMESPACE="argo"
-MF_NAMESPACE="miqroforge"
+MF_NAMESPACE="miqroforge-main"
 
 CLI_ONLY=false
 SERVER_ONLY=false
